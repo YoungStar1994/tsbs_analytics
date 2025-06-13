@@ -410,6 +410,7 @@
     </div>
 
     <!-- 引入 Select2 脚本 -->
+    <script src="/static/js/performance.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
@@ -419,7 +420,7 @@
         let sortColumn = 'datetime';
         let sortDirection = 'desc';
         let currentPage = 1;
-        const pageSize = 100; // 增加每页显示数量
+        const pageSize = 500; // 增加每页显示数量
         let totalPages = 0;
         let isLoading = false;
         let dataCache = new Map(); // 添加数据缓存
@@ -566,56 +567,38 @@
             }
         }
 
-        // 加载数据 - 优化版本
-        async function loadData() {
+        // 加载数据 - 使用防抖优化
+        const loadData = debounce(loadDataInternal, 300);
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        async function loadDataInternal() {
             if (isLoading) return; // 防止重复加载
             
             try {
                 isLoading = true;
                 showLoading();
+                
                 const filters = getFilters();
-                const cacheKey = JSON.stringify(filters);
                 
-                // 检查缓存
-                if (dataCache.has(cacheKey)) {
-                    const cachedData = dataCache.get(cacheKey);
-                    currentData = cachedData.table_data || [];
-                    filteredData = [...currentData];
-                    
-                    // 使用Web Worker进行排序（如果数据量大）
-                    if (currentData.length > 1000) {
-                        await sortDataWithWorker();
-                    } else {
-                        sortData();
-                    }
-                    
-                    displayDataPaginated();
-                    hideError();
-                    return;
-                }
-                
+                // 发送POST请求获取数据
                 const response = await fetch('/data', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(filters)
                 });
-
-                // 尝试更健壮地解析 JSON，自动修正非法的 NaN/Infinity/undefined
-                let data;
-                try {
-                    let raw = await response.text();
-                    // 替换 NaN、Infinity、undefined 为 null
-                    raw = raw.replace(/: ?NaN/g, ':null')
-                             .replace(/: ?Infinity/g, ':null')
-                             .replace(/: ?-Infinity/g, ':null')
-                             .replace(/: ?undefined/g, ':null');
-                    data = JSON.parse(raw);
-                } catch (e) {
-                    showError('加载数据失败: 数据格式错误，后端返回内容无法解析。');
-                    return;
-                }
+                
+                const data = await response.json();
                 
                 if (data.error) {
                     showError('加载数据失败: ' + data.error);
@@ -625,26 +608,20 @@
                 currentData = data.table_data || [];
                 filteredData = [...currentData];
                 
-                // 缓存数据（限制缓存大小）
-                if (dataCache.size > 10) {
-                    const firstKey = dataCache.keys().next().value;
-                    dataCache.delete(firstKey);
-                }
-                dataCache.set(cacheKey, data);
-                
-                // 更新worker选项（多选，允许1和8）
-                const workers = [1, 8];
-                populateSelect('workers', workers);
-                
-                // 使用Web Worker进行排序（如果数据量大）
-                if (currentData.length > 1000) {
-                    await sortDataWithWorker();
-                } else {
-                    sortData();
+                // 显示处理时间和记录数信息
+                if (data.processing_time) {
+                    console.log(`数据处理时间: ${data.processing_time}s, 记录数: ${data.total_records || currentData.length}`);
                 }
                 
+                // 使用原始显示方式，已经优化
+                sortData();
                 displayDataPaginated();
+                
                 hideError();
+                
+                if (window.performanceUtils) {
+                    window.performanceUtils.perfMonitor.end('loadData');
+                }
                 
             } catch (error) {
                 console.error('Error loading data:', error);
@@ -902,12 +879,6 @@
         function displayDataPaginated() {
             const resultsPanel = document.querySelector('.results-panel .table-container');
             if (!resultsPanel) return;
-            
-            // 如果数据量小，使用原有显示方式
-            if (filteredData.length <= 500) {
-                displayData();
-                return;
-            }
             
             // 显示加载状态
             showLoading();

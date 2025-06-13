@@ -10,6 +10,7 @@ import threading
 import logging
 import csv
 import functools
+import json
 
 # 超时处理装饰器
 def timeout(seconds, default_return=None):
@@ -57,17 +58,22 @@ class TSBSDataLoader:
             'min_ms', 'mean_ms', 'max_ms', 'med_ms'
         ]
         
-        # 获取环境变量设置的超时时间（默认160秒）
-        self.data_load_timeout = int(os.environ.get('TSBS_DATA_LOAD_TIMEOUT', 160))
+        # 缓存机制
+        self._options_cache = None
+        self._options_cache_time = 0
+        self._data_cache = {}
+        self._cache_ttl = 300  # 5分钟缓存
+        
+        # 获取环境变量设置的超时时间（默认60秒，降低超时时间）
+        self.data_load_timeout = int(os.environ.get('TSBS_DATA_LOAD_TIMEOUT', 60))
         logging.info(f"Initializing TSBSDataLoader for path: {base_path} with timeout: {self.data_load_timeout}s")
         
-        # 使用超时机制加载数据
-        self.load_existing_data_with_timeout()
+        # 创建空DataFrame以快速启动
+        self.df = pd.DataFrame(columns=self.required_columns)
         
-        # 非阻塞地启动文件监视器和清理任务
-        threading.Thread(target=self.start_file_monitor, daemon=True).start()
-        self.start_cleanup_task()
-        logging.info("Data loader initialized successfully")
+        # 异步加载数据，不阻塞启动
+        self._start_async_initialization()
+        logging.info("Data loader initialized successfully (async loading started)")
     
     def parse_directory_name(self, dir_name):
         """解析目录名提取元数据，增加容错处理"""
@@ -233,7 +239,12 @@ class TSBSDataLoader:
             df_new = self.robust_csv_loader(csv_path)
             
             if df_new.empty:
-                logging.error(f"Failed to load CSV: {csv_path}")
+                logging.warning(f"CSV file is empty or has no data rows: {csv_path}")
+                return
+                
+            # 检查是否只有表头没有数据
+            if len(df_new) == 0:
+                logging.warning(f"CSV file has headers but no data: {csv_path}")
                 return
                 
             # 只在调试模式下输出详细列信息
@@ -259,6 +270,7 @@ class TSBSDataLoader:
             
             # 应用列名映射
             df_new.rename(columns=lambda x: column_mapping.get(x, x), inplace=True)
+           
             
             # 只在调试模式下输出详细列信息  
             logging.debug(f"After renaming columns: {df_new.columns.tolist()}")
@@ -309,7 +321,12 @@ class TSBSDataLoader:
                     return
                 
             with self.lock:
-                self.df = pd.concat([self.df, df_new], ignore_index=True)
+                if not self.df.empty and not df_new.empty:
+                    self.df = pd.concat([self.df, df_new], ignore_index=True)
+                elif df_new.empty:
+                    pass  # 不添加空数据
+                else:
+                    self.df = df_new.copy()
                 self.known_dirs.add(dir_name)
                 # 只在调试模式下输出详细加载信息
                 logging.debug(f"Successfully loaded data from: {dir_name}")
@@ -514,9 +531,14 @@ class TSBSDataLoader:
             return self.df.copy()
     
     def get_options(self):
-        """获取筛选选项，增加空数据保护"""
+        """获取筛选选项，增加空数据保护和缓存"""
+        # 检查缓存
+        if (self._options_cache is not None and 
+            self._is_cache_valid(self._options_cache_time)):
+            return self._options_cache
+        
         df = self.get_data()
-        options = {'branches': [], 'query_types': [], 'scales': [], 'clusters': [], 'execution_types': [], 'workers': []}  # 新增 execution_types 和 workers
+        options = {'branches': [], 'query_types': [], 'scales': [], 'clusters': [], 'execution_types': [], 'workers': []}
         
         if df.empty:
             logging.warning("No data available for options")
@@ -543,9 +565,87 @@ class TSBSDataLoader:
                 
         except Exception as e:
             logging.error(f"Error getting options: {str(e)}")
-            
+        
+        # 缓存结果
+        self._options_cache = options
+        self._options_cache_time = time.time()
+        
         return options
             
+    def _start_async_initialization(self):
+        """启动异步初始化"""
+        def async_init():
+            try:
+                # 延迟5秒启动，让主应用先启动
+                time.sleep(5)
+                # 直接调用加载数据，不使用timeout装饰器（避免signal问题）
+                self.load_existing_data()
+                # 启动文件监视器和清理任务
+                threading.Thread(target=self.start_file_monitor, daemon=True).start()
+                self.start_cleanup_task()
+                logging.info("Async data loading completed")
+            except Exception as e:
+                logging.error(f"Async initialization failed: {str(e)}")
+                import traceback
+                logging.error(traceback.format_exc())
+        
+        threading.Thread(target=async_init, daemon=True).start()
+    
+    def _clear_cache(self):
+        """清除缓存"""
+        self._options_cache = None
+        self._options_cache_time = 0
+        self._data_cache.clear()
+    
+    def _is_cache_valid(self, cache_time):
+        """检查缓存是否有效"""
+        return time.time() - cache_time < self._cache_ttl
+    
+    def get_data_filtered(self, filters=None):
+        """获取筛选后的数据（优化版本）"""
+        if filters is None:
+            filters = {}
+        
+        with self.lock:
+            df = self.df.copy()
+        
+        if df.empty:
+            return df
+        
+        # 应用筛选 - 使用更高效的筛选方式
+        mask = pd.Series(True, index=df.index)
+        
+        if filters.get('branches'):
+            mask &= df['branch'].astype(str).isin(filters['branches'])
+        
+        if filters.get('query_types') and 'query_type' in df.columns:
+            mask &= df['query_type'].isin(filters['query_types'])
+        
+        if filters.get('scales'):
+            try:
+                scales = [int(s) for s in filters['scales']]
+                mask &= df['scale'].isin(scales)
+            except:
+                pass
+        
+        if filters.get('clusters'):
+            try:
+                clusters = [int(c) for c in filters['clusters']]
+                mask &= df['cluster'].isin(clusters)
+            except:
+                pass
+        
+        if filters.get('workers'):
+            try:
+                workers = [int(w) for w in filters['workers']]
+                mask &= df['worker'].isin(workers)
+            except:
+                pass
+        
+        if filters.get('execution_types') and 'phase' in df.columns:
+            mask &= df['phase'].astype(str).isin(filters['execution_types'])
+        
+        return df[mask]
 # 修正基础路径配置 - 支持环境变量和多个路径
 def get_data_path():
     """获取数据路径，支持环境变量配置"""

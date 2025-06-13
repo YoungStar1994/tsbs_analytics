@@ -369,130 +369,110 @@ def check_auth():
 @app.route('/data', methods=['POST'])
 @require_login
 def get_data():
-    """处理数据筛选请求，增加健壮性处理"""
+    """处理数据筛选请求，优化版本"""
     try:
         filters = request.json
+        start_time = time.time()
         
-        # 获取当前数据集
-        df = loader.get_data()
+        # 使用优化的数据筛选方法
+        filtered = loader.get_data_filtered(filters)
         
-        if df.empty:
+        if filtered.empty:
             return jsonify({
                 'table_data': [],
-                'chart_data': {}
+                'chart_data': {},
+                'total_records': 0,
+                'processing_time': round(time.time() - start_time, 3)
             })
         
-        # 应用筛选条件
-        filtered = df.copy()
+        # 限制返回数据量，避免传输过大数据
+        max_records = 1000
+        if len(filtered) > max_records:
+            # 按时间排序，返回最新的记录
+            if 'datetime' in filtered.columns:
+                filtered = filtered.nlargest(max_records, 'datetime')
+            else:
+                filtered = filtered.head(max_records)
+            logging.info(f"Limited result set to {max_records} records (from {len(filtered)} total)")
         
-        # 标准化列名
-        if 'query_type' not in filtered.columns and 'query type' in filtered.columns:
-            filtered.rename(columns={'query type': 'query_type'}, inplace=True)
-        
-        # 应用筛选
-        if filters.get('branches'):
-            filtered = filtered[filtered['branch'].astype(str).isin(filters['branches'])]
-        
-        if filters.get('start_date'):
-            try:
-                start_date = datetime.strptime(filters['start_date'], '%Y-%m-%d')
-                filtered = filtered[filtered['datetime'] >= start_date]
-            except:
-                pass
-        
-        if filters.get('end_date'):
-            try:
-                end_date = datetime.strptime(filters['end_date'], '%Y-%m-%d')
-                next_day = end_date + pd.Timedelta(days=1)
-                filtered = filtered[filtered['datetime'] <= next_day]
-            except:
-                pass
-        
-        if filters.get('scales'):
-            try:
-                scales = [int(s) for s in filters['scales']]
-                filtered = filtered[filtered['scale'].isin(scales)]
-            except:
-                pass
-            
-        if filters.get('clusters'):
-            try:
-                clusters = [int(c) for c in filters['clusters']]
-                filtered = filtered[filtered['cluster'].isin(clusters)]
-            except:
-                pass
-            
-        if filters.get('query_types'):
-            if 'query_type' in filtered.columns:
-                filtered = filtered[filtered['query_type'].isin(filters['query_types'])]
-            
-        if filters.get('workers'):
-            try:
-                workers = [int(w) for w in filters['workers']]
-                filtered = filtered[filtered['worker'].isin(workers)]
-            except:
-                pass
-        if filters.get('execution_types'):
-            if 'phase' in filtered.columns:
-                filtered = filtered[filtered['phase'].astype(str).isin(filters['execution_types'])]
-        
-        # 转换时间为北京时间用于表格显示
-        table_data = filtered.head(1000).copy()
+        # 快速处理时间格式化
+        table_data = filtered.copy()
         if 'datetime' in table_data.columns:
-            table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)
+            table_data['datetime'] = table_data['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
         
-        # 添加基准值对比
+        # 基准值对比处理
         baselines = load_baseline_config()
         if baselines:
-            for idx, row in table_data.iterrows():
-                baseline_key = f"{row.get('scale', '')}_{row.get('cluster', '')}_{row.get('phase', '')}_{row.get('worker', '')}"
-                if baseline_key in baselines:
-                    baseline_data = baselines[baseline_key]
+            # 为每行数据添加基准值对比
+            for idx in table_data.index:
+                row = table_data.loc[idx]
+                config_key = f"{row['scale']}_{row['cluster']}_{row['phase']}_{row['worker']}"
+                baseline_config = baselines.get(config_key, {})
+                
+                if baseline_config:
+                    # 处理 import_speed 基准值对比
+                    if 'import_speed' in table_data.columns and 'import_speed' in baseline_config:
+                        import_speed_baseline = baseline_config['import_speed']
+                        import_speed_actual = row['import_speed']
+                        if pd.notna(import_speed_actual) and import_speed_baseline:
+                            try:
+                                pct = calculate_performance_percentage(float(import_speed_actual), float(import_speed_baseline))
+                                table_data.at[idx, 'import_speed_baseline_pct'] = pct
+                            except (ValueError, TypeError):
+                                table_data.at[idx, 'import_speed_baseline_pct'] = None
                     
-                    # 导入速度对比
-                    if 'import_speed' in baseline_data and row.get('import_speed') is not None:
-                        baseline_import = baseline_data['import_speed']
-                        if baseline_import and baseline_import > 0:
-                            actual_import = row.get('import_speed', 0)
-                            percentage = calculate_performance_percentage(actual_import, baseline_import)
-                            if percentage is not None:
-                                table_data.at[idx, 'import_speed_baseline_pct'] = round(percentage, 2)
-                                # 调试日志
-                                logging.debug(f"Import speed comparison - Baseline: {baseline_import}, Actual: {actual_import}, Percentage: {percentage}%")
-                    
-                    # 查询类型对比 - 使用实际的查询类型
-                    query_type = row.get('query_type', '')
-                    if query_type and 'mean_ms' in row:
-                        # 将查询类型名称转换为metric key格式（Python正则表达式）
+                    # 处理查询类型的基准值对比（mean_ms）
+                    if 'query_type' in table_data.columns and 'mean_ms' in table_data.columns:
+                        query_type = row['query_type']
+                        # 转换查询类型名称为基准值配置中的键格式
                         import re
                         metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
-                        if metric_key in baseline_data:
-                            baseline_value = baseline_data[metric_key]
-                            if baseline_value and baseline_value > 0:
-                                actual_value = row.get('mean_ms', 0)
-                                # 对于延迟，值越小越好，所以计算反向百分比
-                                percentage = calculate_performance_percentage_reverse(actual_value, baseline_value)
-                                if percentage is not None:
-                                    table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)
-                                    # 调试日志
-                                    logging.debug(f"Query {query_type} comparison - Baseline: {baseline_value}ms, Actual: {actual_value}ms, Percentage: {percentage}%")
-                else:
-                    # 调试日志：未找到基准配置
-                    logging.debug(f"No baseline found for key: {baseline_key}")
+                        
+                        if metric_key in baseline_config:
+                            baseline_value = baseline_config[metric_key]
+                            actual_value = row['mean_ms']
+                            if pd.notna(actual_value) and baseline_value:
+                                try:
+                                    # 对于延迟指标，使用反向计算（值越小越好）
+                                    pct = calculate_performance_percentage_reverse(float(actual_value), float(baseline_value))
+                                    table_data.at[idx, 'mean_ms_baseline_pct'] = pct
+                                except (ValueError, TypeError):
+                                    table_data.at[idx, 'mean_ms_baseline_pct'] = None
         
-        # 返回数据
+        processing_time = time.time() - start_time
+        logging.info(f"Data processing completed in {processing_time:.3f}s, returned {len(table_data)} records")
+        
         return jsonify({
-            'table_data': table_data.replace({pd.NaT: None}).to_dict(orient='records'),
-            'chart_data': prepare_chart_data(filtered, filters.get('metric', 'mean_ms'))
+            'table_data': table_data.replace({pd.NaT: None}).infer_objects(copy=False).fillna('').to_dict(orient='records'),
+            'chart_data': prepare_chart_data(filtered, filters.get('metric', 'mean_ms')),
+            'total_records': len(filtered),
+            'processing_time': round(processing_time, 3)
         })
     except Exception as e:
         logging.error(f"Error in data route: {str(e)}")
+        import traceback
+        logging.error(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+# 添加缓存变量
+options_cache = None
+options_cache_time = 0
+OPTIONS_CACHE_TTL = 300  # 5分钟缓存
 
 @app.route('/options', methods=['GET'])
 @require_login
 def get_options():
+    """获取筛选选项，使用缓存优化"""
+    global options_cache, options_cache_time
+    
     try:
+        # 检查缓存
+        current_time = time.time()
+        if (options_cache is not None and 
+            current_time - options_cache_time < OPTIONS_CACHE_TTL):
+            return jsonify(options_cache)
+        
+        # 获取新的options
         options = loader.get_options()
         
         # 确保所有选项都是可JSON序列化的
@@ -502,6 +482,10 @@ def get_options():
         options['branches'] = [str(branch) for branch in options['branches']]
         options['query_types'] = [str(qtype) for qtype in options['query_types']]
         options['execution_types'] = [str(etype) for etype in options['execution_types']]
+        
+        # 更新缓存
+        options_cache = options
+        options_cache_time = current_time
         
         return jsonify(options)
     except Exception as e:
@@ -557,17 +541,19 @@ def save_baseline_config(config):
         return False
 
 def calculate_performance_percentage(actual_value, baseline_value):
-    """计算性能百分比变化"""
+    """计算性能百分比变化，保留两位小数"""
     if not baseline_value or baseline_value == 0:
         return None
-    return ((actual_value - baseline_value) / baseline_value) * 100
+    result = ((actual_value - baseline_value) / baseline_value) * 100
+    return round(result, 2)
 
 def calculate_performance_percentage_reverse(actual_value, baseline_value):
-    """计算性能百分比变化（对于延迟等越小越好的指标）"""
+    """计算性能百分比变化（对于延迟等越小越好的指标），保留两位小数"""
     if not baseline_value or baseline_value == 0:
         return None
     # 对于延迟，值越小越好，所以用基准值减去实际值
-    return ((baseline_value - actual_value) / baseline_value) * 100
+    result = ((baseline_value - actual_value) / baseline_value) * 100
+    return round(result, 2)
 
 @app.route('/baseline')
 @require_login
