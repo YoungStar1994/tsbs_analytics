@@ -428,10 +428,10 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 设置默认日期为最近30天
+            // 设置默认日期为最近14天
             const endDate = new Date();
             const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 29);
+            startDate.setDate(endDate.getDate() - 13);
             document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
             document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
 
@@ -680,10 +680,10 @@
             document.getElementById('scales').selectedIndex = -1;
             document.getElementById('clusters').selectedIndex = -1;
             document.getElementById('workers').selectedIndex = -1;
-            // 恢复最近30天
+            // 恢复最近14天
             const endDate = new Date();
             const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 29);
+            startDate.setDate(endDate.getDate() - 13);
             document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
             document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
             // 指标类型默认选中平均时间
