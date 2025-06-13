@@ -350,7 +350,7 @@
                         <option value="">加载中...</option>
                     </select>
                 </div>
-                <!-- 在 filter
+                <!-- 在 filter-row 中的集群筛选控件后添加 -->
                 <div class="filter-group">
                     <label for="execution_types">执行类型 (Execution Type)</label>
                     <select id="execution_types" class="filter-select select2-multi" multiple style="width: 100%">
@@ -418,6 +418,9 @@
         let filteredData = [];
         let sortColumn = 'datetime';
         let sortDirection = 'desc';
+        let currentPage = 1;
+        const pageSize = 100; // 增加每页显示数量
+        let totalPages = 0;
         let isLoading = false;
         let dataCache = new Map(); // 添加数据缓存
         let debounceTimer = null; // 防抖定时器
@@ -680,6 +683,7 @@
             
             // 设置防抖延迟
             debounceTimer = setTimeout(() => {
+                currentPage = 1; // 重置到第一页
                 loadData();
             }, 300);
         }
@@ -689,6 +693,7 @@
             if (debounceTimer) {
                 clearTimeout(debounceTimer);
             }
+            currentPage = 1;
             loadData();
         }
 
@@ -893,15 +898,274 @@
             });
         }
 
-        // 显示数据 - 一次性展示所有数据
+        // 分页显示数据 - 优化版本
         function displayDataPaginated() {
             const resultsPanel = document.querySelector('.results-panel .table-container');
             if (!resultsPanel) return;
             
-            // 直接使用原有显示方式，不进行分页
-            displayData();
-            return;
+            // 如果数据量小，使用原有显示方式
+            if (filteredData.length <= 500) {
+                displayData();
+                return;
+            }
             
+            // 显示加载状态
+            showLoading();
+            
+            // 使用 requestIdleCallback 或 setTimeout 来避免阻塞UI
+            const renderTable = () => {
+                resultsPanel.innerHTML = '';
+                
+                // 获取所有多选项的选中值
+                const branches = getSelectedValues('branches');
+                const scales = getSelectedValues('scales');
+                const clusters = getSelectedValues('clusters');
+                const workers = getSelectedValues('workers');
+                const phases = getSelectedValues('execution_types');
+                const metricSelect = document.getElementById('metric');
+                const metrics = $(metricSelect).val() || ['mean_ms'];
+
+                // 计算总页数
+                totalPages = Math.ceil(filteredData.length / pageSize);
+                
+                // 获取当前页数据
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = Math.min(startIndex + pageSize, filteredData.length);
+                const pageData = filteredData.slice(startIndex, endIndex);
+                
+                // 分组处理当前页数据
+                const groupMap = new Map();
+                pageData.forEach(row => {
+                    const key = [row.datetime, row.branch, row.phase, row.scale, row.cluster, row.worker].join('||');
+                    if (!groupMap.has(key)) {
+                        groupMap.set(key, {
+                            datetime: row.datetime,
+                            branch: row.branch,
+                            phase: row.phase,
+                            scale: row.scale,
+                            cluster: row.cluster,
+                            worker: row.worker,
+                            queries: {}
+                        });
+                    }
+                    groupMap.get(key).queries[row.query_type] = row;
+                });
+                
+                const groupedRows = Array.from(groupMap.values());
+                
+                // 动态获取所有查询类型作为列名
+                const queryTypes = [...new Set(filteredData.map(row => row.query_type))].filter(Boolean);
+                
+                // 生成表格
+                const table = document.createElement('table');
+                table.className = 'multi-table';
+                table.style.marginBottom = '32px';
+                
+                // 生成表头
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['时间', '分支', '执行类型', '规模', '集群', '工作线程'].forEach(txt => {
+                    const th = document.createElement('th');
+                    th.textContent = txt;
+                    headerRow.appendChild(th);
+                });
+                
+                // 导入速度列
+                const thImport = document.createElement('th');
+                thImport.textContent = '导入速度 (rows/sec)';
+                headerRow.appendChild(thImport);
+                
+                const thImportBaseline = document.createElement('th');
+                thImportBaseline.textContent = '导入速度对比(%)';
+                thImportBaseline.style.backgroundColor = '#fff3cd';
+                headerRow.appendChild(thImportBaseline);
+                
+                // 查询类型列
+                queryTypes.forEach(qt => {
+                    const th = document.createElement('th');
+                    th.textContent = qt;
+                    headerRow.appendChild(th);
+                    
+                    const thBaseline = document.createElement('th');
+                    thBaseline.textContent = qt + ' 对比(%)';
+                    thBaseline.style.backgroundColor = '#e7f3ff';
+                    headerRow.appendChild(thBaseline);
+                });
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // 生成表体 - 使用DocumentFragment优化性能
+                const tbody = document.createElement('tbody');
+                const fragment = document.createDocumentFragment();
+                
+                // 分批渲染行数据，避免阻塞UI
+                const batchSize = 20;
+                let currentBatch = 0;
+                
+                const renderBatch = () => {
+                    const start = currentBatch * batchSize;
+                    const end = Math.min(start + batchSize, groupedRows.length);
+                    
+                    for (let i = start; i < end; i++) {
+                        const row = groupedRows[i];
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${formatDateTime(row.datetime)}</td>
+                            <td>${row.branch || '-'}</td>
+                            <td>${row.phase || '-'}</td>
+                            <td>${row.scale || '-'}</td>
+                            <td>${row.cluster || '-'}</td>
+                            <td>${row.worker || '-'}</td>
+                        `;
+                        
+                        // 导入速度列
+                        let importSpeed = '--';
+                        let importSpeedBaseline = '--';
+                        const importSpeeds = Object.values(row.queries)
+                            .map(q => q && q.import_speed != null && q.import_speed !== '' && !isNaN(Number(q.import_speed)) ? Number(q.import_speed) : null)
+                            .filter(v => v != null);
+                        if (importSpeeds.length > 0) {
+                            const maxSpeed = Math.max(...importSpeeds);
+                            importSpeed = isFinite(maxSpeed) ? maxSpeed.toFixed(2) : '--';
+                            
+                            const firstQuery = Object.values(row.queries).find(q => q && q.import_speed_baseline_pct != null);
+                            if (firstQuery && firstQuery.import_speed_baseline_pct != null) {
+                                const pct = firstQuery.import_speed_baseline_pct;
+                                const color = pct >= 0 ? '#28a745' : '#dc3545'; 
+                                importSpeedBaseline = `<span style="color: ${color}; font-weight: bold;" title="实际值: ${importSpeed} rows/sec">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                            }
+                        }
+                        tr.innerHTML += `<td style="background-color: #fffbe6; font-weight: bold; color: #d48806;">${importSpeed}</td>`;
+                        tr.innerHTML += `<td style="background-color: #fff3cd; text-align: center;">${importSpeedBaseline}</td>`;
+                        
+                        // 查询类型列
+                        queryTypes.forEach(qt => {
+                            const q = row.queries[qt];
+                            if (q) {
+                                const value = formatNumber(q[metrics[0] || 'mean_ms']);
+                                tr.innerHTML += `<td style="background-color: #f0f9ff; font-weight: bold;">${value}</td>`;
+                                
+                                let baselineComp = '--';
+                                if (q.mean_ms_baseline_pct != null) {
+                                    const pct = q.mean_ms_baseline_pct;
+                                    const color = pct >= 0 ? '#28a745' : '#dc3545';
+                                    const actualValue = formatNumber(q[metrics[0] || 'mean_ms']);
+                                    baselineComp = `<span style="color: ${color}; font-weight: bold;" title="实际值: ${actualValue}ms">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                                }
+                                tr.innerHTML += `<td style="background-color: #e7f3ff; text-align: center;">${baselineComp}</td>`;
+                            } else {
+                                tr.innerHTML += '<td>-</td>';
+                                tr.innerHTML += '<td>-</td>';
+                            }
+                        });
+                        
+                        fragment.appendChild(tr);
+                    }
+                    
+                    currentBatch++;
+                    
+                    if (end < groupedRows.length) {
+                        // 还有更多数据，继续下一批
+                        if (window.requestIdleCallback) {
+                            requestIdleCallback(renderBatch);
+                        } else {
+                            setTimeout(renderBatch, 0);
+                        }
+                    } else {
+                        // 所有数据渲染完成
+                        tbody.appendChild(fragment);
+                        table.appendChild(tbody);
+                        
+                        // 添加分页信息和控件
+                        const paginationDiv = createPaginationControls();
+                        
+                        // 插入到结果面板
+                        resultsPanel.appendChild(table);
+                        resultsPanel.appendChild(paginationDiv);
+                        
+                        // 更新记录数显示
+                        document.getElementById('results-count').textContent = `${filteredData.length} 条记录 (第 ${currentPage}/${totalPages} 页)`;
+                        
+                        // 动态调整表格容器高度
+                        adjustTableHeight(Math.min(pageSize, groupedRows.length));
+                    }
+                };
+                
+                // 开始渲染
+                renderBatch();
+            };
+            
+            // 使用 requestIdleCallback 延迟渲染，避免阻塞UI
+            if (window.requestIdleCallback) {
+                requestIdleCallback(renderTable);
+            } else {
+                setTimeout(renderTable, 0);
+            }
+        }
+
+        // 创建分页控件
+        function createPaginationControls() {
+            const paginationDiv = document.createElement('div');
+            paginationDiv.style.cssText = 'display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px;';
+            
+            // 上一页按钮
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '‹ 上一页';
+            prevButton.className = 'btn btn-secondary';
+            prevButton.disabled = currentPage === 1;
+            prevButton.style.cssText = prevButton.disabled ? 'opacity: 0.5; cursor: not-allowed;' : '';
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayDataPaginated();
+                }
+            };
+            
+            // 页码信息
+            const pageInfo = document.createElement('span');
+            pageInfo.style.cssText = 'font-weight: 600; color: #374151; margin: 0 15px;';
+            pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+            
+            // 下一页按钮
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '下一页 ›';
+            nextButton.className = 'btn btn-secondary';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.style.cssText = nextButton.disabled ? 'opacity: 0.5; cursor: not-allowed;' : '';
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayDataPaginated();
+                }
+            };
+            
+            // 跳转页码输入框
+            const jumpInput = document.createElement('input');
+            jumpInput.type = 'number';
+            jumpInput.min = 1;
+            jumpInput.max = totalPages;
+            jumpInput.value = currentPage;
+            jumpInput.style.cssText = 'width: 60px; padding: 5px; border: 1px solid #d1d5db; border-radius: 4px; text-align: center;';
+            jumpInput.onchange = () => {
+                const page = parseInt(jumpInput.value);
+                if (page >= 1 && page <= totalPages) {
+                    currentPage = page;
+                    displayDataPaginated();
+                }
+            };
+            
+            const jumpLabel = document.createElement('span');
+            jumpLabel.textContent = '跳转到';
+            jumpLabel.style.cssText = 'color: #6b7280; margin-left: 20px; margin-right: 8px;';
+            
+            paginationDiv.appendChild(prevButton);
+            paginationDiv.appendChild(pageInfo);
+            paginationDiv.appendChild(nextButton);
+            paginationDiv.appendChild(jumpLabel);
+            paginationDiv.appendChild(jumpInput);
+            
+            return paginationDiv;
         }
 
         // 原始显示数据函数（用于小数据量）
@@ -1119,6 +1383,19 @@
             // 应用高度
             tableContainer.style.height = finalHeight + 'px';
             tableContainer.style.maxHeight = maxViewportHeight + 'px';
+        }
+
+        // 翻页 - 更新版本
+        function changePage(direction) {
+            if (isLoading) return; // 防止加载时翻页
+            
+            totalPages = Math.ceil(filteredData.length / pageSize);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                displayDataPaginated();
+            }
         }
 
         // 显示加载状态 - 增强版本
