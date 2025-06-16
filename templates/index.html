@@ -184,11 +184,205 @@
             font-weight: 600;
         }
 
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
         .table-container {
+            /* 这个类现在用于包含所有表格的容器 */
+        }
+
+        /* 多表格容器样式优化 */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(900px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .multi-table-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .multi-table-section:hover {
+            box-shadow: 0 12px 35px rgba(0,0,0,0.18);
+            transform: translateY(-2px);
+            border-color: #667eea;
+        }
+
+        .multi-table-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-bottom: 3px solid #5a67d8;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .multi-table-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706);
+        }
+
+        /* 独立表格框架指示器 */
+        .table-frame-indicator {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .multi-table-wrapper {
             overflow-x: auto;
             max-height: 600px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
+        }
+
+        .multi-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            min-width: 800px; /* 确保表格有最小宽度 */
+        }
+
+        .multi-table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #374151;
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #d1d5db;
+            border-right: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            white-space: nowrap;
+        }
+
+        .multi-table th:first-child {
+            border-left: none;
+        }
+
+        .multi-table th:last-child {
+            border-right: none;
+        }
+
+        .multi-table td {
+            padding: 10px;
+            border-bottom: 1px solid #f3f4f6;
+            border-right: 1px solid #f3f4f6;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .multi-table td:first-child {
+            border-left: none;
+        }
+
+        .multi-table td:last-child {
+            border-right: none;
+        }
+
+        .multi-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .multi-table tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .multi-table tr:nth-child(even):hover {
+            background-color: #f1f5f9;
+        }
+
+        /* 特殊列的样式 */
+        .import-speed-col {
+            background-color: #fffbe6 !important;
+            font-weight: bold;
+            color: #d48806;
+            border-left: 3px solid #fbbf24 !important;
+        }
+
+        .import-baseline-col {
+            background-color: #fff3cd !important;
+            text-align: center;
+        }
+
+        .query-result-col {
+            background-color: #f0f9ff !important;
+            font-weight: bold;
+            border-left: 3px solid #60a5fa !important;
+        }
+
+        .query-baseline-col {
+            background-color: #e7f3ff !important;
+            text-align: center;
+        }
+
+        /* 性能对比颜色 */
+        .performance-good {
+            color: #059669;
+            font-weight: bold;
+            text-shadow: 0.5px 0.5px 1px rgba(5, 150, 105, 0.2);
+        }
+
+        .performance-bad {
+            color: #dc2626;
+            font-weight: bold;
+            text-shadow: 0.5px 0.5px 1px rgba(220, 38, 38, 0.2);
+        }
+
+        /* 无数据样式 */
+        .no-data-cell {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 40px;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        }
+
+        /* 表格标题特殊样式 */
+        .header-import-speed {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+            color: #92400e !important;
+            border-left: 3px solid #f59e0b !important;
+        }
+
+        .header-import-baseline {
+            background: linear-gradient(135deg, #fef3c7 0%, #fcd34d 100%) !important;
+            color: #92400e !important;
+        }
+
+        .header-query-result {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+            color: #1e40af !important;
+            border-left: 3px solid #3b82f6 !important;
+        }
+
+        .header-query-baseline {
+            background: linear-gradient(135deg, #dbeafe 0%, #93c5fd 100%) !important;
+            color: #1e40af !important;
         }
 
         table {
@@ -294,6 +488,105 @@
                 gap: 10px;
                 text-align: center;
             }
+            
+            .multi-table-header {
+                padding: 12px 15px;
+                font-size: 1rem;
+            }
+            
+            .multi-table th {
+                padding: 8px 6px;
+                font-size: 0.8rem;
+            }
+            
+            .multi-table td {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+            }
+            
+            .multi-table-wrapper {
+                max-height: 400px;
+            }
+        }
+
+        /* 新增：表格加载动画 */
+        .table-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        .table-loading::after {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 15px;
+        }
+
+        /* 新增：表格统计信息 */
+        .table-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-top: 2px solid #e5e7eb;
+            font-size: 0.9rem;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .stats-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 响应式网格调整 */
+        @media (max-width: 1400px) {
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tables-grid {
+                gap: 20px;
+            }
+            
+            .multi-table-section {
+                margin: 0;
+            }
+            
+            .multi-table-header {
+                padding: 15px 18px;
+                font-size: 1rem;
+            }
+            
+            .table-frame-indicator {
+                position: static;
+                display: inline-block;
+                margin-left: 10px;
+                font-size: 0.7rem;
+            }
+        }
+
+        .stats-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -387,15 +680,11 @@
             
             <div class="table-container"><!-- 动态插入表格 --></div>
         </div>
-        <!-- 在结果面板下方添加图表容器 -->
-        <div id="charts-container" style="margin-top: 40px;"></div>
     </div>
 
     <!-- 引入 Select2 脚本 -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <!-- 在 body 结束前引入 Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // 全局变量
         let currentData = [];
@@ -743,6 +1032,7 @@
     const resultsPanel = document.querySelector('.results-panel .table-container');
     if (!resultsPanel) return;
     resultsPanel.innerHTML = '';
+    
     // 获取所有多选项的选中值
     const branches = getSelectedValues('branches');
     const scales = getSelectedValues('scales');
@@ -768,7 +1058,13 @@
     // 动态获取所有查询类型作为列名
     const queryTypes = [...new Set(filteredData.map(row => row.query_type))].filter(Boolean);
 
+    // 创建网格容器来承载多个表格
+    const tablesGrid = document.createElement('div');
+    tablesGrid.className = 'tables-grid';
+    
     let totalRecords = 0;
+    let tableIndex = 0;
+    
     combos.forEach(combo => {
         const [branch, scale, cluster, worker, phase, metric] = combo;
         // 筛选出该组合下的数据
@@ -780,7 +1076,10 @@
             (phase === '' || row.phase == phase)
         );
         if (!comboData.length) return;
+        
+        tableIndex++;
         totalRecords += comboData.length;
+        
         // 分组：以主键为key
         const groupMap = new Map();
         comboData.forEach(row => {
@@ -799,10 +1098,43 @@
             groupMap.get(key).queries[row.query_type] = row;
         });
         const groupedRows = Array.from(groupMap.values());
+        
+        // 创建独立的表格容器
+        const tableSection = document.createElement('div');
+        tableSection.className = 'multi-table-section';
+        
+        // 创建表格标题
+        const tableHeader = document.createElement('div');
+        tableHeader.className = 'multi-table-header';
+        
+        // 添加表格框架指示器
+        const frameIndicator = document.createElement('div');
+        frameIndicator.className = 'table-frame-indicator';
+        frameIndicator.textContent = `表格 ${tableIndex}`;
+        tableHeader.appendChild(frameIndicator);
+        
+        const conditionParts = [];
+        if (branch) conditionParts.push(`分支: ${branch}`);
+        if (scale) conditionParts.push(`规模: ${scale}`);
+        if (cluster) conditionParts.push(`集群: ${cluster}`);
+        if (worker) conditionParts.push(`工作线程: ${worker}`);
+        if (phase) conditionParts.push(`执行类型: ${phase}`);
+        if (metric && metric !== 'mean_ms') {
+            const metricText = metricSelect ? metricSelect.querySelector(`option[value='${metric}']`)?.textContent || metric : metric;
+            conditionParts.push(`指标: ${metricText}`);
+        }
+        
+        const titleText = document.createElement('div');
+        titleText.style.marginTop = '5px';
+        titleText.textContent = conditionParts.length > 0 ? conditionParts.join(' | ') : '全部数据';
+        tableHeader.appendChild(titleText);
+        
+        tableSection.appendChild(tableHeader);
+        
         // 生成表格
         const table = document.createElement('table');
         table.className = 'multi-table';
-        table.style.marginBottom = '32px';
+        
         // 生成表头
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
@@ -810,29 +1142,36 @@
             const th = document.createElement('th');
             th.textContent = txt;
             headerRow.appendChild(th);
-        });            // 先插入导入速度列
-            const thImport = document.createElement('th');
-            thImport.textContent = '导入速度 (rows/sec)';
-            headerRow.appendChild(thImport);
+        });
+        
+        // 先插入导入速度列
+        const thImport = document.createElement('th');
+        thImport.textContent = '导入速度 (rows/sec)';
+        thImport.className = 'header-import-speed';
+        headerRow.appendChild(thImport);
+        
+        // 导入速度基准对比列
+        const thImportBaseline = document.createElement('th');
+        thImportBaseline.textContent = '导入速度对比(%)';
+        thImportBaseline.className = 'header-import-baseline';
+        headerRow.appendChild(thImportBaseline);
+        
+        // 再插入查询类型列
+        queryTypes.forEach(qt => {
+            const th = document.createElement('th');
+            th.textContent = qt;
+            th.className = 'header-query-result';
+            headerRow.appendChild(th);
             
-            // 导入速度基准对比列
-            const thImportBaseline = document.createElement('th');
-            thImportBaseline.textContent = '导入速度对比(%)';
-            thImportBaseline.style.backgroundColor = '#fff3cd';
-            headerRow.appendChild(thImportBaseline);            // 再插入查询类型列
-            queryTypes.forEach(qt => {
-                const th = document.createElement('th');
-                th.textContent = qt;
-                headerRow.appendChild(th);
-                
-                // 添加对应的基准对比列
-                const thBaseline = document.createElement('th');
-                thBaseline.textContent = qt + ' 对比(%)';
-                thBaseline.style.backgroundColor = '#e7f3ff';
-                headerRow.appendChild(thBaseline);
-            });
+            // 添加对应的基准对比列
+            const thBaseline = document.createElement('th');
+            thBaseline.textContent = qt + ' 对比(%)';
+            thBaseline.className = 'header-query-baseline';
+            headerRow.appendChild(thBaseline);
+        });
         thead.appendChild(headerRow);
         table.appendChild(thead);
+        
         // 生成表体
         const tbody = document.createElement('tbody');
         groupedRows.forEach(row => {
@@ -845,7 +1184,8 @@
                 <td>${row.cluster || '-'}</td>
                 <td>${row.worker || '-'}</td>
             `;
-            // 先插入导入速度列
+            
+            // 导入速度列
             let importSpeed = '--';
             let importSpeedBaseline = '--';
             const importSpeeds = Object.values(row.queries)
@@ -860,31 +1200,30 @@
                 if (firstQuery && firstQuery.import_speed_baseline_pct != null) {
                     const pct = firstQuery.import_speed_baseline_pct;
                     // 对于导入速度：正值表示速度提升（好），负值表示速度下降（坏）
-                    const color = pct >= 0 ? '#28a745' : '#dc3545'; 
-                    // 添加调试信息：显示实际值用于验证
-                    importSpeedBaseline = `<span style="color: ${color}; font-weight: bold;" title="实际值: ${importSpeed} rows/sec">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                    const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
+                    importSpeedBaseline = `<span class="${colorClass}" title="实际值: ${importSpeed} rows/sec">${pct > 0 ? '+' : ''}${pct}%</span>`;
                 }
             }
-            tr.innerHTML += `<td style="background-color: #fffbe6; font-weight: bold; color: #d48806;">${importSpeed}</td>`;
-            tr.innerHTML += `<td style="background-color: #fff3cd; text-align: center;">${importSpeedBaseline}</td>`;
+            tr.innerHTML += `<td class="import-speed-col">${importSpeed}</td>`;
+            tr.innerHTML += `<td class="import-baseline-col">${importSpeedBaseline}</td>`;
+            
             // 再插入查询类型列
             queryTypes.forEach(qt => {
                 const q = row.queries[qt];
                 if (q) {
                     const value = formatNumber(q[metric]);
-                    tr.innerHTML += `<td style="background-color: #f0f9ff; font-weight: bold;">${value}</td>`;
+                    tr.innerHTML += `<td class="query-result-col">${value}</td>`;
                     
                     // 添加基准对比列
                     let baselineComp = '--';
                     if (q.mean_ms_baseline_pct != null) {
                         const pct = q.mean_ms_baseline_pct;
                         // 对于查询延迟：正值表示延迟减少（性能提升，好），负值表示延迟增加（性能下降，坏）
-                        const color = pct >= 0 ? '#28a745' : '#dc3545';
-                        // 添加调试信息：显示实际值用于验证
+                        const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
                         const actualValue = formatNumber(q[metric]);
-                        baselineComp = `<span style="color: ${color}; font-weight: bold;" title="实际值: ${actualValue}ms">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                        baselineComp = `<span class="${colorClass}" title="实际值: ${actualValue}ms">${pct > 0 ? '+' : ''}${pct}%</span>`;
                     }
-                    tr.innerHTML += `<td style="background-color: #e7f3ff; text-align: center;">${baselineComp}</td>`;
+                    tr.innerHTML += `<td class="query-baseline-col">${baselineComp}</td>`;
                 } else {
                     tr.innerHTML += '<td>-</td>';
                     tr.innerHTML += '<td>-</td>';
@@ -892,24 +1231,55 @@
             });
             tbody.appendChild(tr);
         });
+        
         if (!groupedRows.length) {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td colspan="100" class="no-data">没有找到匹配的数据</td>`;
+            const colSpan = 6 + 2 + (queryTypes.length * 2); // 基础列 + 导入速度列 + 查询类型列及对比列
+            tr.innerHTML = `<td colspan="${colSpan}" class="no-data-cell">没有找到匹配的数据</td>`;
             tbody.appendChild(tr);
         }
+        
         table.appendChild(tbody);
-        // 生成条件标签
-        const labelDiv = document.createElement('div');
-        labelDiv.style.margin = '16px 0 8px 0';
-        labelDiv.style.fontWeight = '600';
-        labelDiv.style.color = '#764ba2';
-        labelDiv.textContent = `筛选条件：分支=${branch||'全部'}，规模=${scale||'全部'}，集群=${cluster||'全部'}，工作线程=${worker||'全部'}，执行类型=${phase||'全部'}，指标=${metricSelect ? metricSelect.querySelector(`option[value='${metric}']`)?.textContent || metric : metric}`;
-        // 插入到 resultsPanel
-        resultsPanel.appendChild(labelDiv);
-        resultsPanel.appendChild(table);
+        
+        // 创建表格包装器
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'multi-table-wrapper';
+        tableWrapper.appendChild(table);
+        tableSection.appendChild(tableWrapper);
+        
+        // 添加表格统计信息
+        const tableStats = document.createElement('div');
+        tableStats.className = 'table-stats';
+        const recordCount = groupedRows.length;
+        const queryTypeCount = queryTypes.length;
+        tableStats.innerHTML = `
+            <div class="stats-item">
+                <span>📊</span>
+                <span>记录: ${recordCount}</span>
+            </div>
+            <div class="stats-item">
+                <span>🔍</span>
+                <span>查询类型: ${queryTypeCount}</span>
+            </div>
+            <div class="stats-item">
+                <span>⏰</span>
+                <span>${new Date().toLocaleTimeString('zh-CN', {hour12: false})}</span>
+            </div>
+        `;
+        tableSection.appendChild(tableStats);
+        
+        // 将表格添加到网格容器
+        tablesGrid.appendChild(tableSection);
     });
-    document.getElementById('results-count').textContent = `${totalRecords} 条记录`;
-    renderCharts();
+    
+    // 将网格容器添加到结果面板
+    resultsPanel.appendChild(tablesGrid);
+    
+    // 更新总记录数和表格数
+    const recordsText = combos.length > 1 ? 
+        `${totalRecords} 条记录 (${tableIndex} 个表格)` : 
+        `${totalRecords} 条记录`;
+    document.getElementById('results-count').textContent = recordsText;
 }
 
         // 格式化日期时间
@@ -1017,160 +1387,7 @@ if (window) {
     });
 }
 
-        // 在 displayData 函数后修改 renderCharts
-function renderCharts() {
-    // 如果存在多选（任意一个多选项选中多个），则不展示折线图
-    const multiSelected = [
-        getSelectedValues('branches'),
-        getSelectedValues('scales'),
-        getSelectedValues('clusters'),
-        getSelectedValues('workers'),
-        getSelectedValues('execution_types'),
-        $(document.getElementById('metric')).val() || []
-    ].some(arr => arr && arr.length > 1);
-    const container = document.getElementById('charts-container');
-    container.innerHTML = '';
-    if (!filteredData.length || multiSelected) return;
-    // 获取所有查询类型
-    const queryTypes = [...new Set(filteredData.map(row => row.query_type))].filter(Boolean);
-    // 获取当前选中的指标类型（只取第一个）
-    const metricSelect = document.getElementById('metric');
-    let metric = 'mean_ms';
-    if (metricSelect) {
-        const selected = $(metricSelect).val();
-        if (selected && selected.length > 0) metric = selected[0];
-    }
-    // 统一使用黄色
-    const lineColor = '#FFD600';
-    const fillColor = 'rgba(255, 214, 0, 0.18)';
-    queryTypes.forEach((qt) => {
-        // 过滤出该查询类型的所有数据，并按时间排序
-        const data = filteredData.filter(row => row.query_type === qt)
-            .sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-        if (!data.length) return;
-        // 构建图表数据 - 使用基准值对比百分比
-        const labels = data.map(row => row.datetime ? row.datetime.replace('T', ' ').slice(0, 19) : '');
-        // 使用基准值对比百分比而不是原始延迟值
-        const values = data.map(row => {
-            if (row.mean_ms_baseline_pct != null) {
-                return row.mean_ms_baseline_pct;
-            }
-            return null; // 如果没有基准值对比数据，返回null
-        });
-        
-        // 过滤掉没有基准值对比数据的点
-        const validDataPoints = labels.map((label, index) => ({
-            label: label,
-            value: values[index]
-        })).filter(point => point.value !== null);
-        
-        if (validDataPoints.length === 0) return; // 如果没有有效的基准值对比数据，跳过该图表
-        
-        const validLabels = validDataPoints.map(point => point.label);
-        const validValues = validDataPoints.map(point => point.value);
-        
-        // 创建图表容器
-        const chartDiv = document.createElement('div');
-        chartDiv.style.marginBottom = '40px';
-        chartDiv.style.background = '#fff';
-        chartDiv.style.borderRadius = '12px';
-        chartDiv.style.boxShadow = '0 2px 12px 0 rgba(0,0,0,0.06)';
-        chartDiv.style.padding = '24px 18px 18px 18px';
-        chartDiv.innerHTML = `<h3 style="margin-bottom:16px;font-size:1.1rem;color:#222;font-weight:600;letter-spacing:1px;">${qt} 查询类型 - 基准值对比百分比</h3><canvas id="chart_${qt}"></canvas>`;
-        container.appendChild(chartDiv);
-        // 渲染 Chart.js 折线图
-        new Chart(chartDiv.querySelector('canvas'), {
-            type: 'line',
-            data: {
-                labels: validLabels,
-                datasets: [{
-                    label: qt + ' 基准值对比',
-                    data: validValues,
-                    borderColor: lineColor,
-                    backgroundColor: fillColor,
-                    fill: true,
-                    tension: 0.25,
-                    pointRadius: 4,
-                    pointBackgroundColor: validValues.map(val => val >= 0 ? '#28a745' : '#dc3545'), // 正值绿色，负值红色
-                    pointBorderColor: '#fff',
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: lineColor,
-                    pointHoverBorderColor: '#fff',
-                    borderWidth: 2,
-                    segment: {
-                        borderColor: ctx => {
-                            // 根据数值正负设置线段颜色
-                            const value = ctx.p1.parsed.y;
-                            return value >= 0 ? '#28a745' : '#dc3545';
-                        }
-                    }
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: '#222',
-                        titleColor: '#FFD600',
-                        bodyColor: '#fff',
-                        borderColor: '#FFD600',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.parsed.y;
-                                const sign = value >= 0 ? '+' : '';
-                                return `基准值对比: ${sign}${value}%`;
-                            }
-                        }
-                    }
-                },
-                layout: {
-                    padding: { left: 10, right: 10, top: 10, bottom: 10 }
-                },
-                scales: {
-                    x: {
-                        title: { display: true, text: '时间', color: '#333', font: { weight: 600 } },
-                        ticks: { maxTicksLimit: 10, color: '#444', font: { size: 12 } },
-                        grid: { color: '#f3f4f6' }
-                    },
-                    y: {
-                        title: { display: true, text: '基准值对比百分比 (%)', color: '#333', font: { weight: 600 } },
-                        ticks: { 
-                            color: '#444', 
-                            font: { size: 12 },
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        },
-                        grid: { color: '#f3f4f6' }
-                    }
-                },
-                plugins: [{
-                    id: 'zeroLine',
-                    afterDraw: function(chart) {
-                        const ctx = chart.ctx;
-                        const yAxis = chart.scales.y;
-                        const zeroPosition = yAxis.getPixelForValue(0);
-                        
-                        if (zeroPosition >= chart.chartArea.top && zeroPosition <= chart.chartArea.bottom) {
-                            ctx.save();
-                            ctx.strokeStyle = '#666';
-                            ctx.lineWidth = 2;
-                            ctx.setLineDash([5, 5]);
-                            ctx.beginPath();
-                            ctx.moveTo(chart.chartArea.left, zeroPosition);
-                            ctx.lineTo(chart.chartArea.right, zeroPosition);
-                            ctx.stroke();
-                            ctx.restore();
-                        }
-                    }
-                }]
-            }
-        });
-    });
-}
+
     </script>
 </body>
 </html>
