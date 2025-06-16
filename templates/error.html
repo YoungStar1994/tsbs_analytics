@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>系统错误</title>
+    <style>
+        .error-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #e74c3c;
+            background-color: #fdeded;
+            border-radius: 5px;
+            text-align: center;
+        }
+        h1 { color: #e74c3c; }
+        .error-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>系统错误</h1>
+        <p>抱歉，处理您的请求时发生错误。</p>
+        
+        <div class="error-details">
+            <p><strong>错误信息:</strong> {{ message }}</p>
+            <p><strong>建议操作:</strong></p>
+            <ul>
+                <li>刷新页面重试</li>
+                <li>检查服务日志获取详细信息</li>
+               
+
