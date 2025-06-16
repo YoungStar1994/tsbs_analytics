@@ -69,22 +69,68 @@
         document.getElementById('login-btn').onclick = function() {
             const user = document.getElementById('login-username').value.trim();
             const pwd = document.getElementById('login-password').value;
-            if (user === 'admin' && pwd === 'Tsbs2024') {
-                localStorage.setItem('tsbs_login', '1');
-                window.location.href = '/';
-            } else {
+            
+            if (!user || !pwd) {
                 const err = document.getElementById('login-error');
-                err.textContent = '用户名或密码错误';
+                err.textContent = '请输入用户名和密码';
                 err.style.display = 'block';
+                return;
             }
+            
+            // 禁用按钮防止重复提交
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+            
+            // 使用 fetch API 发送登录请求
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: user,
+                    password: pwd
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    const err = document.getElementById('login-error');
+                    err.textContent = data.error || '登录失败';
+                    err.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                const err = document.getElementById('login-error');
+                err.textContent = '网络错误，请重试';
+                err.style.display = 'block';
+            })
+            .finally(() => {
+                // 恢复按钮状态
+                btn.disabled = false;
+                btn.textContent = '登录';
+            });
         };
+        
         document.getElementById('login-password').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') document.getElementById('login-btn').click();
         });
-        // 已登录自动跳转
-        if (localStorage.getItem('tsbs_login') === '1') {
-            window.location.href = '/';
-        }
+        
+        // 检查是否已登录
+        fetch('/api/check-auth')
+        .then(response => response.json())
+        .then(data => {
+            if (data.authenticated) {
+                window.location.href = '/';
+            }
+        })
+        .catch(error => {
+            console.error('Auth check error:', error);
+        });
     </script>
 </body>
 </html>

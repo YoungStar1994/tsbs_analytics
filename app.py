@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from data_loader import loader
 from datetime import datetime
 import pandas as pd
@@ -8,6 +8,9 @@ import os
 import signal
 import sys
 import atexit
+import hashlib
+import secrets
+from functools import wraps
 
 # 配置日志 - 支持文件输出
 def setup_logging():
@@ -39,6 +42,34 @@ def setup_logging():
 setup_logging()
 
 app = Flask(__name__)
+
+# 设置密钥用于session加密
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+
+# 用户配置 - 使用哈希密码存储
+USER_CONFIG = {
+    'admin': {
+        'password_hash': '3e4e69e51d323903c6e65859c0a29461a85addf6327360f92f1dec47efcdaddd',  # 'Tsbs2024' 的SHA256哈希
+        'role': 'admin'
+    }
+}
+
+def hash_password(password):
+    """对密码进行SHA256哈希"""
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+def verify_password(password, password_hash):
+    """验证密码"""
+    return hash_password(password) == password_hash
+
+def login_required(f):
+    """登录验证装饰器"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('user_id'):
+            return jsonify({'error': '需要登录'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 # 基准值配置文件路径
 BASELINE_CONFIG_FILE = 'baseline_config.json'
@@ -112,6 +143,10 @@ def format_datetime_for_chart(dt):
 def index():
     """主页面展示筛选表单，增加错误处理"""
     try:
+        # 检查是否已登录
+        if not session.get('user_id'):
+            return redirect(url_for('login'))
+            
         options = loader.get_options()
         return render_template('index.html', 
                                branches=options['branches'],
@@ -124,11 +159,59 @@ def index():
         return render_template('error.html', message="系统初始化失败，请检查日志"), 500
 
 @app.route('/login.html')
+@app.route('/login')
 def login():
     """登录页面路由"""
     return render_template('login.html')
 
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """API登录接口"""
+    try:
+        data = request.json
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+        
+        if not username or not password:
+            return jsonify({'error': '用户名和密码不能为空'}), 400
+            
+        user = USER_CONFIG.get(username)
+        if user and verify_password(password, user['password_hash']):
+            session['user_id'] = username
+            session['role'] = user['role']
+            logging.info(f"User {username} logged in successfully")
+            return jsonify({'success': True, 'message': '登录成功'})
+        else:
+            logging.warning(f"Failed login attempt for user: {username}")
+            return jsonify({'error': '用户名或密码错误'}), 401
+            
+    except Exception as e:
+        logging.error(f"Login error: {str(e)}")
+        return jsonify({'error': '登录失败，请重试'}), 500
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    """API登出接口"""
+    user_id = session.get('user_id')
+    session.clear()
+    if user_id:
+        logging.info(f"User {user_id} logged out")
+    return jsonify({'success': True, 'message': '已成功登出'})
+
+@app.route('/api/check-auth', methods=['GET'])
+def check_auth():
+    """检查登录状态"""
+    if session.get('user_id'):
+        return jsonify({
+            'authenticated': True,
+            'user': session.get('user_id'),
+            'role': session.get('role')
+        })
+    else:
+        return jsonify({'authenticated': False})
+
 @app.route('/data', methods=['POST'])
+@login_required
 def get_data():
     """处理数据筛选请求，增加健壮性处理"""
     try:
@@ -251,6 +334,7 @@ def get_data():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/options', methods=['GET'])
+@login_required
 def get_options():
     try:
         options = loader.get_options()
@@ -330,11 +414,13 @@ def calculate_performance_percentage_reverse(actual_value, baseline_value):
     return ((baseline_value - actual_value) / baseline_value) * 100
 
 @app.route('/baseline')
+@login_required
 def baseline():
     """基准值配置页面"""
     return render_template('baseline.html')
 
 @app.route('/baselines', methods=['GET'])
+@login_required
 def get_baselines():
     """获取基准值配置"""
     try:
@@ -345,6 +431,7 @@ def get_baselines():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/baselines', methods=['POST'])
+@login_required
 def save_baselines():
     """保存基准值配置"""
     try:

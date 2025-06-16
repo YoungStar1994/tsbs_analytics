@@ -61,6 +61,7 @@
             <div class="navbar-nav">
                 <a class="nav-link" href="{{ url_for('index') }}">数据分析</a>
                 <a class="nav-link active" href="{{ url_for('baseline') }}">基准值配置</a>
+                <a class="nav-link" href="#" onclick="logout()">登出</a>
             </div>
         </div>
     </nav>
@@ -130,8 +131,48 @@
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', async function() {
+            // 首先检查认证状态
+            await checkAuthStatus();
+            // 然后加载数据
             await loadOptionsAndBaselines();
         });
+
+        // 检查登录状态
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/check-auth');
+                const data = await response.json();
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = '/login';
+                return;
+            }
+        }
+
+        // 登出功能
+        function logout() {
+            if (confirm('确定要登出吗？')) {
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    // 即使API调用失败也跳转到登录页
+                    window.location.href = '/login';
+                });
+            }
+        }
 
         // 加载选项和基准值
         async function loadOptionsAndBaselines() {

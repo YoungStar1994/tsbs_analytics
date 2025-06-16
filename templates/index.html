@@ -302,6 +302,7 @@
         <div class="header">
             <div class="nav-links">
                 <a href="/baseline" class="nav-link">基准值配置</a>
+                <a href="#" onclick="logout()" class="nav-link">登出</a>
             </div>
             <h1>TSBS Analytics</h1>
             <p>时间序列基准测试数据分析平台</p>
@@ -955,59 +956,45 @@
             document.getElementById('error-message').style.display = 'none';
         }
 
-        // 登录认证弹窗
-function showLoginModal() {
-    if (document.getElementById('login-modal')) return;
-    const modal = document.createElement('div');
-    modal.id = 'login-modal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.background = 'rgba(0,0,0,0.35)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '9999';
-    modal.innerHTML = `
-      <div style="background:#fff;padding:32px 28px;border-radius:12px;box-shadow:0 4px 32px #0002;min-width:320px;max-width:90vw;">
-        <h2 style="margin-bottom:18px;font-size:1.2rem;color:#764ba2;text-align:center;">登录认证</h2>
-        <div style="margin-bottom:12px;">
-          <input id="login-username" type="text" placeholder="用户名" style="width:100%;padding:10px 12px;border-radius:6px;border:1.5px solid #e5e7eb;font-size:1rem;">
-        </div>
-        <div style="margin-bottom:18px;">
-          <input id="login-password" type="password" placeholder="密码" style="width:100%;padding:10px 12px;border-radius:6px;border:1.5px solid #e5e7eb;font-size:1rem;">
-        </div>
-        <div id="login-error" style="color:#dc2626;font-size:0.95rem;margin-bottom:10px;display:none;"></div>
-        <button id="login-btn" style="width:100%;padding:10px 0;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:6px;font-weight:600;font-size:1rem;cursor:pointer;">登录</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById('login-btn').onclick = function() {
-        const user = document.getElementById('login-username').value.trim();
-        const pwd = document.getElementById('login-password').value;
-        // 简单前端校验（生产环境请用后端校验）
-        if (user === 'admin' && pwd === 'Tsbs2024') {
-            localStorage.setItem('tsbs_login', '1');
-            document.body.removeChild(modal);
-        } else {
-            const err = document.getElementById('login-error');
-            err.textContent = '用户名或密码错误';
-            err.style.display = 'block';
+        // 登录认证相关功能已移至后端API
+        // 检查登录状态
+        function checkAuthStatus() {
+            fetch('/api/check-auth')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                }
+            })
+            .catch(error => {
+                console.error('Auth check error:', error);
+                window.location.href = '/login';
+            });
         }
-    };
-    document.getElementById('login-password').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') document.getElementById('login-btn').click();
-    });
-}
 
-// 页面加载时校验登录
-(function(){
-    if (localStorage.getItem('tsbs_login') !== '1') {
-        window.location.href = '/login.html';
-    }
-})();
+        // 页面加载时校验登录
+        checkAuthStatus();
+
+        // 登出功能
+        function logout() {
+            if (confirm('确定要登出吗？')) {
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    // 即使API调用失败也跳转到登录页
+                    window.location.href = '/login';
+                });
+            }
+        }
 
 // 禁用调试相关特性
 if (window) {
