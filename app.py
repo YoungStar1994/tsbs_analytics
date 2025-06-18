@@ -281,7 +281,7 @@ def get_data():
                 filtered = filtered[filtered['phase'].astype(str).isin(filters['execution_types'])]
         
         # 转换时间为北京时间用于表格显示
-        table_data = filtered.head(1000).copy()
+        table_data = filtered.copy()
         if 'datetime' in table_data.columns:
             table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)
         

@@ -1085,7 +1085,6 @@
         if (!comboData.length) return;
         
         tableIndex++;
-        totalRecords += comboData.length;
         
         // 分组：以主键为key
         const groupMap = new Map();
@@ -1105,6 +1104,9 @@
             groupMap.get(key).queries[row.query_type] = row;
         });
         const groupedRows = Array.from(groupMap.values());
+        
+        // 将分组后的行数累计到总记录数中
+        totalRecords += groupedRows.length;
         
         // 创建独立的表格容器
         const tableSection = document.createElement('div');
