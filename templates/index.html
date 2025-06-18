@@ -255,6 +255,7 @@
         .multi-table-wrapper {
             overflow-x: auto;
             max-height: 600px;
+            position: relative;
         }
 
         .multi-table {
@@ -262,6 +263,21 @@
             border-collapse: collapse;
             background: white;
             min-width: 800px; /* 确保表格有最小宽度 */
+        }
+
+        /* 固定日期列样式 */
+        .multi-table th:first-child,
+        .multi-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 6;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .multi-table th:first-child {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            z-index: 7;
         }
 
         .multi-table th {
@@ -507,6 +523,14 @@
             .multi-table-wrapper {
                 max-height: 400px;
             }
+            
+            /* 移动端固定列样式优化 */
+            .multi-table th:first-child,
+            .multi-table td:first-child {
+                min-width: 120px;
+                max-width: 120px;
+                font-size: 0.7rem;
+            }
         }
 
         /* 新增：表格加载动画 */
@@ -696,10 +720,10 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 设置默认日期为最近30天
+            // 设置默认日期为最近7天
             const endDate = new Date();
             const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 29);
+            startDate.setDate(endDate.getDate() - 6);
             document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
             document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
 
@@ -908,10 +932,10 @@
             document.getElementById('scales').selectedIndex = -1;
             document.getElementById('clusters').selectedIndex = -1;
             document.getElementById('workers').selectedIndex = -1;
-            // 恢复最近30天
+            // 恢复最近7天
             const endDate = new Date();
             const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 29);
+            startDate.setDate(endDate.getDate() - 6);
             document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
             document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
             // 指标类型默认选中平均时间
