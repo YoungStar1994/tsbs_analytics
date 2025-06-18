@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Script to update baseline configuration with actual test data from a specified date and branch.
-Usage: python update_baseline.py --date YYYY-MM-DD --branch BRANCH_NAME [--output OUTPUT_FILE]
+Script to update baseline configuration with actual test data from a specified date range and branch.
+The script processes all test results within the date range, removes min/max values for each metric,
+and calculates the average of remaining values as baseline data.
+Usage: python update_baseline.py --start YYYY-MM-DD --end YYYY-MM-DD --branch BRANCH_NAME [--output OUTPUT_FILE]
 """
 
 import pandas as pd
@@ -20,15 +22,16 @@ logging.getLogger('data_loader').setLevel(logging.WARNING)
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from data_loader import loader
 
-def load_data_by_date_and_branch(target_date, branch_name):
-    """Load and process data for the specified date and branch.
+def load_data_by_date_range_and_branch(start_date, end_date, branch_name):
+    """Load and process data for the specified date range and branch.
     
     Args:
-        target_date (date): The target date to filter data
+        start_date (date): The start date to filter data
+        end_date (date): The end date to filter data (inclusive)
         branch_name (str): The branch name to filter data
     
     Returns:
-        pandas.DataFrame: Filtered data for the specified date and branch
+        pandas.DataFrame: Filtered data for the specified date range and branch
     """
     # Get data from the data loader
     df = loader.get_data()
@@ -39,22 +42,173 @@ def load_data_by_date_and_branch(target_date, branch_name):
     
     print(f"Total records loaded: {len(df)}")
     
-    # Filter for specified date and branch
+    # Filter for specified date range and branch
     filtered_data = df[
-        (df['datetime'].dt.date == target_date) & 
+        (df['datetime'].dt.date >= start_date) & 
+        (df['datetime'].dt.date <= end_date) &
         (df['branch'] == branch_name)
     ]
     
-    print(f"Loaded {len(filtered_data)} records from {target_date} {branch_name} branch")
+    print(f"Loaded {len(filtered_data)} records from {start_date} to {end_date} for {branch_name} branch")
     return filtered_data
 
 def create_config_key(row):
     """Create configuration key in format scale_cluster_phase_worker"""
     return f"{row['scale']}_{row['cluster']}_{row['phase']}_{row['worker']}"
 
-def process_baseline_data(df):
-    """Process the data and create baseline configuration."""
+def validate_data_completeness(df):
+    """Validate that all configurations have complete data for all metrics.
+    
+    Args:
+        df (pandas.DataFrame): The filtered data to validate
+    
+    Returns:
+        tuple: (is_valid, error_messages)
+    """
+    error_messages = []
+    
+    # Get unique configurations and query types
+    configurations = df.groupby(['scale', 'cluster', 'phase', 'worker']).groups.keys()
+    all_query_types = df['query_type'].dropna().unique()
+    
+    print(f"Validating data completeness...")
+    print(f"Found {len(configurations)} configurations and {len(all_query_types)} query types")
+    
+    # Check each configuration
+    for config_key in configurations:
+        scale, cluster, phase, worker = config_key
+        config_name = f"{scale}_{cluster}_{phase}_{worker}"
+        
+        # Get data for this configuration
+        config_data = df[
+            (df['scale'] == scale) & 
+            (df['cluster'] == cluster) & 
+            (df['phase'] == phase) & 
+            (df['worker'] == worker)
+        ]
+        
+        # Check import_speed data
+        import_speed_data = config_data[config_data['import_speed'].notna()]
+        if import_speed_data.empty:
+            error_messages.append(f"Configuration {config_name}: Missing import_speed data")
+        
+        # Check query type data
+        config_query_types = config_data['query_type'].dropna().unique()
+        missing_query_types = set(all_query_types) - set(config_query_types)
+        
+        if missing_query_types:
+            for missing_type in sorted(missing_query_types):
+                error_messages.append(f"Configuration {config_name}: Missing query_type '{missing_type}' data")
+        
+        # Check for query types with missing mean_ms values
+        for query_type in config_query_types:
+            query_data = config_data[
+                (config_data['query_type'] == query_type) & 
+                (config_data['mean_ms'].notna())
+            ]
+            if query_data.empty:
+                error_messages.append(f"Configuration {config_name}: Query type '{query_type}' has no valid mean_ms values")
+    
+    # Additional validation: Check if we have sufficient data points for trimmed mean
+    insufficient_data = []
+    for config_key in configurations:
+        scale, cluster, phase, worker = config_key
+        config_name = f"{scale}_{cluster}_{phase}_{worker}"
+        
+        config_data = df[
+            (df['scale'] == scale) & 
+            (df['cluster'] == cluster) & 
+            (df['phase'] == phase) & 
+            (df['worker'] == worker)
+        ]
+        
+        # Check import_speed data points
+        import_speed_count = len(config_data[config_data['import_speed'].notna()])
+        if import_speed_count == 0:
+            insufficient_data.append(f"Configuration {config_name}: No import_speed data points")
+        elif import_speed_count == 1:
+            print(f"Warning: Configuration {config_name}: Only 1 import_speed data point (no trimming possible)")
+        
+        # Check query type data points
+        for query_type in config_data['query_type'].dropna().unique():
+            query_count = len(config_data[
+                (config_data['query_type'] == query_type) & 
+                (config_data['mean_ms'].notna())
+            ])
+            if query_count == 0:
+                insufficient_data.append(f"Configuration {config_name}: No data points for query_type '{query_type}'")
+            elif query_count == 1:
+                print(f"Warning: Configuration {config_name}: Only 1 data point for query_type '{query_type}' (no trimming possible)")
+    
+    error_messages.extend(insufficient_data)
+    
+    return len(error_messages) == 0, error_messages
+
+def calculate_trimmed_mean(values, metric_name=None, config_name=None, verbose=False):
+    """Calculate mean after removing min and max values.
+    
+    Args:
+        values: List or Series of numeric values
+        metric_name: Name of the metric for debugging
+        config_name: Name of the configuration for debugging
+        verbose: Whether to print detailed calculation steps
+    
+    Returns:
+        tuple: (trimmed_mean, calculation_details)
+    """
+    values_list = list(values) if hasattr(values, '__iter__') else [values]
+    
+    if len(values_list) <= 2:
+        # If we have 2 or fewer values, return the mean without trimming
+        mean_val = sum(values_list) / len(values_list) if len(values_list) > 0 else 0.0
+        details = {
+            'original_values': values_list,
+            'count': len(values_list),
+            'method': 'simple_mean' if len(values_list) <= 2 else 'no_data',
+            'removed_values': [],
+            'used_values': values_list,
+            'result': mean_val
+        }
+        
+        if verbose and metric_name and config_name:
+            print(f"    {config_name}.{metric_name}: {values_list} -> Simple mean (≤2 values): {mean_val:.4f}")
+        
+        return mean_val, details
+    
+    # Remove min and max values
+    values_sorted = sorted(values_list)
+    min_val = values_sorted[0]
+    max_val = values_sorted[-1]
+    trimmed_values = values_sorted[1:-1]  # Remove first (min) and last (max)
+    
+    result = sum(trimmed_values) / len(trimmed_values) if trimmed_values else 0.0
+    
+    details = {
+        'original_values': values_list,
+        'sorted_values': values_sorted,
+        'count': len(values_list),
+        'method': 'trimmed_mean',
+        'removed_min': min_val,
+        'removed_max': max_val,
+        'removed_values': [min_val, max_val],
+        'used_values': trimmed_values,
+        'result': result
+    }
+    
+    if verbose and metric_name and config_name:
+        print(f"    {config_name}.{metric_name}:")
+        print(f"      Original: {values_list}")
+        print(f"      Sorted: {values_sorted}")
+        print(f"      Removed min: {min_val}, max: {max_val}")
+        print(f"      Used for calculation: {trimmed_values}")
+        print(f"      Trimmed mean: {result:.4f}")
+    
+    return result, details
+
+def process_baseline_data(df, verbose=False):
+    """Process the data and create baseline configuration using trimmed mean."""
     baselines = {}
+    calculation_logs = {}
     
     # Group by configuration (scale, cluster, phase, worker)
     for config_key, config_group in df.groupby(['scale', 'cluster', 'phase', 'worker']):
@@ -65,15 +219,22 @@ def process_baseline_data(df):
         
         # Initialize baseline for this configuration
         baseline = {}
+        calculation_logs[key] = {}
         
-        # Get import_speed (use the first available value since it should be the same for the config)
-        import_speed_data = config_group[config_group['import_speed'].notna()]
+        # Get import_speed values and calculate trimmed mean
+        import_speed_data = config_group[config_group['import_speed'].notna()]['import_speed']
         if not import_speed_data.empty:
-            baseline['import_speed'] = float(import_speed_data['import_speed'].iloc[0])
+            baseline['import_speed'], calc_details = calculate_trimmed_mean(
+                import_speed_data, 'import_speed', key, verbose
+            )
+            calculation_logs[key]['import_speed'] = calc_details
+            print(f"  import_speed: {len(import_speed_data)} values -> {baseline['import_speed']:.2f}")
         else:
             baseline['import_speed'] = 300  # fallback
+            calculation_logs[key]['import_speed'] = {'method': 'fallback', 'result': 300}
         
         # Process query types and their mean_ms values
+        query_metrics = {}
         for _, row in config_group.iterrows():
             query_type = row['query_type']
             mean_ms = row['mean_ms']
@@ -82,11 +243,22 @@ def process_baseline_data(df):
                 # Convert query type to use hyphens consistently (matching app.py logic)
                 import re
                 metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
-                baseline[metric_key] = float(mean_ms)
+                
+                if metric_key not in query_metrics:
+                    query_metrics[metric_key] = []
+                query_metrics[metric_key].append(float(mean_ms))
+        
+        # Calculate trimmed mean for each query metric
+        for metric_key, values in query_metrics.items():
+            baseline[metric_key], calc_details = calculate_trimmed_mean(
+                values, metric_key, key, verbose
+            )
+            calculation_logs[key][metric_key] = calc_details
+            print(f"  {metric_key}: {len(values)} values -> {baseline[metric_key]:.2f}")
         
         baselines[key] = baseline
     
-    return baselines
+    return baselines, calculation_logs
 
 def update_baseline_config(new_baselines, output_file=None):
     """Update the baseline configuration file with new data.
@@ -99,7 +271,7 @@ def update_baseline_config(new_baselines, output_file=None):
         dict: Updated configuration
     """
     if output_file is None:
-        baseline_file = '/Users/yangxing/Downloads/tsbs_analytics/baseline_config.json'
+        baseline_file = './baseline_config.json'
     else:
         baseline_file = output_file
     
@@ -149,21 +321,28 @@ def update_baseline_config(new_baselines, output_file=None):
 def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description='Update baseline configuration with test data from specified date and branch',
+        description='Update baseline configuration with test data from specified date range and branch',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python update_baseline.py --date 2025-06-03 --branch master
-  python update_baseline.py --date 2025-06-10 --branch feature-branch --output custom_baseline.json
-  python update_baseline.py -d 2025-06-03 -b master --list-available
+  python update_baseline.py --start 2025-06-01 --end 2025-06-03 --branch master
+  python update_baseline.py --start 2025-06-05 --end 2025-06-10 --branch feature-branch --output custom_baseline.json
+  python update_baseline.py -s 2025-06-01 -e 2025-06-03 -b master --list-available
         """
     )
     
     parser.add_argument(
-        '--date', '-d',
+        '--start', '-s',
         type=str,
         required=True,
-        help='Target date in YYYY-MM-DD format (e.g., 2025-06-03)'
+        help='Start date in YYYY-MM-DD format (e.g., 2025-06-01)'
+    )
+    
+    parser.add_argument(
+        '--end', '-e',
+        type=str,
+        required=True,
+        help='End date in YYYY-MM-DD format (e.g., 2025-06-03)'
     )
     
     parser.add_argument(
@@ -189,6 +368,24 @@ Examples:
         '--dry-run',
         action='store_true',
         help='Show what would be updated without making changes'
+    )
+    
+    parser.add_argument(
+        '--verbose-calc',
+        action='store_true',
+        help='Show detailed calculation steps for trimmed mean'
+    )
+    
+    parser.add_argument(
+        '--export-calc-log',
+        type=str,
+        help='Export detailed calculation log to JSON file'
+    )
+    
+    parser.add_argument(
+        '--skip-validation',
+        action='store_true',
+        help='Skip data completeness validation (use with caution)'
     )
     
     parser.add_argument(
@@ -222,7 +419,10 @@ def list_available_data():
     print("\nDate-Branch combinations:")
     combinations = df.groupby([df['datetime'].dt.date, 'branch']).size().reset_index(name='count')
     for _, row in combinations.iterrows():
-        print(f"  {row[0]} - {row['branch']}: {row['count']} records")
+        date_val = row.iloc[0]  # Use iloc for positional access
+        branch_val = row['branch']
+        count_val = row['count']
+        print(f"  {date_val} - {branch_val}: {count_val} records")
 
 def main():
     """Main function to update baseline configuration."""
@@ -233,11 +433,17 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
         print("Verbose mode enabled - showing data loading progress...")
     
-    # Validate and parse date
+    # Validate and parse dates
     try:
-        target_date = datetime.strptime(args.date, '%Y-%m-%d').date()
-    except ValueError:
-        print(f"Error: Invalid date format '{args.date}'. Use YYYY-MM-DD format.")
+        start_date = datetime.strptime(args.start, '%Y-%m-%d').date()
+        end_date = datetime.strptime(args.end, '%Y-%m-%d').date()
+    except ValueError as e:
+        print(f"Error: Invalid date format. Use YYYY-MM-DD format. {e}")
+        sys.exit(1)
+    
+    # Validate date range
+    if start_date > end_date:
+        print("Error: Start date must be before or equal to end date.")
         sys.exit(1)
     
     # List available data if requested
@@ -245,24 +451,68 @@ def main():
         list_available_data()
         return
     
-    print(f"Starting baseline configuration update for {target_date} on '{args.branch}' branch...")
+    print(f"Starting baseline configuration update for {start_date} to {end_date} on '{args.branch}' branch...")
+    print("Using trimmed mean (removing min/max values) for each metric...")
     
-    # Load data for specified date and branch
-    df = load_data_by_date_and_branch(target_date, args.branch)
+    # Load data for specified date range and branch
+    df = load_data_by_date_range_and_branch(start_date, end_date, args.branch)
     
     if df.empty:
-        print(f"No data found for {target_date} {args.branch} branch!")
+        print(f"No data found for {start_date} to {end_date} on {args.branch} branch!")
         print("Use --list-available to see available dates and branches.")
         return
     
+    # Show date distribution
+    print(f"\nData distribution by date:")
+    date_counts = df['datetime'].dt.date.value_counts().sort_index()
+    for d, count in date_counts.items():
+        print(f"  {d}: {count} records")
+    
     # Show data summary
     print(f"\nData summary:")
+    print(f"Total records: {len(df)}")
+    print(f"Date range: {df['datetime'].dt.date.min()} to {df['datetime'].dt.date.max()}")
     print(f"Configurations available: {df.groupby(['scale', 'cluster', 'phase', 'worker']).ngroups}")
     print(f"Query types available: {df['query_type'].nunique()}")
     print(f"Query types: {sorted(df['query_type'].unique())}")
     
+    # Validate data completeness
+    if not args.skip_validation:
+        print(f"\n" + "="*50)
+        print("VALIDATING DATA COMPLETENESS")
+        print("="*50)
+        
+        is_valid, error_messages = validate_data_completeness(df)
+        
+        if not is_valid:
+            print(f"\n❌ DATA VALIDATION FAILED!")
+            print(f"Found {len(error_messages)} issues:")
+            print("-" * 40)
+            
+            for i, error in enumerate(error_messages, 1):
+                print(f"{i}. {error}")
+            
+            print("-" * 40)
+            print("Please check the data source and ensure all configurations have complete data.")
+            print("Use --skip-validation flag to bypass this check (not recommended).")
+            print("Execution terminated to prevent incomplete baseline generation.")
+            sys.exit(1)
+        
+        print("✅ Data validation passed - all configurations have complete data")
+    else:
+        print("\n⚠️  Data validation skipped (--skip-validation flag used)")
+    
     # Process the data into baseline format
-    baselines = process_baseline_data(df)
+    baselines, calculation_logs = process_baseline_data(df, args.verbose_calc)
+    
+    # Export calculation log if requested
+    if args.export_calc_log:
+        try:
+            with open(args.export_calc_log, 'w') as f:
+                json.dump(calculation_logs, f, indent=2, default=str)
+            print(f"Calculation log exported to: {args.export_calc_log}")
+        except Exception as e:
+            print(f"Failed to export calculation log: {e}")
     
     print(f"\nProcessed {len(baselines)} configurations")
     
@@ -271,7 +521,7 @@ def main():
         for config_key, baseline_data in baselines.items():
             print(f"Configuration: {config_key}")
             for metric, value in baseline_data.items():
-                print(f"  {metric}: {value}")
+                print(f"  {metric}: {value:.2f}")
         print("\nNo changes made (dry run mode)")
         return
     

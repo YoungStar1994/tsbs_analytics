@@ -1042,16 +1042,23 @@
     const metricSelect = document.getElementById('metric');
     const metrics = $(metricSelect).val() || ['mean_ms'];
 
+    // 如果某个条件没有选择，使用当前数据中该字段的所有唯一值
+    const allBranches = branches.length > 0 ? branches : [...new Set(filteredData.map(row => row.branch))].filter(Boolean);
+    const allScales = scales.length > 0 ? scales : [...new Set(filteredData.map(row => String(row.scale)))].filter(Boolean);
+    const allClusters = clusters.length > 0 ? clusters : [...new Set(filteredData.map(row => String(row.cluster)))].filter(Boolean);
+    const allWorkers = workers.length > 0 ? workers : [...new Set(filteredData.map(row => String(row.worker)))].filter(Boolean);
+    const allPhases = phases.length > 0 ? phases : [...new Set(filteredData.map(row => row.phase))].filter(Boolean);
+
     // 计算所有排列组合（笛卡尔积）
     function cartesian(arrays) {
         return arrays.reduce((a, b) => a.flatMap(d => b.map(e => [].concat(d, e))));
     }
     const combos = cartesian([
-        branches.length ? branches : [''],
-        scales.length ? scales : [''],
-        clusters.length ? clusters : [''],
-        workers.length ? workers : [''],
-        phases.length ? phases : [''],
+        allBranches,
+        allScales,
+        allClusters,
+        allWorkers,
+        allPhases,
         metrics.length ? metrics : ['mean_ms']
     ]);
 
@@ -1067,13 +1074,13 @@
     
     combos.forEach(combo => {
         const [branch, scale, cluster, worker, phase, metric] = combo;
-        // 筛选出该组合下的数据
+        // 筛选出该组合下的数据 - 现在都是精确匹配
         const comboData = filteredData.filter(row =>
-            (branch === '' || row.branch == branch) &&
-            (scale === '' || row.scale == scale) &&
-            (cluster === '' || row.cluster == cluster) &&
-            (worker === '' || row.worker == worker) &&
-            (phase === '' || row.phase == phase)
+            row.branch == branch &&
+            String(row.scale) == scale &&
+            String(row.cluster) == cluster &&
+            String(row.worker) == worker &&
+            row.phase == phase
         );
         if (!comboData.length) return;
         
@@ -1391,3 +1398,4 @@ if (window) {
     </script>
 </body>
 </html>
+
