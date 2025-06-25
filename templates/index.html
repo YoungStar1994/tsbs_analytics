@@ -615,6 +615,48 @@
             height: 16px;
             opacity: 0.7;
         }
+
+        /* Select2 自定义样式 */
+        .select2-container--default .select2-selection--single {
+            height: 42px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px;
+            padding-left: 12px;
+            color: #374151;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 38px;
+            right: 8px;
+        }
+
+        .select2-container--default .select2-selection--multiple {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            min-height: 42px;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .select2-dropdown {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -682,7 +724,7 @@
                 
                 <div class="filter-group">
                     <label for="baseline-type">基准值类型</label>
-                    <select id="baseline-type" class="filter-select" style="width: 100%">
+                    <select id="baseline-type" class="filter-select select2-single" style="width: 100%">
                         <option value="baseline1">标准基准值</option>
                         <option value="baseline2">第二基准值</option>
                     </select>
@@ -736,6 +778,15 @@
                 allowClear: true,
                 width: 'resolve',
                 language: 'zh-CN'
+            });
+            
+            // 初始化单选 select2
+            $('.select2-single').select2({
+                placeholder: '请选择',
+                allowClear: false,
+                width: 'resolve',
+                language: 'zh-CN',
+                minimumResultsForSearch: Infinity // 禁用搜索框
             });
             // 设置默认值
             setTimeout(() => {
@@ -837,12 +888,22 @@
             if ($(select).hasClass('select2-hidden-accessible')) {
                 $(select).trigger('change.select2');
             } else {
-                $(select).select2({
-                    placeholder: '请选择',
-                    allowClear: true,
-                    width: 'resolve',
-                    language: 'zh-CN'
-                });
+                if ($(select).hasClass('select2-single')) {
+                    $(select).select2({
+                        placeholder: '请选择',
+                        allowClear: false,
+                        width: 'resolve',
+                        language: 'zh-CN',
+                        minimumResultsForSearch: Infinity // 禁用搜索框
+                    });
+                } else {
+                    $(select).select2({
+                        placeholder: '请选择',
+                        allowClear: true,
+                        width: 'resolve',
+                        language: 'zh-CN'
+                    });
+                }
             }
         }
 
