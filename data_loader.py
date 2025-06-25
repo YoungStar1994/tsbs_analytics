@@ -409,7 +409,7 @@ class TSBSDataLoader:
             return self.df.copy()
     
     def get_options(self):
-        """获取筛选选项，增加空数据保护"""
+        """获取筛选选项，增加空数据保护和强制去重"""
         df = self.get_data()
         options = {'branches': [], 'query_types': [], 'scales': [], 'clusters': [], 'execution_types': [], 'workers': []}  # 新增 execution_types 和 workers
         
@@ -419,27 +419,32 @@ class TSBSDataLoader:
             
         try:
             if 'branch' in df.columns:
-                options['branches'] = sorted(df['branch'].astype(str).unique())
+                options['branches'] = sorted(list(set(df['branch'].astype(str).unique())))
             
             if 'query_type' in df.columns:
-                options['query_types'] = sorted(df['query_type'].astype(str).unique())
+                options['query_types'] = sorted(list(set(df['query_type'].astype(str).unique())))
             
             if 'scale' in df.columns:
-                options['scales'] = sorted(df['scale'].unique())
+                options['scales'] = sorted(list(set(df['scale'].unique())))
             
             if 'cluster' in df.columns:
-                options['clusters'] = sorted(df['cluster'].unique())
+                options['clusters'] = sorted(list(set(df['cluster'].unique())))
                 
             if 'phase' in df.columns:
-                options['execution_types'] = sorted(df['phase'].astype(str).unique())
+                options['execution_types'] = sorted(list(set(df['phase'].astype(str).unique())))
                 
             if 'worker' in df.columns:
-                options['workers'] = sorted(df['worker'].unique())
+                options['workers'] = sorted(list(set(df['worker'].unique())))
                 
         except Exception as e:
             logging.error(f"Error getting options: {str(e)}")
             
+        # 最终确保所有选项都已去重
+        for key in options:
+            if isinstance(options[key], list):
+                options[key] = sorted(list(set(options[key])))
+            
         return options
 
 # 修正基础路径为实际路径
-loader = TSBSDataLoader('/data1/reports/tsbs_dist_server_gitee')
+loader = TSBSDataLoader('/Users/yangxing/Desktop/tsbs_dist_server_gitee')

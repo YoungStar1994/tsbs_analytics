@@ -73,6 +73,7 @@ def login_required(f):
 
 # 基准值配置文件路径
 BASELINE_CONFIG_FILE = 'baseline_config.json'
+BASELINE2_CONFIG_FILE = 'baseline2_config.json'  # 第二基准值配置文件
 PID_FILE = 'app.pid'
 
 def write_pid_file():
@@ -286,7 +287,12 @@ def get_data():
             table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)
         
         # 添加基准值对比
-        baselines = load_baseline_config()
+        baseline_type = filters.get('baseline_type', 'baseline1')
+        if baseline_type == 'baseline2':
+            baselines = load_baseline2_config()
+        else:
+            baselines = load_baseline_config()
+            
         if baselines:
             for idx, row in table_data.iterrows():
                 baseline_key = f"{row.get('scale', '')}_{row.get('cluster', '')}_{row.get('phase', '')}_{row.get('worker', '')}"
@@ -400,6 +406,26 @@ def save_baseline_config(config):
         logging.error(f"保存基准值配置失败: {e}")
         return False
 
+def load_baseline2_config():
+    """加载第二基准值配置"""
+    if os.path.exists(BASELINE2_CONFIG_FILE):
+        try:
+            with open(BASELINE2_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.error(f"加载第二基准值配置失败: {e}")
+    return {}
+
+def save_baseline2_config(config):
+    """保存第二基准值配置"""
+    try:
+        with open(BASELINE2_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logging.error(f"保存第二基准值配置失败: {e}")
+        return False
+
 def calculate_performance_percentage(actual_value, baseline_value):
     """计算性能百分比变化"""
     if not baseline_value or baseline_value == 0:
@@ -442,6 +468,37 @@ def save_baselines():
             return jsonify({"error": "保存失败"}), 500
     except Exception as e:
         logging.error(f"保存基准值失败: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/baseline2')
+@login_required
+def baseline2():
+    """第二基准值配置页面"""
+    return render_template('baseline2.html')
+
+@app.route('/baselines2', methods=['GET'])
+@login_required
+def get_baselines2():
+    """获取第二基准值配置"""
+    try:
+        baselines = load_baseline2_config()
+        return jsonify(baselines)
+    except Exception as e:
+        logging.error(f"获取第二基准值失败: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/baselines2', methods=['POST'])
+@login_required
+def save_baselines2():
+    """保存第二基准值配置"""
+    try:
+        baselines = request.json
+        if save_baseline2_config(baselines):
+            return jsonify({"message": "第二基准值保存成功"})
+        else:
+            return jsonify({"error": "保存失败"}), 500
+    except Exception as e:
+        logging.error(f"保存第二基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

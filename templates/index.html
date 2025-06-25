@@ -192,6 +192,9 @@
 
         .table-container {
             /* 这个类现在用于包含所有表格的容器 */
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
         }
 
         /* 多表格容器样式优化 */
@@ -619,6 +622,7 @@
         <div class="header">
             <div class="nav-links">
                 <a href="/baseline" class="nav-link">基准值配置</a>
+                <a href="/baseline2" class="nav-link">第二基准值配置</a>
                 <a href="#" onclick="logout()" class="nav-link">登出</a>
             </div>
             <h1>TSBS Analytics</h1>
@@ -677,12 +681,10 @@
                 </div>
                 
                 <div class="filter-group">
-                    <label for="metric">指标类型</label>
-                    <select id="metric" class="filter-select select2-multi" multiple style="width: 100%">
-                        <option value="mean_ms">平均时间 (ms)</option>
-                        <option value="min_ms">最小时间 (ms)</option>
-                        <option value="max_ms">最大时间 (ms)</option>
-                        <option value="med_ms">中位数时间 (ms)</option>
+                    <label for="baseline-type">基准值类型</label>
+                    <select id="baseline-type" class="filter-select" style="width: 100%">
+                        <option value="baseline1">标准基准值</option>
+                        <option value="baseline2">第二基准值</option>
                     </select>
                 </div>
             </div>
@@ -777,14 +779,8 @@
                     });
                     $(execSelect).trigger('change');
                 }
-                // 指标类型默认选中平均时间
-                const metricSelect = document.getElementById('metric');
-                if (metricSelect) {
-                    Array.from(metricSelect.options).forEach(opt => {
-                        opt.selected = (opt.value === 'mean_ms');
-                    });
-                    $(metricSelect).trigger('change');
-                }
+                // 基准值类型默认选择标准基准值
+                document.getElementById('baseline-type').value = 'baseline1';
             }, 300);
             loadData();
         });
@@ -911,7 +907,7 @@
                 execution_types: getSelectedValues('execution_types'),
                 start_date: document.getElementById('start_date').value,
                 end_date: document.getElementById('end_date').value,
-                metric: document.getElementById('metric').value
+                baseline_type: document.getElementById('baseline-type').value
             };
         }
 
@@ -938,14 +934,8 @@
             startDate.setDate(endDate.getDate() - 6);
             document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
             document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
-            // 指标类型默认选中平均时间
-            const metricSelect = document.getElementById('metric');
-            if (metricSelect) {
-                Array.from(metricSelect.options).forEach(opt => {
-                    opt.selected = (opt.value === 'mean_ms');
-                });
-                $(metricSelect).trigger('change');
-            }
+            // 基准值类型默认选择标准基准值
+            document.getElementById('baseline-type').value = 'baseline1';
             document.getElementById('execution_types').selectedIndex = -1;
             // 重新设置默认值
             setTimeout(() => {
@@ -1063,8 +1053,7 @@
     const clusters = getSelectedValues('clusters');
     const workers = getSelectedValues('workers');
     const phases = getSelectedValues('execution_types');
-    const metricSelect = document.getElementById('metric');
-    const metrics = $(metricSelect).val() || ['mean_ms'];
+    const baselineType = document.getElementById('baseline-type').value;
 
     // 如果某个条件没有选择，使用当前数据中该字段的所有唯一值
     const allBranches = branches.length > 0 ? branches : [...new Set(filteredData.map(row => row.branch))].filter(Boolean);
@@ -1082,8 +1071,7 @@
         allScales,
         allClusters,
         allWorkers,
-        allPhases,
-        metrics.length ? metrics : ['mean_ms']
+        allPhases
     ]);
 
     // 动态获取所有查询类型作为列名
@@ -1097,7 +1085,7 @@
     let tableIndex = 0;
     
     combos.forEach(combo => {
-        const [branch, scale, cluster, worker, phase, metric] = combo;
+        const [branch, scale, cluster, worker, phase] = combo;
         // 筛选出该组合下的数据 - 现在都是精确匹配
         const comboData = filteredData.filter(row =>
             row.branch == branch &&
@@ -1152,10 +1140,8 @@
         if (cluster) conditionParts.push(`集群: ${cluster}`);
         if (worker) conditionParts.push(`工作线程: ${worker}`);
         if (phase) conditionParts.push(`执行类型: ${phase}`);
-        if (metric && metric !== 'mean_ms') {
-            const metricText = metricSelect ? metricSelect.querySelector(`option[value='${metric}']`)?.textContent || metric : metric;
-            conditionParts.push(`指标: ${metricText}`);
-        }
+        const baselineTypeName = baselineType === 'baseline2' ? '第二基准值' : '标准基准值';
+        conditionParts.push(`基准值类型: ${baselineTypeName}`);
         
         const titleText = document.createElement('div');
         titleText.style.marginTop = '5px';
@@ -1244,7 +1230,7 @@
             queryTypes.forEach(qt => {
                 const q = row.queries[qt];
                 if (q) {
-                    const value = formatNumber(q[metric]);
+                    const value = formatNumber(q.mean_ms);
                     tr.innerHTML += `<td class="query-result-col">${value}</td>`;
                     
                     // 添加基准对比列
@@ -1253,7 +1239,7 @@
                         const pct = q.mean_ms_baseline_pct;
                         // 对于查询延迟：正值表示延迟减少（性能提升，好），负值表示延迟增加（性能下降，坏）
                         const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
-                        const actualValue = formatNumber(q[metric]);
+                        const actualValue = formatNumber(q.mean_ms);
                         baselineComp = `<span class="${colorClass}" title="实际值: ${actualValue}ms">${pct > 0 ? '+' : ''}${pct}%</span>`;
                     }
                     tr.innerHTML += `<td class="query-baseline-col">${baselineComp}</td>`;
