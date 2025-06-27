@@ -617,6 +617,22 @@
         }
 
         /* Select2 自定义样式 */
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-success:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .select2-container--default .select2-selection--single {
             height: 42px;
             border: 2px solid #e5e7eb;
@@ -735,6 +751,7 @@
                 <button class="btn btn-primary" onclick="applyFilters()">应用筛选</button>
                 <button class="btn btn-secondary" onclick="clearFilters()">清除筛选</button>
                 <button class="btn btn-secondary" onclick="refreshData()">刷新数据</button>
+                <button class="btn btn-success" onclick="exportToCSV()" id="export-btn" style="display: none;">导出Excel</button>
             </div>
         </div>
 
@@ -1360,6 +1377,14 @@
         `${totalRecords} 条记录 (${tableIndex} 个表格)` : 
         `${totalRecords} 条记录`;
     document.getElementById('results-count').textContent = recordsText;
+    
+    // 显示导出按钮（如果有数据）
+    const exportBtn = document.getElementById('export-btn');
+    if (totalRecords > 0) {
+        exportBtn.style.display = 'inline-block';
+    } else {
+        exportBtn.style.display = 'none';
+    }
 }
 
         // 格式化日期时间
@@ -1443,6 +1468,178 @@
                     // 即使API调用失败也跳转到登录页
                     window.location.href = '/login';
                 });
+            }
+        }
+
+        // 准备导出数据 - 基于当前页面显示的表格结构
+        function prepareExportData() {
+            const exportData = {};
+            
+            // 获取所有多选项的选中值
+            const branches = getSelectedValues('branches');
+            const scales = getSelectedValues('scales');
+            const clusters = getSelectedValues('clusters');
+            const workers = getSelectedValues('workers');
+            const phases = getSelectedValues('execution_types');
+
+            // 如果某个条件没有选择，使用当前数据中该字段的所有唯一值
+            const allBranches = branches.length > 0 ? branches : [...new Set(filteredData.map(row => row.branch))].filter(Boolean);
+            const allScales = scales.length > 0 ? scales : [...new Set(filteredData.map(row => String(row.scale)))].filter(Boolean);
+            const allClusters = clusters.length > 0 ? clusters : [...new Set(filteredData.map(row => String(row.cluster)))].filter(Boolean);
+            const allWorkers = workers.length > 0 ? workers : [...new Set(filteredData.map(row => String(row.worker)))].filter(Boolean);
+            const allPhases = phases.length > 0 ? phases : [...new Set(filteredData.map(row => row.phase))].filter(Boolean);
+
+            // 计算所有排列组合（笛卡尔积）
+            function cartesian(arrays) {
+                return arrays.reduce((a, b) => a.flatMap(d => b.map(e => [].concat(d, e))));
+            }
+            const combos = cartesian([
+                allBranches,
+                allScales,
+                allClusters,
+                allWorkers,
+                allPhases
+            ]);
+
+            // 为每个组合准备数据
+            combos.forEach(([branch, scale, cluster, worker, phase]) => {
+                // 筛选符合当前组合条件的数据
+                const comboData = filteredData.filter(row => 
+                    row.branch === branch &&
+                    String(row.scale) === String(scale) &&
+                    String(row.cluster) === String(cluster) &&
+                    String(row.worker) === String(worker) &&
+                    row.phase === phase
+                );
+
+                if (comboData.length > 0) {
+                    // 按时间分组
+                    const groupedByTime = {};
+                    comboData.forEach(row => {
+                        const timeKey = formatDateTime(row.datetime);
+                        if (!groupedByTime[timeKey]) {
+                            groupedByTime[timeKey] = {
+                                datetime: row.datetime,
+                                branch: row.branch,
+                                phase: row.phase,
+                                scale: row.scale,
+                                cluster: row.cluster,
+                                worker: row.worker,
+                                queries: {},
+                                import_speed: row.import_speed,
+                                import_speed_baseline_pct: row.import_speed_baseline_pct
+                            };
+                        }
+                        
+                        if (row.query_type) {
+                            groupedByTime[timeKey].queries[row.query_type] = {
+                                mean_ms: row.mean_ms,
+                                min_ms: row.min_ms,
+                                max_ms: row.max_ms,
+                                med_ms: row.med_ms,
+                                mean_ms_baseline_pct: row.mean_ms_baseline_pct
+                            };
+                        }
+                    });
+
+                    // 生成表格标识符
+                    const tableKey = `${branch}_${scale}_${cluster}_${worker}_${phase}`;
+                    exportData[tableKey] = {
+                        metadata: {
+                            branch: branch,
+                            scale: scale,
+                            cluster: cluster,
+                            worker: worker,
+                            phase: phase
+                        },
+                        data: Object.values(groupedByTime)
+                    };
+                }
+            });
+
+            return exportData;
+        }
+
+        // 导出CSV功能
+        async function exportToCSV() {
+            const exportBtn = document.getElementById('export-btn');
+            const originalText = exportBtn.textContent;
+            
+            try {
+                // 禁用按钮，显示加载状态
+                exportBtn.disabled = true;
+                exportBtn.textContent = '导出中...';
+                
+                // 检查是否有筛选后的数据
+                if (!filteredData || filteredData.length === 0) {
+                    alert('没有数据可导出');
+                    return;
+                }
+                
+                // 获取当前页面显示的表格数据结构
+                const exportData = prepareExportData();
+                
+                // 发送导出请求
+                const response = await fetch('/api/export-csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        export_data: exportData,
+                        baseline_type: document.getElementById('baseline-type').value
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '导出失败');
+                }
+                
+                // 获取文件blob
+                const blob = await response.blob();
+                
+                // 从响应头获取文件名，或根据Content-Type判断文件类型
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'tsbs_analytics_export';
+                
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                    if (filenameMatch && filenameMatch[1]) {
+                        filename = filenameMatch[1].replace(/['"]/g, '');
+                    }
+                } else {
+                    // 根据Content-Type判断文件扩展名
+                    const contentType = response.headers.get('Content-Type');
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+                    if (contentType && contentType.includes('spreadsheet')) {
+                        filename = `tsbs_analytics_export_${timestamp}.xlsx`;
+                    } else if (contentType && contentType.includes('zip')) {
+                        filename = `tsbs_analytics_export_${timestamp}.zip`;
+                    } else {
+                        filename = `tsbs_analytics_export_${timestamp}.csv`;
+                    }
+                }
+                
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                
+                // 触发下载
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('导出失败：' + error.message);
+            } finally {
+                // 恢复按钮状态
+                exportBtn.disabled = false;
+                exportBtn.textContent = originalText;
             }
         }
 

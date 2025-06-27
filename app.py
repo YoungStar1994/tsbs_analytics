@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file
 from data_loader import loader
 from datetime import datetime
 import pandas as pd
@@ -11,6 +11,8 @@ import atexit
 import hashlib
 import secrets
 from functools import wraps
+import io
+import zipfile
 
 # 配置日志 - 支持文件输出
 def setup_logging():
@@ -500,6 +502,115 @@ def save_baselines2():
     except Exception as e:
         logging.error(f"保存第二基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/export-csv', methods=['POST'])
+@login_required
+def export_csv():
+    """导出筛选结果为Excel文件 - 每个表格作为一个sheet页"""
+    try:
+        request_data = request.json
+        export_data = request_data.get('export_data', {})
+        baseline_type = request_data.get('baseline_type', 'baseline1')
+        
+        if not export_data:
+            return jsonify({'error': '没有数据可导出'}), 400
+        
+        # 创建内存中的Excel文件
+        memory_file = io.BytesIO()
+        
+        # 使用pandas的ExcelWriter创建多sheet的Excel文件
+        with pd.ExcelWriter(memory_file, engine='openpyxl') as writer:
+            for table_key, table_info in export_data.items():
+                metadata = table_info['metadata']
+                data_rows = table_info['data']
+                
+                if not data_rows:
+                    continue
+                
+                # 收集所有查询类型
+                all_query_types = set()
+                for row in data_rows:
+                    all_query_types.update(row.get('queries', {}).keys())
+                all_query_types = sorted(list(all_query_types))
+                
+                # 准备DataFrame数据
+                df_data = []
+                
+                for row in data_rows:
+                    row_data = {
+                        '时间': format_datetime_for_display(row.get('datetime')),
+                        '分支': row.get('branch', ''),
+                        '执行类型': row.get('phase', ''),
+                        '规模': row.get('scale', ''),
+                        '集群': row.get('cluster', ''),
+                        '工作线程': row.get('worker', ''),
+                        '导入速度(rows/sec)': row.get('import_speed', '') if row.get('import_speed') is not None else '',
+                        '导入速度对比(%)': f"{row.get('import_speed_baseline_pct', '')}%" if row.get('import_speed_baseline_pct') is not None else ''
+                    }
+                    
+                    # 为每个查询类型添加平均延迟和对比数据
+                    queries = row.get('queries', {})
+                    for qt in all_query_types:
+                        if qt in queries:
+                            query_data = queries[qt]
+                            row_data[f'{qt}_平均延迟(ms)'] = query_data.get('mean_ms', '')
+                            row_data[f'{qt}_对比(%)'] = f"{query_data.get('mean_ms_baseline_pct', '')}%" if query_data.get('mean_ms_baseline_pct') is not None else ''
+                        else:
+                            row_data[f'{qt}_平均延迟(ms)'] = ''
+                            row_data[f'{qt}_对比(%)'] = ''
+                    
+                    df_data.append(row_data)
+                
+                # 创建DataFrame
+                df = pd.DataFrame(df_data)
+                
+                # 生成sheet名称（Excel限制sheet名称长度为31字符）
+                sheet_name = f"{metadata['branch']}_规模{metadata['scale']}_集群{metadata['cluster']}_工作线程{metadata['worker']}"
+                if metadata.get('phase'):
+                    sheet_name += f"_{metadata['phase']}"
+                
+                # 确保sheet名称不超过31字符且不包含非法字符
+                import re
+                sheet_name = re.sub(r'[\\/*?[\]:]+', '_', sheet_name)  # 替换Excel不允许的字符
+                if len(sheet_name) > 31:
+                    sheet_name = sheet_name[:28] + "..."
+                
+                # 写入Excel sheet
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
+                
+                # 获取工作表对象以进行格式化
+                worksheet = writer.sheets[sheet_name]
+                
+                # 自动调整列宽
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)  # 最大宽度限制为50
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+        
+        memory_file.seek(0)
+        
+        # 生成下载文件名
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        baseline_name = "第二基准值" if baseline_type == 'baseline2' else "标准基准值"
+        download_name = f'TSBS分析数据导出_{baseline_name}_{timestamp}.xlsx'
+        
+        return send_file(
+            memory_file,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=download_name
+        )
+        
+    except Exception as e:
+        logging.error(f"Excel导出失败: {str(e)}")
+        return jsonify({'error': f'导出失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     try:
