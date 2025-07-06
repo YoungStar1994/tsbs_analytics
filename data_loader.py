@@ -8,6 +8,7 @@ from watchdog.events import FileSystemEventHandler
 import threading
 import logging
 import csv
+import pickle
 
 # 配置日志格式，但不强制设置级别（让父级控制）
 if not logging.getLogger().handlers:
@@ -27,10 +28,24 @@ class TSBSDataLoader:
             'min_ms', 'mean_ms', 'max_ms', 'med_ms'
         ]
         
+        # 设置持久化文件路径
+        self.cache_file = os.path.join(base_path, '.tsbs_data_cache.pkl')
+        self.metadata_file = os.path.join(base_path, '.tsbs_metadata.pkl')
+        
         logging.info(f"Initializing TSBSDataLoader for path: {base_path}")
-        self.load_existing_data()
+        
+        # 先尝试加载缓存数据
+        if self.load_cached_data():
+            logging.info("Loaded data from cache")
+            # 检查是否有新的目录需要加载
+            self.load_new_directories()
+        else:
+            logging.info("No cache found, loading all data")
+            self.load_existing_data()
+            
         self.start_file_monitor()
-        self.start_cleanup_task()
+        # 移除自动清理任务
+        # self.start_cleanup_task()
         logging.info("Data loader initialized successfully")
     
     def parse_directory_name(self, dir_name):
@@ -263,6 +278,11 @@ class TSBSDataLoader:
                 # 只在调试模式下输出详细加载信息
                 logging.debug(f"Successfully loaded data from: {dir_name}")
                 
+                # 异步保存缓存，避免阻塞
+                threading.Thread(target=self.save_cache, daemon=True).start()
+                # 异步保存缓存，避免阻塞
+                threading.Thread(target=self.save_cache, daemon=True).start()
+                
         except Exception as e:
             logging.error(f"Error loading {csv_path}: {str(e)}")
             import traceback
@@ -293,6 +313,8 @@ class TSBSDataLoader:
         # 完成时输出总结信息
         if total > 0:
             logging.info(f"Data loading completed: {total} directories processed, {len(self.df)} records loaded")
+            # 保存缓存
+            self.save_cache()
     
     def remove_directory_data(self, dir_path):
         """移除被删除目录的数据"""
@@ -304,6 +326,8 @@ class TSBSDataLoader:
                 self.known_dirs.discard(dir_name)
                 after_count = len(self.df)
                 logging.info(f"Removed data for deleted directory: {dir_name}, rows removed: {before_count - after_count}")
+                # 保存缓存
+                self.save_cache()
             else:
                 logging.info(f"Deleted directory not in known_dirs: {dir_name}")
 
@@ -359,33 +383,9 @@ class TSBSDataLoader:
         except Exception as e:
             logging.error(f"Failed to start file monitor: {str(e)}")
     
-    def start_cleanup_task(self):
-        """启动定时数据清理任务"""
-        def cleanup():
-            while True:
-                time.sleep(3600)  # 每小时清理一次
-                self.clean_old_data()
-                
-        thread = threading.Thread(target=cleanup, daemon=True)
-        thread.start()
-        logging.info("Cleanup task started")
-    
-    def clean_old_data(self):
-        """清理旧数据（保留最近30天）"""
-        try:
-            with self.lock:
-                if not self.df.empty and 'datetime' in self.df.columns:
-                    cutoff = datetime.now() - pd.DateOffset(days=30)
-                    initial_count = len(self.df)
-                    self.df = self.df[self.df['datetime'] >= cutoff]
-                    removed = initial_count - len(self.df)
-                    if removed > 0:
-                        logging.info(f"Cleaned up {removed} old records")
-                    
-                    # 更新已知目录集
-                    self.known_dirs = set(self.df['dir_name'].unique())
-        except Exception as e:
-            logging.error(f"Error during cleanup: {str(e)}")
+    # 以下方法已删除，不再需要自动清理任务
+    # def start_cleanup_task(self):
+    # def clean_old_data(self):
     
     def get_data(self):
         """获取当前数据集（线程安全）"""
@@ -445,6 +445,116 @@ class TSBSDataLoader:
                 options[key] = sorted(list(set(options[key])))
             
         return options
-
+    
+    def save_cache(self):
+        """保存数据到缓存文件"""
+        try:
+            with self.lock:
+                # 保存主数据
+                with open(self.cache_file, 'wb') as f:
+                    pickle.dump(self.df, f)
+                
+                # 保存元数据
+                metadata = {
+                    'known_dirs': self.known_dirs,
+                    'last_save_time': datetime.now(),
+                    'total_records': len(self.df)
+                }
+                with open(self.metadata_file, 'wb') as f:
+                    pickle.dump(metadata, f)
+                
+                logging.debug(f"Cache saved: {len(self.df)} records")
+        except Exception as e:
+            logging.error(f"Error saving cache: {str(e)}")
+    
+    def load_cached_data(self):
+        """从缓存文件加载数据"""
+        try:
+            if not os.path.exists(self.cache_file) or not os.path.exists(self.metadata_file):
+                return False
+            
+            # 检查缓存文件是否太旧（超过1天）
+            cache_age = time.time() - os.path.getmtime(self.cache_file)
+            if cache_age > 86400:  # 24小时
+                logging.info("Cache file is too old, will reload all data")
+                return False
+            
+            with self.lock:
+                # 加载主数据
+                with open(self.cache_file, 'rb') as f:
+                    self.df = pickle.load(f)
+                
+                # 加载元数据
+                with open(self.metadata_file, 'rb') as f:
+                    metadata = pickle.load(f)
+                    self.known_dirs = metadata.get('known_dirs', set())
+                
+                logging.info(f"Loaded {len(self.df)} records from cache")
+                return True
+                
+        except Exception as e:
+            logging.error(f"Error loading cache: {str(e)}")
+            return False
+    
+    def load_new_directories(self):
+        """只加载新的目录"""
+        if not os.path.exists(self.base_path):
+            return
+            
+        current_dirs = set(d for d in os.listdir(self.base_path) 
+                          if os.path.isdir(os.path.join(self.base_path, d)))
+        
+        new_dirs = current_dirs - self.known_dirs
+        
+        if new_dirs:
+            logging.info(f"Found {len(new_dirs)} new directories to load")
+            for dir_name in new_dirs:
+                dir_path = os.path.join(self.base_path, dir_name)
+                self.load_single_directory(dir_path)
+            
+            # 保存更新后的缓存
+            self.save_cache()
+        else:
+            logging.debug("No new directories found")
+    
+    def clear_cache(self):
+        """清理缓存文件"""
+        try:
+            if os.path.exists(self.cache_file):
+                os.remove(self.cache_file)
+            if os.path.exists(self.metadata_file):
+                os.remove(self.metadata_file)
+            logging.info("Cache files cleared")
+        except Exception as e:
+            logging.error(f"Error clearing cache: {str(e)}")
+    
+    def get_cache_info(self):
+        """获取缓存信息"""
+        info = {
+            'cache_exists': os.path.exists(self.cache_file),
+            'cache_size': 0,
+            'last_modified': None,
+            'records_count': len(self.df)
+        }
+        
+        if info['cache_exists']:
+            try:
+                info['cache_size'] = os.path.getsize(self.cache_file) / 1024 / 1024  # MB
+                info['last_modified'] = datetime.fromtimestamp(os.path.getmtime(self.cache_file))
+            except Exception as e:
+                logging.error(f"Error getting cache info: {str(e)}")
+        
+        return info
+    
+    def force_data_reload(self):
+        """强制重新加载所有数据"""
+        logging.info("Starting forced data reload...")
+        with self.lock:
+            self.df = pd.DataFrame()
+            self.known_dirs = set()
+        self.load_existing_data()
+        self.save_cache()
+        logging.info("Forced data reload completed")
+    
 # 修正基础路径为实际路径
-loader = TSBSDataLoader('/Users/yangxing/Desktop/tsbs_dist_server_gitee')
+loader = TSBSDataLoader('/data1/reports/tsbs_dist_server_gitee')
