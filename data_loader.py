@@ -17,7 +17,7 @@ if not logging.getLogger().handlers:
     )
 
 class TSBSDataLoader:
-    def __init__(self, base_path):
+    def __init__(self, base_path: str) -> None:
         self.base_path = base_path
         self.df = pd.DataFrame()
         self.last_scan_time = time.time()
@@ -129,7 +129,7 @@ class TSBSDataLoader:
                 header = header[0].split(',')
                 
             # 创建DataFrame
-            df = pd.DataFrame(data, columns=header)
+            df = pd.DataFrame(data, columns=pd.Index(header))
             return df
         except Exception as e:
             logging.warning(f"Manual CSV parsing failed: {str(e)}")
@@ -166,7 +166,7 @@ class TSBSDataLoader:
                 elif len(row) > max_cols:
                     data[i] = row[:max_cols]
             
-            return pd.DataFrame(data, columns=header)
+            return pd.DataFrame(data, columns=pd.Index(header))
         except Exception as e:
             logging.error(f"All CSV parsing methods failed: {str(e)}")
             return pd.DataFrame()
@@ -278,9 +278,7 @@ class TSBSDataLoader:
                 # 只在调试模式下输出详细加载信息
                 logging.debug(f"Successfully loaded data from: {dir_name}")
                 
-                # 异步保存缓存，避免阻塞
-                threading.Thread(target=self.save_cache, daemon=True).start()
-                # 异步保存缓存，避免阻塞
+                # 异步保存缓存，避免阻塞（只启动一个线程）
                 threading.Thread(target=self.save_cache, daemon=True).start()
                 
         except Exception as e:
@@ -313,8 +311,8 @@ class TSBSDataLoader:
         # 完成时输出总结信息
         if total > 0:
             logging.info(f"Data loading completed: {total} directories processed, {len(self.df)} records loaded")
-            # 保存缓存
-            self.save_cache()
+            # 异步保存缓存，避免阻塞
+            threading.Thread(target=self.save_cache, daemon=True).start()
     
     def remove_directory_data(self, dir_path):
         """移除被删除目录的数据"""
@@ -326,8 +324,8 @@ class TSBSDataLoader:
                 self.known_dirs.discard(dir_name)
                 after_count = len(self.df)
                 logging.info(f"Removed data for deleted directory: {dir_name}, rows removed: {before_count - after_count}")
-                # 保存缓存
-                self.save_cache()
+                # 异步保存缓存，避免阻塞
+                threading.Thread(target=self.save_cache, daemon=True).start()
             else:
                 logging.info(f"Deleted directory not in known_dirs: {dir_name}")
 
@@ -342,7 +340,7 @@ class TSBSDataLoader:
                 self.loader = loader
             
             def on_created(self, event):
-                if not event.is_directory and event.src_path.endswith('TSBS_TEST_RESULT.csv'):
+                if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
                     # 等待文件完全写入
                     time.sleep(5)
                     logging.info(f"New CSV file detected: {event.src_path}")
@@ -351,7 +349,7 @@ class TSBSDataLoader:
                     self.loader.load_single_directory(dir_path)
             
             def on_modified(self, event):
-                if not event.is_directory and event.src_path.endswith('TSBS_TEST_RESULT.csv'):
+                if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
                     # CSV文件被修改时重新加载
                     time.sleep(2)
                     logging.info(f"CSV file modified: {event.src_path}")
@@ -363,7 +361,7 @@ class TSBSDataLoader:
                     self.loader.load_single_directory(dir_path)
             
             def on_deleted(self, event):
-                if not event.is_directory and event.src_path.endswith('TSBS_TEST_RESULT.csv'):
+                if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
                     logging.info(f"CSV file deleted: {event.src_path}")
                     # 获取包含该CSV文件的目录并移除数据
                     dir_path = os.path.dirname(os.path.dirname(event.src_path))
@@ -446,8 +444,17 @@ class TSBSDataLoader:
             
         return options
     
-    def save_cache(self):
-        """保存数据到缓存文件"""
+    def save_cache(self) -> None:
+        """保存数据到缓存文件（线程安全，避免重复保存）"""
+        # 使用类级别的锁来确保同一时刻只有一个线程在保存缓存
+        if not hasattr(self, '_save_lock'):
+            self._save_lock = threading.Lock()
+        
+        # 如果已经有保存任务在运行，则跳过
+        if not self._save_lock.acquire(blocking=False):
+            logging.debug("Cache save already in progress, skipping")
+            return
+        
         try:
             with self.lock:
                 # 保存主数据
@@ -466,8 +473,10 @@ class TSBSDataLoader:
                 logging.debug(f"Cache saved: {len(self.df)} records")
         except Exception as e:
             logging.error(f"Error saving cache: {str(e)}")
+        finally:
+            self._save_lock.release()
     
-    def load_cached_data(self):
+    def load_cached_data(self) -> bool:
         """从缓存文件加载数据"""
         try:
             if not os.path.exists(self.cache_file) or not os.path.exists(self.metadata_file):
@@ -496,7 +505,7 @@ class TSBSDataLoader:
             logging.error(f"Error loading cache: {str(e)}")
             return False
     
-    def load_new_directories(self):
+    def load_new_directories(self) -> None:
         """只加载新的目录"""
         if not os.path.exists(self.base_path):
             return
@@ -512,8 +521,8 @@ class TSBSDataLoader:
                 dir_path = os.path.join(self.base_path, dir_name)
                 self.load_single_directory(dir_path)
             
-            # 保存更新后的缓存
-            self.save_cache()
+            # 异步保存更新后的缓存，避免阻塞
+            threading.Thread(target=self.save_cache, daemon=True).start()
         else:
             logging.debug("No new directories found")
     
@@ -553,7 +562,8 @@ class TSBSDataLoader:
             self.df = pd.DataFrame()
             self.known_dirs = set()
         self.load_existing_data()
-        self.save_cache()
+        # 异步保存缓存，避免阻塞
+        threading.Thread(target=self.save_cache, daemon=True).start()
         logging.info("Forced data reload completed")
     
 # 修正基础路径为实际路径
