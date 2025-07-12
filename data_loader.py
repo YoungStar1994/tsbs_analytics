@@ -9,6 +9,8 @@ import threading
 import logging
 import csv
 import pickle
+import tempfile
+from typing import Optional, Dict, Any, List, Union
 
 # 配置日志格式，但不强制设置级别（让父级控制）
 if not logging.getLogger().handlers:
@@ -19,18 +21,20 @@ if not logging.getLogger().handlers:
 class TSBSDataLoader:
     def __init__(self, base_path: str) -> None:
         self.base_path = base_path
-        self.df = pd.DataFrame()
+        self.df: Union[pd.DataFrame, pd.Series] = pd.DataFrame()  # 使用Union类型
         self.last_scan_time = time.time()
         self.lock = threading.Lock()
+        self._save_lock = threading.Lock()  # 在初始化时就创建保存锁
         self.known_dirs = set()
         self.required_columns = [
             'branch', 'query_type', 'scale', 'worker', 
             'min_ms', 'mean_ms', 'max_ms', 'med_ms'
         ]
         
-        # 设置持久化文件路径
-        self.cache_file = os.path.join(base_path, '.tsbs_data_cache.pkl')
-        self.metadata_file = os.path.join(base_path, '.tsbs_metadata.pkl')
+        # 设置持久化文件路径 - 使用临时目录避免权限问题
+        temp_dir = tempfile.gettempdir()
+        self.cache_file = os.path.join(temp_dir, '.tsbs_data_cache.pkl')
+        self.metadata_file = os.path.join(temp_dir, '.tsbs_metadata.pkl')
         
         logging.info(f"Initializing TSBSDataLoader for path: {base_path}")
         
@@ -71,7 +75,7 @@ class TSBSDataLoader:
                     'scale': int(match.group(6)),
                     'cluster': int(match.group(7)),
                     'dop': int(match.group(8)),
-                    'phase': match.group(9),  # 新增执行类型字段
+                    'phase': 'unknown',  # 宽松匹配中无法获取phase，设为unknown
                     'dir_name': dir_name,
                     'datetime': datetime.strptime(
                         f"{match.group(1)}{match.group(2)}{match.group(3)}_{match.group(4)}", 
@@ -345,7 +349,11 @@ class TSBSDataLoader:
                     time.sleep(5)
                     logging.info(f"New CSV file detected: {event.src_path}")
                     # 获取包含该CSV文件的目录
-                    dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
+                    csv_dir = os.path.dirname(event.src_path)
+                    if os.path.basename(csv_dir) == 'query_result':
+                        dir_path = os.path.dirname(csv_dir)  # 向上一级到主目录
+                    else:
+                        dir_path = csv_dir  # 如果CSV不在query_result子目录中
                     self.loader.load_single_directory(dir_path)
             
             def on_modified(self, event):
@@ -353,7 +361,11 @@ class TSBSDataLoader:
                     # CSV文件被修改时重新加载
                     time.sleep(2)
                     logging.info(f"CSV file modified: {event.src_path}")
-                    dir_path = os.path.dirname(os.path.dirname(event.src_path))
+                    csv_dir = os.path.dirname(event.src_path)
+                    if os.path.basename(csv_dir) == 'query_result':
+                        dir_path = os.path.dirname(csv_dir)  # 向上一级到主目录
+                    else:
+                        dir_path = csv_dir  # 如果CSV不在query_result子目录中
                     # 先移除旧数据再重新加载
                     dir_name = os.path.basename(dir_path)
                     if dir_name in self.loader.known_dirs:
@@ -364,7 +376,11 @@ class TSBSDataLoader:
                 if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
                     logging.info(f"CSV file deleted: {event.src_path}")
                     # 获取包含该CSV文件的目录并移除数据
-                    dir_path = os.path.dirname(os.path.dirname(event.src_path))
+                    csv_dir = os.path.dirname(event.src_path)
+                    if os.path.basename(csv_dir) == 'query_result':
+                        dir_path = os.path.dirname(csv_dir)  # 向上一级到主目录
+                    else:
+                        dir_path = csv_dir  # 如果CSV不在query_result子目录中
                     self.loader.remove_directory_data(dir_path)
                 elif event.is_directory:
                     # 目录被删除时也要移除数据
@@ -446,10 +462,6 @@ class TSBSDataLoader:
     
     def save_cache(self) -> None:
         """保存数据到缓存文件（线程安全，避免重复保存）"""
-        # 使用类级别的锁来确保同一时刻只有一个线程在保存缓存
-        if not hasattr(self, '_save_lock'):
-            self._save_lock = threading.Lock()
-        
         # 如果已经有保存任务在运行，则跳过
         if not self._save_lock.acquire(blocking=False):
             logging.debug("Cache save already in progress, skipping")
