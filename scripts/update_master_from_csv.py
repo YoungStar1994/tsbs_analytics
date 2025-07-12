@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Script to update baseline configuration from avg.csv file.
-Usage: python update_baseline_from_csv.py
+Script to update master configuration from master.csv file.
+Usage: python update_master_from_csv.py
 """
 
 import pandas as pd
 import json
 import os
 
-def parse_avg_csv(csv_file_path):
-    """Parse the avg.csv file and extract baseline data."""
+def parse_master_csv(csv_file_path):
+    """Parse the master.csv file and extract configuration data."""
     # Read the CSV file
     df = pd.read_csv(csv_file_path)
     
@@ -19,8 +19,8 @@ def parse_avg_csv(csv_file_path):
     scale_row = df.iloc[2, 1:]      # Third data row contains scales
     worker_row = df.iloc[3, 1:]     # Fourth data row contains worker counts
     
-    # Initialize the baseline configuration
-    baseline_config = {}
+    # Initialize the master configuration
+    master_config = {}
     
     # Process each column (configuration)
     for col_idx in range(1, len(df.columns)):
@@ -34,68 +34,71 @@ def parse_avg_csv(csv_file_path):
         config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
         
         # Initialize configuration if not exists
-        if config_key not in baseline_config:
-            baseline_config[config_key] = {}
+        if config_key not in master_config:
+            master_config[config_key] = {}
         
         # Extract metric values for this configuration (starting from row 4)
         for row_idx in range(4, len(df)):
             metric_name = df.iloc[row_idx, 0]  # First column contains metric names
             metric_value = df.iloc[row_idx, col_idx]
             
-            # Convert metric name to match baseline format
+            # Convert metric name to match configuration format
             if metric_name == 'import_speed':
-                baseline_config[config_key]['import_speed'] = float(metric_value)
+                master_config[config_key]['import_speed'] = float(metric_value)
             else:
                 # Convert underscores to hyphens for consistency
-                baseline_metric_name = metric_name.replace('_', '-')
-                baseline_config[config_key][baseline_metric_name] = float(metric_value)
+                config_metric_name = metric_name.replace('_', '-')
+                master_config[config_key][config_metric_name] = float(metric_value)
     
-    return baseline_config
+    return master_config
 
-def update_baseline_config(baseline_config, output_file='baseline_config.json'):
-    """Update the baseline configuration file."""
+def update_master_config(master_config, output_file='config/master_config.json'):
+    """Update the master configuration file."""
+    # Ensure config directory exists
+    os.makedirs('config', exist_ok=True)
+    
     # Backup existing file if it exists
     if os.path.exists(output_file):
         backup_file = f"{output_file}.backup_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}"
         os.rename(output_file, backup_file)
-        print(f"Backed up existing baseline config to: {backup_file}")
+        print(f"Backed up existing master config to: {backup_file}")
     
     # Write the new configuration
     with open(output_file, 'w') as f:
-        json.dump(baseline_config, f, indent=2, sort_keys=True)
+        json.dump(master_config, f, indent=2, sort_keys=True)
     
-    print(f"Updated baseline configuration written to: {output_file}")
-    print(f"Total configurations: {len(baseline_config)}")
+    print(f"Updated master configuration written to: {output_file}")
+    print(f"Total configurations: {len(master_config)}")
     
     # Show sample configuration
-    if baseline_config:
-        sample_key = list(baseline_config.keys())[0]
+    if master_config:
+        sample_key = list(master_config.keys())[0]
         print(f"\nSample configuration ({sample_key}):")
-        for metric, value in sorted(baseline_config[sample_key].items()):
+        for metric, value in sorted(master_config[sample_key].items()):
             print(f"  {metric}: {value}")
 
 def main():
     """Main function."""
-    csv_file = 'avg.csv'
+    csv_file = 'master.csv'
     
     if not os.path.exists(csv_file):
         print(f"Error: {csv_file} not found!")
         return
     
     print(f"Reading data from {csv_file}...")
-    baseline_config = parse_avg_csv(csv_file)
+    master_config = parse_master_csv(csv_file)
     
-    print(f"Parsed {len(baseline_config)} configurations")
+    print(f"Parsed {len(master_config)} configurations")
     
     # Show all configuration keys
     print("\nConfiguration keys found:")
-    for key in sorted(baseline_config.keys()):
+    for key in sorted(master_config.keys()):
         print(f"  {key}")
     
-    # Update the baseline configuration
-    update_baseline_config(baseline_config)
+    # Update the master configuration
+    update_master_config(master_config)
     
-    print("\nBaseline configuration update completed!")
+    print("\nMaster configuration update completed!")
 
 if __name__ == '__main__':
-    main()
+    main() 
