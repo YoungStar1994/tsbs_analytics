@@ -294,10 +294,13 @@ def get_data():
         baseline_type = filters.get('baseline_type', 'master')
         if baseline_type == 'enterprise':
             baselines = load_enterprise_config()
+            logging.info(f"Using enterprise baseline with {len(baselines)} configurations")
         elif baseline_type == 'opensource':
             baselines = load_opensource_config()
+            logging.info(f"Using opensource baseline with {len(baselines)} configurations")
         else:
             baselines = load_master_config()
+            logging.info(f"Using master baseline with {len(baselines)} configurations")
             
         if baselines:
             for idx, row in table_data.iterrows():
@@ -314,7 +317,7 @@ def get_data():
                             if percentage is not None:
                                 table_data.at[idx, 'import_speed_baseline_pct'] = round(percentage, 2)
                                 # 调试日志
-                                logging.debug(f"Import speed comparison - Baseline: {baseline_import}, Actual: {actual_import}, Percentage: {percentage}%")
+                                logging.info(f"Import speed comparison - Baseline: {baseline_import}, Actual: {actual_import}, Percentage: {percentage}%")
                     
                     # 查询类型对比 - 使用实际的查询类型
                     query_type = row.get('query_type', '')
@@ -331,10 +334,10 @@ def get_data():
                                 if percentage is not None:
                                     table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)
                                     # 调试日志
-                                    logging.debug(f"Query {query_type} comparison - Baseline: {baseline_value}ms, Actual: {actual_value}ms, Percentage: {percentage}%")
+                                    logging.info(f"Query {query_type} comparison - Baseline: {baseline_value}ms, Actual: {actual_value}ms, Percentage: {percentage}%")
                 else:
                     # 调试日志：未找到基准配置
-                    logging.debug(f"No baseline found for key: {baseline_key}")
+                    logging.info(f"No baseline found for key: {baseline_key}")
         
         # 返回数据
         return jsonify({
@@ -669,11 +672,7 @@ def export_csv():
         logging.error(f"Excel导出失败: {str(e)}")
         return jsonify({'error': f'导出失败: {str(e)}'}), 500
 
-@app.route('/upload-csv')
-@login_required
-def upload_csv_page():
-    """CSV文件上传页面"""
-    return render_template('upload_csv.html')
+
 
 @app.route('/api/upload-enterprise-csv', methods=['POST'])
 @login_required
