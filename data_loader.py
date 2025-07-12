@@ -11,6 +11,9 @@ import csv
 import pickle
 import tempfile
 from typing import Optional, Dict, Any, List, Union
+from concurrent.futures import ThreadPoolExecutor
+import gc
+import weakref
 
 # 配置日志格式，但不强制设置级别（让父级控制）
 if not logging.getLogger().handlers:
@@ -21,20 +24,28 @@ if not logging.getLogger().handlers:
 class TSBSDataLoader:
     def __init__(self, base_path: str) -> None:
         self.base_path = base_path
-        self.df: Union[pd.DataFrame, pd.Series] = pd.DataFrame()  # 使用Union类型
+        self.df: pd.DataFrame = pd.DataFrame()  # 修复类型注解
         self.last_scan_time = time.time()
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()  # 使用RLock避免死锁
         self._save_lock = threading.Lock()  # 在初始化时就创建保存锁
+        self._save_pending = False  # 标记是否有待保存的数据
         self.known_dirs = set()
         self.required_columns = [
             'branch', 'query_type', 'scale', 'worker', 
             'min_ms', 'mean_ms', 'max_ms', 'med_ms'
         ]
         
+        # 使用线程池管理异步任务，限制线程数量
+        self._thread_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='tsbs-cache')
+        
         # 设置持久化文件路径 - 使用临时目录避免权限问题
         temp_dir = tempfile.gettempdir()
         self.cache_file = os.path.join(temp_dir, '.tsbs_data_cache.pkl')
         self.metadata_file = os.path.join(temp_dir, '.tsbs_metadata.pkl')
+        
+        # 添加内存监控
+        self._max_memory_mb = 1024  # 最大内存使用限制(MB)
+        self._last_gc_time = time.time()
         
         logging.info(f"Initializing TSBSDataLoader for path: {base_path}")
         
@@ -48,9 +59,37 @@ class TSBSDataLoader:
             self.load_existing_data()
             
         self.start_file_monitor()
-        # 移除自动清理任务
-        # self.start_cleanup_task()
         logging.info("Data loader initialized successfully")
+    
+    def __del__(self):
+        """析构函数，确保线程池正确关闭"""
+        try:
+            if hasattr(self, '_thread_pool'):
+                self._thread_pool.shutdown(wait=False)
+        except:
+            pass
+    
+    def _check_memory_usage(self):
+        """检查内存使用情况，必要时进行垃圾回收"""
+        current_time = time.time()
+        if current_time - self._last_gc_time > 300:  # 每5分钟检查一次
+            try:
+                import psutil
+                process = psutil.Process()
+                memory_mb = process.memory_info().rss / 1024 / 1024
+                
+                if memory_mb > self._max_memory_mb:
+                    logging.warning(f"Memory usage high: {memory_mb:.1f}MB, running garbage collection")
+                    gc.collect()
+                    
+                self._last_gc_time = current_time
+            except ImportError:
+                # 如果没有psutil，只做基本的垃圾回收
+                if current_time - self._last_gc_time > 600:  # 10分钟
+                    gc.collect()
+                    self._last_gc_time = current_time
+            except Exception as e:
+                logging.warning(f"Memory check failed: {e}")
     
     def parse_directory_name(self, dir_name):
         """解析目录名提取元数据，增加容错处理"""
@@ -179,11 +218,13 @@ class TSBSDataLoader:
         """加载单个目录的数据，增加健壮性处理"""
         dir_name = os.path.basename(dir_path)
         
-        # 如果目录已经加载过，先移除旧数据
-        if dir_name in self.known_dirs:
-            logging.info(f"Directory already loaded, refreshing data: {dir_name}")
-            with self.lock:
-                self.df = self.df[self.df['dir_name'] != dir_name]
+        # 防止重复加载同一目录
+        with self.lock:
+            if dir_name in self.known_dirs:
+                logging.info(f"Directory already loaded, refreshing data: {dir_name}")
+                # 先移除旧数据
+                filtered_df = self.df[self.df['dir_name'] != dir_name]
+                self.df = filtered_df.copy() if isinstance(filtered_df, pd.DataFrame) else pd.DataFrame()
                 self.known_dirs.discard(dir_name)
         
         meta = self.parse_directory_name(dir_name)
@@ -262,6 +303,7 @@ class TSBSDataLoader:
                         df_new[col] = pd.to_numeric(df_new[col], errors='coerce')
                     except Exception as e:
                         logging.warning(f"Error converting column {col} to numeric: {str(e)}")
+            
             # 验证数据
             if not self.validate_dataframe(df_new):
                 logging.error(f"Validation failed for {csv_path}")
@@ -277,18 +319,34 @@ class TSBSDataLoader:
                     return
                 
             with self.lock:
-                self.df = pd.concat([self.df, df_new], ignore_index=True)
+                # 使用更高效的concat方式
+                if not self.df.empty:
+                    self.df = pd.concat([self.df, df_new], ignore_index=True, copy=False)
+                else:
+                    self.df = df_new.copy()
+                
                 self.known_dirs.add(dir_name)
-                # 只在调试模式下输出详细加载信息
                 logging.debug(f"Successfully loaded data from: {dir_name}")
                 
-                # 异步保存缓存，避免阻塞（只启动一个线程）
-                threading.Thread(target=self.save_cache, daemon=True).start()
+                # 标记需要保存缓存
+                self._save_pending = True
+                
+                # 使用线程池异步保存缓存，避免创建过多线程
+                self._thread_pool.submit(self._delayed_save_cache)
+                
+                # 检查内存使用
+                self._check_memory_usage()
                 
         except Exception as e:
             logging.error(f"Error loading {csv_path}: {str(e)}")
             import traceback
             logging.error(traceback.format_exc())
+    
+    def _delayed_save_cache(self):
+        """延迟保存缓存，避免频繁保存"""
+        time.sleep(1)  # 等待1秒，合并多个保存请求
+        if self._save_pending:
+            self.save_cache()
     
     def load_existing_data(self):
         """加载所有现有数据，增加进度日志"""
@@ -315,8 +373,8 @@ class TSBSDataLoader:
         # 完成时输出总结信息
         if total > 0:
             logging.info(f"Data loading completed: {total} directories processed, {len(self.df)} records loaded")
-            # 异步保存缓存，避免阻塞
-            threading.Thread(target=self.save_cache, daemon=True).start()
+            # 使用线程池异步保存缓存
+            self._thread_pool.submit(self.save_cache)
     
     def remove_directory_data(self, dir_path):
         """移除被删除目录的数据"""
@@ -324,12 +382,13 @@ class TSBSDataLoader:
         with self.lock:
             if dir_name in self.known_dirs:
                 before_count = len(self.df)
-                self.df = self.df[self.df['dir_name'] != dir_name]
+                filtered_df = self.df[self.df['dir_name'] != dir_name]
+                self.df = filtered_df.copy() if isinstance(filtered_df, pd.DataFrame) else pd.DataFrame()
                 self.known_dirs.discard(dir_name)
                 after_count = len(self.df)
                 logging.info(f"Removed data for deleted directory: {dir_name}, rows removed: {before_count - after_count}")
-                # 异步保存缓存，避免阻塞
-                threading.Thread(target=self.save_cache, daemon=True).start()
+                # 使用线程池异步保存缓存
+                self._thread_pool.submit(self.save_cache)
             else:
                 logging.info(f"Deleted directory not in known_dirs: {dir_name}")
 
@@ -341,40 +400,67 @@ class TSBSDataLoader:
             
         class CSVFileHandler(FileSystemEventHandler):
             def __init__(self, loader):
-                self.loader = loader
+                self.loader = weakref.ref(loader)  # 使用弱引用避免循环引用
+                self._processing = set()  # 记录正在处理的文件，避免重复处理
             
             def on_created(self, event):
+                loader = self.loader()
+                if loader is None:
+                    return
+                    
                 if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
-                    # 等待文件完全写入
-                    time.sleep(5)
-                    logging.info(f"New CSV file detected: {event.src_path}")
-                    # 获取包含该CSV文件的目录 - CSV文件一定在query_result子目录中
-                    dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
-                    self.loader.load_single_directory(dir_path)
+                    if event.src_path in self._processing:
+                        return
+                    self._processing.add(event.src_path)
+                    
+                    try:
+                        # 等待文件完全写入
+                        time.sleep(5)
+                        logging.info(f"New CSV file detected: {event.src_path}")
+                        # 获取包含该CSV文件的目录 - CSV文件一定在query_result子目录中
+                        dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
+                        loader.load_single_directory(dir_path)
+                    finally:
+                        self._processing.discard(event.src_path)
             
             def on_modified(self, event):
+                loader = self.loader()
+                if loader is None:
+                    return
+                    
                 if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
-                    # CSV文件被修改时重新加载
-                    time.sleep(2)
-                    logging.info(f"CSV file modified: {event.src_path}")
-                    # CSV文件一定在query_result子目录中
-                    dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
-                    # 先移除旧数据再重新加载
-                    dir_name = os.path.basename(dir_path)
-                    if dir_name in self.loader.known_dirs:
-                        self.loader.remove_directory_data(dir_path)
-                    self.loader.load_single_directory(dir_path)
+                    if event.src_path in self._processing:
+                        return
+                    self._processing.add(event.src_path)
+                    
+                    try:
+                        # CSV文件被修改时重新加载
+                        time.sleep(2)
+                        logging.info(f"CSV file modified: {event.src_path}")
+                        # CSV文件一定在query_result子目录中
+                        dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
+                        # 先移除旧数据再重新加载
+                        dir_name = os.path.basename(dir_path)
+                        if dir_name in loader.known_dirs:
+                            loader.remove_directory_data(dir_path)
+                        loader.load_single_directory(dir_path)
+                    finally:
+                        self._processing.discard(event.src_path)
             
             def on_deleted(self, event):
+                loader = self.loader()
+                if loader is None:
+                    return
+                    
                 if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
                     logging.info(f"CSV file deleted: {event.src_path}")
                     # 获取包含该CSV文件的目录并移除数据 - CSV文件一定在query_result子目录中
                     dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
-                    self.loader.remove_directory_data(dir_path)
+                    loader.remove_directory_data(dir_path)
                 elif event.is_directory:
                     # 目录被删除时也要移除数据
                     logging.info(f"Directory deleted: {event.src_path}")
-                    self.loader.remove_directory_data(event.src_path)
+                    loader.remove_directory_data(event.src_path)
         
         try:
             event_handler = CSVFileHandler(self)
@@ -386,10 +472,6 @@ class TSBSDataLoader:
         except Exception as e:
             logging.error(f"Failed to start file monitor: {str(e)}")
     
-    # 以下方法已删除，不再需要自动清理任务
-    # def start_cleanup_task(self):
-    # def clean_old_data(self):
-    
     def get_data(self):
         """获取当前数据集（线程安全）"""
         with self.lock:
@@ -399,7 +481,7 @@ class TSBSDataLoader:
                 possible_names = ['query_type', 'query type', 'query-type', 'querytype', 'query']
                 for name in possible_names:
                     if name in self.df.columns:
-                        self.df.rename(columns={name: 'query_type'}, inplace=True)
+                        self.df = self.df.rename(columns={name: 'query_type'})
                         break
             
             # 确保时间列是datetime类型
@@ -414,7 +496,7 @@ class TSBSDataLoader:
     def get_options(self):
         """获取筛选选项，增加空数据保护和强制去重"""
         df = self.get_data()
-        options = {'branches': [], 'query_types': [], 'scales': [], 'clusters': [], 'execution_types': [], 'workers': []}  # 新增 execution_types 和 workers
+        options = {'branches': [], 'query_types': [], 'scales': [], 'clusters': [], 'execution_types': [], 'workers': []}
         
         if df.empty:
             logging.warning("No data available for options")
@@ -422,22 +504,28 @@ class TSBSDataLoader:
             
         try:
             if 'branch' in df.columns:
-                options['branches'] = sorted(list(set(df['branch'].astype(str).unique())))
+                unique_branches = df['branch'].astype(str).unique()
+                options['branches'] = sorted(list(set(unique_branches)))
             
             if 'query_type' in df.columns:
-                options['query_types'] = sorted(list(set(df['query_type'].astype(str).unique())))
+                unique_query_types = df['query_type'].astype(str).unique()
+                options['query_types'] = sorted(list(set(unique_query_types)))
             
             if 'scale' in df.columns:
-                options['scales'] = sorted(list(set(df['scale'].unique())))
+                unique_scales = df['scale'].dropna().unique()
+                options['scales'] = sorted(list(set(unique_scales)))
             
             if 'cluster' in df.columns:
-                options['clusters'] = sorted(list(set(df['cluster'].unique())))
+                unique_clusters = df['cluster'].dropna().unique()
+                options['clusters'] = sorted(list(set(unique_clusters)))
                 
             if 'phase' in df.columns:
-                options['execution_types'] = sorted(list(set(df['phase'].astype(str).unique())))
+                unique_phases = df['phase'].astype(str).unique()
+                options['execution_types'] = sorted(list(set(unique_phases)))
                 
             if 'worker' in df.columns:
-                options['workers'] = sorted(list(set(df['worker'].unique())))
+                unique_workers = df['worker'].dropna().unique()
+                options['workers'] = sorted(list(set(unique_workers)))
                 
         except Exception as e:
             logging.error(f"Error getting options: {str(e)}")
@@ -457,10 +545,12 @@ class TSBSDataLoader:
             return
         
         try:
+            self._save_pending = False  # 重置保存标记
+            
             with self.lock:
                 # 保存主数据
                 with open(self.cache_file, 'wb') as f:
-                    pickle.dump(self.df, f)
+                    pickle.dump(self.df, f, protocol=pickle.HIGHEST_PROTOCOL)
                 
                 # 保存元数据
                 metadata = {
@@ -469,7 +559,7 @@ class TSBSDataLoader:
                     'total_records': len(self.df)
                 }
                 with open(self.metadata_file, 'wb') as f:
-                    pickle.dump(metadata, f)
+                    pickle.dump(metadata, f, protocol=pickle.HIGHEST_PROTOCOL)
                 
                 logging.debug(f"Cache saved: {len(self.df)} records")
         except Exception as e:
@@ -522,8 +612,8 @@ class TSBSDataLoader:
                 dir_path = os.path.join(self.base_path, dir_name)
                 self.load_single_directory(dir_path)
             
-            # 异步保存更新后的缓存，避免阻塞
-            threading.Thread(target=self.save_cache, daemon=True).start()
+            # 使用线程池异步保存更新后的缓存
+            self._thread_pool.submit(self.save_cache)
         else:
             logging.debug("No new directories found")
     
@@ -563,9 +653,9 @@ class TSBSDataLoader:
             self.df = pd.DataFrame()
             self.known_dirs = set()
         self.load_existing_data()
-        # 异步保存缓存，避免阻塞
-        threading.Thread(target=self.save_cache, daemon=True).start()
+        # 使用线程池异步保存缓存
+        self._thread_pool.submit(self.save_cache)
         logging.info("Forced data reload completed")
-    
+
 # 修正基础路径为实际路径
 loader = TSBSDataLoader('/Users/yangxing/Desktop/tsbs_dist_server_gitee')
