@@ -699,6 +699,7 @@
                 <a href="/master" class="nav-link">Master基准值配置</a>
                 <a href="/enterprise" class="nav-link">企业发版基准值配置</a>
                 <a href="/opensource" class="nav-link">开源发版基准值配置</a>
+                <a href="/upload-csv" class="nav-link">CSV文件上传</a>
                 <a href="#" onclick="logout()" class="nav-link">登出</a>
             </div>
         </div>
@@ -757,9 +758,9 @@
                 <div class="filter-group">
                     <label for="baseline-type">基准值类型</label>
                     <select id="baseline-type" class="filter-select select2-single" style="width: 100%">
-                        <option value="baseline1">Master基准值</option>
-                        <option value="baseline2">企业发版基准值</option>
-                        <option value="enterprise">开源发版基准值</option>
+                        <option value="master">Master基准值</option>
+                        <option value="enterprise">企业发版基准值</option>
+                        <option value="opensource">开源发版基准值</option>
                     </select>
                 </div>
             </div>
@@ -865,7 +866,7 @@
                     $(execSelect).trigger('change');
                 }
                 // 基准值类型默认选择标准基准值
-                document.getElementById('baseline-type').value = 'baseline1';
+                document.getElementById('baseline-type').value = 'master';
             }, 300);
             loadData();
         });
@@ -1030,7 +1031,7 @@
             document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
             document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
             // 基准值类型默认选择标准基准值
-            document.getElementById('baseline-type').value = 'baseline1';
+                            document.getElementById('baseline-type').value = 'master';
             document.getElementById('execution_types').selectedIndex = -1;
             // 重新设置默认值
             setTimeout(() => {

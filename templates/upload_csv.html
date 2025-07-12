@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV文件上传 - TSBS Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .enterprise-section {
+            border-left: 4px solid #28a745;
+            background-color: #f8fff8;
+        }
+        .opensource-section {
+            border-left: 4px solid #007bff;
+            background-color: #f8fbff;
+        }
+        .file-upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        .file-upload-area:hover {
+            border-color: #007bff;
+            background-color: #f8fbff;
+        }
+        .file-upload-area.dragover {
+            border-color: #28a745;
+            background-color: #f8fff8;
+        }
+        .upload-btn {
+            margin-top: 15px;
+        }
+        .progress-section {
+            margin-top: 15px;
+            display: none;
+        }
+        .result-section {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .csv-format-info {
+            background-color: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">TSBS Analytics</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="{{ url_for('index') }}">数据分析</a>
+                <a class="nav-link" href="{{ url_for('master') }}">Master基准值配置</a>
+                <a class="nav-link" href="{{ url_for('enterprise_page') }}">企业发版基准值配置</a>
+                <a class="nav-link" href="{{ url_for('opensource_page') }}">开源发版基准值配置</a>
+                <a class="nav-link active" href="{{ url_for('upload_csv_page') }}">CSV文件上传</a>
+                <a class="nav-link" href="#" onclick="logout()">登出</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-primary">CSV文件上传</h2>
+                <p class="text-muted">上传CSV文件来更新企业版和开源版基准值配置</p>
+
+                <!-- CSV格式说明 -->
+                <div class="csv-format-info">
+                    <h5><i class="fas fa-info-circle"></i> CSV文件格式说明</h5>
+                    <p><strong>文件格式要求：</strong></p>
+                    <ul>
+                        <li>第一行：branch（如：ent_v2.2.1）</li>
+                        <li>第二行：Execution Types（如：insert, prepare）</li>
+                        <li>第三行：Clusters（如：1, 3）</li>
+                        <li>第四行：Scales（如：100, 4000, 100000, 1000000）</li>
+                        <li>第五行：Workers（如：1, 8）</li>
+                        <li>第六行开始：各项指标数据（如：import_speed, cpu-max-all-1等）</li>
+                    </ul>
+                    <p><strong>注意：</strong>请确保CSV文件格式正确，否则可能导致解析失败。</p>
+                </div>
+
+                <!-- 企业版CSV上传 -->
+                <div class="upload-section enterprise-section">
+                    <h4 class="text-success">
+                        <i class="fas fa-building"></i> 企业版基准值配置上传
+                    </h4>
+                    <p class="text-muted">上传企业版CSV文件来更新企业发版基准值配置</p>
+                    
+                    <div class="file-upload-area" id="enterprise-upload-area">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>拖拽文件到此处或点击选择文件</h5>
+                        <p class="text-muted">支持CSV格式文件</p>
+                        <input type="file" id="enterprise-csv-file" accept=".csv" style="display: none;">
+                        <button class="btn btn-outline-success" onclick="document.getElementById('enterprise-csv-file').click()">
+                            <i class="fas fa-file-upload"></i> 选择CSV文件
+                        </button>
+                    </div>
+                    
+                    <div class="progress-section" id="enterprise-progress">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center mt-2">正在处理文件...</p>
+                    </div>
+                    
+                    <div class="result-section" id="enterprise-result"></div>
+                </div>
+
+                <!-- 开源版CSV上传 -->
+                <div class="upload-section opensource-section">
+                    <h4 class="text-primary">
+                        <i class="fas fa-code"></i> 开源版基准值配置上传
+                    </h4>
+                    <p class="text-muted">上传开源版CSV文件来更新开源发版基准值配置</p>
+                    
+                    <div class="file-upload-area" id="opensource-upload-area">
+                        <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                        <h5>拖拽文件到此处或点击选择文件</h5>
+                        <p class="text-muted">支持CSV格式文件</p>
+                        <input type="file" id="opensource-csv-file" accept=".csv" style="display: none;">
+                        <button class="btn btn-outline-primary" onclick="document.getElementById('opensource-csv-file').click()">
+                            <i class="fas fa-file-upload"></i> 选择CSV文件
+                        </button>
+                    </div>
+                    
+                    <div class="progress-section" id="opensource-progress">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center mt-2">正在处理文件...</p>
+                    </div>
+                    
+                    <div class="result-section" id="opensource-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    <script>
+        // 页面加载时检查认证状态
+        document.addEventListener('DOMContentLoaded', async function() {
+            await checkAuthStatus();
+            setupFileUploads();
+        });
+
+        // 检查登录状态
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/check-auth');
+                const data = await response.json();
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = '/login';
+                return;
+            }
+        }
+
+        // 登出功能
+        function logout() {
+            if (confirm('确定要登出吗？')) {
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/login';
+                });
+            }
+        }
+
+        // 设置文件上传功能
+        function setupFileUploads() {
+            // 企业版文件上传
+            const enterpriseFileInput = document.getElementById('enterprise-csv-file');
+            const enterpriseUploadArea = document.getElementById('enterprise-upload-area');
+            
+            enterpriseFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadEnterpriseCSV(file);
+                }
+            });
+
+            // 开源版文件上传
+            const opensourceFileInput = document.getElementById('opensource-csv-file');
+            const opensourceUploadArea = document.getElementById('opensource-upload-area');
+            
+            opensourceFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    uploadOpensourceCSV(file);
+                }
+            });
+
+            // 拖拽上传功能
+            setupDragAndDrop(enterpriseUploadArea, enterpriseFileInput, 'enterprise');
+            setupDragAndDrop(opensourceUploadArea, opensourceFileInput, 'opensource');
+        }
+
+        // 设置拖拽上传
+        function setupDragAndDrop(uploadArea, fileInput, type) {
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.name.endsWith('.csv')) {
+                        fileInput.files = files;
+                        if (type === 'enterprise') {
+                            uploadEnterpriseCSV(file);
+                        } else {
+                            uploadOpensourceCSV(file);
+                        }
+                    } else {
+                        showResult(type, 'error', '请选择CSV格式的文件');
+                    }
+                }
+            });
+        }
+
+        // 上传企业版CSV
+        async function uploadEnterpriseCSV(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showProgress('enterprise', true);
+            showResult('enterprise', '', '');
+
+            try {
+                const response = await fetch('/api/upload-enterprise-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('enterprise', 'success', result.message);
+                } else {
+                    showResult('enterprise', 'error', result.error || '上传失败');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showResult('enterprise', 'error', '上传失败：' + error.message);
+            } finally {
+                showProgress('enterprise', false);
+            }
+        }
+
+        // 上传开源版CSV
+        async function uploadOpensourceCSV(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            showProgress('opensource', true);
+            showResult('opensource', '', '');
+
+            try {
+                const response = await fetch('/api/upload-opensource-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showResult('opensource', 'success', result.message);
+                } else {
+                    showResult('opensource', 'error', result.error || '上传失败');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showResult('opensource', 'error', '上传失败：' + error.message);
+            } finally {
+                showProgress('opensource', false);
+            }
+        }
+
+        // 显示进度条
+        function showProgress(type, show) {
+            const progressElement = document.getElementById(`${type}-progress`);
+            if (show) {
+                progressElement.style.display = 'block';
+            } else {
+                progressElement.style.display = 'none';
+            }
+        }
+
+        // 显示结果
+        function showResult(type, resultType, message) {
+            const resultElement = document.getElementById(`${type}-result`);
+            
+            if (resultType === '') {
+                resultElement.style.display = 'none';
+                return;
+            }
+
+            resultElement.style.display = 'block';
+            resultElement.className = `result-section result-${resultType}`;
+            
+            if (resultType === 'success') {
+                resultElement.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+            } else {
+                resultElement.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                        <span>${message}</span>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -74,9 +74,9 @@ def login_required(f):
     return decorated_function
 
 # 基准值配置文件路径
-BASELINE_CONFIG_FILE = 'config/master_config.json'
-BASELINE2_CONFIG_FILE = 'config/enterprise_config.json'  # 企业发版基准值配置文件
-ENTERPRISE_CONFIG_FILE = 'config/opensource_config.json'  # 开源发版基准值配置文件
+MASTER_CONFIG_FILE = 'config/master_config.json'
+ENTERPRISE_CONFIG_FILE = 'config/enterprise_config.json'  # 企业发版基准值配置文件
+OPENSOURCE_CONFIG_FILE = 'config/opensource_config.json'  # 开源发版基准值配置文件
 PID_FILE = 'logs/app.pid'
 
 def write_pid_file():
@@ -291,13 +291,13 @@ def get_data():
             table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)
         
         # 添加基准值对比
-        baseline_type = filters.get('baseline_type', 'baseline1')
-        if baseline_type == 'baseline2':
-            baselines = load_baseline2_config()
-        elif baseline_type == 'enterprise':
+        baseline_type = filters.get('baseline_type', 'master')
+        if baseline_type == 'enterprise':
             baselines = load_enterprise_config()
+        elif baseline_type == 'opensource':
+            baselines = load_opensource_config()
         else:
-            baselines = load_baseline_config()
+            baselines = load_master_config()
             
         if baselines:
             for idx, row in table_data.iterrows():
@@ -392,48 +392,30 @@ def prepare_chart_data(df, metric):
         logging.error(f"Error preparing chart data: {str(e)}")
         return {}
 
-def load_baseline_config():
-    """加载基准值配置"""
-    if os.path.exists(BASELINE_CONFIG_FILE):
+def load_master_config():
+    """加载Master基准值配置"""
+    if os.path.exists(MASTER_CONFIG_FILE):
         try:
-            with open(BASELINE_CONFIG_FILE, 'r', encoding='utf-8') as f:
+            with open(MASTER_CONFIG_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            logging.error(f"加载基准值配置失败: {e}")
+            logging.error(f"加载Master基准值配置失败: {e}")
     return {}
 
-def save_baseline_config(config):
-    """保存基准值配置"""
+def save_master_config(config):
+    """保存Master基准值配置"""
     try:
-        with open(BASELINE_CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(MASTER_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         return True
     except Exception as e:
-        logging.error(f"保存基准值配置失败: {e}")
+        logging.error(f"保存Master基准值配置失败: {e}")
         return False
 
-def load_baseline2_config():
-    """加载企业发版基准值配置"""
-    if os.path.exists(BASELINE2_CONFIG_FILE):
-        try:
-            with open(BASELINE2_CONFIG_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            logging.error(f"加载第二基准值配置失败: {e}")
-    return {}
 
-def save_baseline2_config(config):
-    """保存企业发版基准值配置"""
-    try:
-        with open(BASELINE2_CONFIG_FILE, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
-        return True
-    except Exception as e:
-        logging.error(f"保存第二基准值配置失败: {e}")
-        return False
 
 def load_enterprise_config():
-    """加载开源发版基准值配置"""
+    """加载企业发版基准值配置"""
     if os.path.exists(ENTERPRISE_CONFIG_FILE):
         try:
             with open(ENTERPRISE_CONFIG_FILE, 'r', encoding='utf-8') as f:
@@ -443,13 +425,33 @@ def load_enterprise_config():
     return {}
 
 def save_enterprise_config(config):
-    """保存开源发版基准值配置"""
+    """保存企业发版基准值配置"""
     try:
         with open(ENTERPRISE_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         return True
     except Exception as e:
         logging.error(f"保存企业发版基准值配置失败: {e}")
+        return False
+
+def load_opensource_config():
+    """加载开源发版基准值配置"""
+    if os.path.exists(OPENSOURCE_CONFIG_FILE):
+        try:
+            with open(OPENSOURCE_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.error(f"加载开源发版基准值配置失败: {e}")
+    return {}
+
+def save_opensource_config(config):
+    """保存开源发版基准值配置"""
+    try:
+        with open(OPENSOURCE_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logging.error(f"保存开源发版基准值配置失败: {e}")
         return False
 
 def calculate_performance_percentage(actual_value, baseline_value):
@@ -471,29 +473,29 @@ def master():
     """基准值配置页面"""
     return render_template('master.html')
 
-@app.route('/baselines', methods=['GET'])
+@app.route('/masters', methods=['GET'])
 @login_required
 def get_masters():
-    """获取基准值配置"""
+    """获取Master基准值配置"""
     try:
-        baselines = load_baseline_config()
+        baselines = load_master_config()
         return jsonify(baselines)
     except Exception as e:
-        logging.error(f"获取基准值失败: {e}")
+        logging.error(f"获取Master基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/baselines', methods=['POST'])
+@app.route('/masters', methods=['POST'])
 @login_required
 def save_masters():
-    """保存基准值配置"""
+    """保存Master基准值配置"""
     try:
         baselines = request.json
-        if save_baseline_config(baselines):
-            return jsonify({"message": "基准值保存成功"})
+        if save_master_config(baselines):
+            return jsonify({"message": "Master基准值保存成功"})
         else:
             return jsonify({"error": "保存失败"}), 500
     except Exception as e:
-        logging.error(f"保存基准值失败: {e}")
+        logging.error(f"保存Master基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/opensource')
@@ -507,7 +509,7 @@ def opensource_page():
 def get_opensource_config():
     """获取开源发版基准值配置"""
     try:
-        baselines = load_enterprise_config()
+        baselines = load_opensource_config()
         return jsonify(baselines)
     except Exception as e:
         logging.error(f"获取开源发版基准值失败: {e}")
@@ -515,11 +517,11 @@ def get_opensource_config():
 
 @app.route('/opensources', methods=['POST'])
 @login_required
-def save_opensource_config():
+def save_opensource_config_api():
     """保存开源发版基准值配置"""
     try:
         baselines = request.json
-        if save_enterprise_config(baselines):
+        if save_opensource_config(baselines):
             return jsonify({"message": "开源发版基准值保存成功"})
         else:
             return jsonify({"error": "保存失败"}), 500
@@ -538,7 +540,7 @@ def enterprise_page():
 def get_enterprise_config():
     """获取企业发版基准值配置"""
     try:
-        baselines = load_baseline2_config()
+        baselines = load_enterprise_config()
         return jsonify(baselines)
     except Exception as e:
         logging.error(f"获取企业发版基准值失败: {e}")
@@ -550,7 +552,7 @@ def save_enterprise_config_api():
     """保存企业发版基准值配置"""
     try:
         baselines = request.json
-        if save_baseline2_config(baselines):
+        if save_enterprise_config(baselines):
             return jsonify({"message": "企业发版基准值保存成功"})
         else:
             return jsonify({"error": "保存失败"}), 500
@@ -565,7 +567,7 @@ def export_csv():
     try:
         request_data = request.json
         export_data = request_data.get('export_data', {})
-        baseline_type = request_data.get('baseline_type', 'baseline1')
+        baseline_type = request_data.get('baseline_type', 'master')
         
         if not export_data:
             return jsonify({'error': '没有数据可导出'}), 400
@@ -653,7 +655,7 @@ def export_csv():
         
         # 生成下载文件名
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        baseline_name = "第二基准值" if baseline_type == 'baseline2' else "标准基准值"
+        baseline_name = "企业发版基准值" if baseline_type == 'enterprise' else "开源发版基准值" if baseline_type == 'opensource' else "Master基准值"
         download_name = f'TSBS分析数据导出_{baseline_name}_{timestamp}.xlsx'
         
         return send_file(
@@ -666,6 +668,166 @@ def export_csv():
     except Exception as e:
         logging.error(f"Excel导出失败: {str(e)}")
         return jsonify({'error': f'导出失败: {str(e)}'}), 500
+
+@app.route('/upload-csv')
+@login_required
+def upload_csv_page():
+    """CSV文件上传页面"""
+    return render_template('upload_csv.html')
+
+@app.route('/api/upload-enterprise-csv', methods=['POST'])
+@login_required
+def upload_enterprise_csv():
+    """上传企业版CSV文件并更新配置"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        if not file.filename.endswith('.csv'):
+            return jsonify({'error': '请上传CSV格式的文件'}), 400
+        
+        # 读取CSV文件
+        csv_content = file.read().decode('utf-8')
+        df = pd.read_csv(io.StringIO(csv_content))
+        
+        # 解析CSV并生成配置
+        enterprise_config = parse_enterprise_csv_from_dataframe(df)
+        
+        # 保存配置
+        save_enterprise_config(enterprise_config)
+        
+        return jsonify({
+            'success': True,
+            'message': f'企业版配置更新成功，共处理 {len(enterprise_config)} 个配置项',
+            'config_count': len(enterprise_config),
+            'sample_keys': list(enterprise_config.keys())[:5]  # 显示前5个配置键
+        })
+        
+    except Exception as e:
+        logging.error(f"Upload enterprise CSV error: {str(e)}")
+        return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
+
+@app.route('/api/upload-opensource-csv', methods=['POST'])
+@login_required
+def upload_opensource_csv():
+    """上传开源版CSV文件并更新配置"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        if not file.filename.endswith('.csv'):
+            return jsonify({'error': '请上传CSV格式的文件'}), 400
+        
+        # 读取CSV文件
+        csv_content = file.read().decode('utf-8')
+        df = pd.read_csv(io.StringIO(csv_content))
+        
+        # 解析CSV并生成配置
+        opensource_config = parse_opensource_csv_from_dataframe(df)
+        
+        # 保存配置
+        save_opensource_config(opensource_config)  # 保存到opensource_config.json
+        
+        return jsonify({
+            'success': True,
+            'message': f'开源版配置更新成功，共处理 {len(opensource_config)} 个配置项',
+            'config_count': len(opensource_config),
+            'sample_keys': list(opensource_config.keys())[:5]  # 显示前5个配置键
+        })
+        
+    except Exception as e:
+        logging.error(f"Upload opensource CSV error: {str(e)}")
+        return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
+
+def parse_enterprise_csv_from_dataframe(df):
+    """从DataFrame解析企业版CSV数据"""
+    # 获取头部信息
+    exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
+    cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
+    scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
+    worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
+    
+    # 初始化企业版配置
+    enterprise_config = {}
+    
+    # 处理每一列（配置）
+    for col_idx in range(1, len(df.columns)):
+        # 提取配置参数
+        exec_type = exec_type_row.iloc[col_idx - 1] 
+        cluster = int(cluster_row.iloc[col_idx - 1])
+        scale = int(scale_row.iloc[col_idx - 1])
+        worker = int(worker_row.iloc[col_idx - 1])
+        
+        # 创建配置键
+        config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+        
+        # 初始化配置（如果不存在）
+        if config_key not in enterprise_config:
+            enterprise_config[config_key] = {}
+        
+        # 提取此配置的指标值（从第4行开始）
+        for row_idx in range(4, len(df)):
+            metric_name = df.iloc[row_idx, 0]  # 第一列包含指标名称
+            metric_value = df.iloc[row_idx, col_idx]
+            
+            # 转换指标名称以匹配配置格式
+            if metric_name == 'import_speed':
+                enterprise_config[config_key]['import_speed'] = float(metric_value)
+            else:
+                # 将下划线转换为连字符以保持一致性
+                config_metric_name = metric_name.replace('_', '-')
+                enterprise_config[config_key][config_metric_name] = float(metric_value)
+    
+    return enterprise_config
+
+def parse_opensource_csv_from_dataframe(df):
+    """从DataFrame解析开源版CSV数据"""
+    # 获取头部信息
+    exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
+    cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
+    scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
+    worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
+    
+    # 初始化开源版配置
+    opensource_config = {}
+    
+    # 处理每一列（配置）
+    for col_idx in range(1, len(df.columns)):
+        # 提取配置参数
+        exec_type = exec_type_row.iloc[col_idx - 1] 
+        cluster = int(cluster_row.iloc[col_idx - 1])
+        scale = int(scale_row.iloc[col_idx - 1])
+        worker = int(worker_row.iloc[col_idx - 1])
+        
+        # 创建配置键
+        config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+        
+        # 初始化配置（如果不存在）
+        if config_key not in opensource_config:
+            opensource_config[config_key] = {}
+        
+        # 提取此配置的指标值（从第4行开始）
+        for row_idx in range(4, len(df)):
+            metric_name = df.iloc[row_idx, 0]  # 第一列包含指标名称
+            metric_value = df.iloc[row_idx, col_idx]
+            
+            # 转换指标名称以匹配配置格式
+            if metric_name == 'import_speed':
+                opensource_config[config_key]['import_speed'] = float(metric_value)
+            else:
+                # 将下划线转换为连字符以保持一致性
+                config_metric_name = metric_name.replace('_', '-')
+                opensource_config[config_key][config_metric_name] = float(metric_value)
+    
+    return opensource_config
 
 if __name__ == '__main__':
     try:
