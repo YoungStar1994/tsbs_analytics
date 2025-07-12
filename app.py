@@ -74,8 +74,9 @@ def login_required(f):
     return decorated_function
 
 # 基准值配置文件路径
-BASELINE_CONFIG_FILE = 'baseline_config.json'
-BASELINE2_CONFIG_FILE = 'baseline2_config.json'  # 第二基准值配置文件
+BASELINE_CONFIG_FILE = 'master_config.json'
+BASELINE2_CONFIG_FILE = 'enterprise_config.json'  # 企业发版基准值配置文件
+ENTERPRISE_CONFIG_FILE = 'opensource_config.json'  # 开源发版基准值配置文件
 PID_FILE = 'app.pid'
 
 def write_pid_file():
@@ -292,6 +293,8 @@ def get_data():
         baseline_type = filters.get('baseline_type', 'baseline1')
         if baseline_type == 'baseline2':
             baselines = load_baseline2_config()
+        elif baseline_type == 'enterprise':
+            baselines = load_enterprise_config()
         else:
             baselines = load_baseline_config()
             
@@ -409,7 +412,7 @@ def save_baseline_config(config):
         return False
 
 def load_baseline2_config():
-    """加载第二基准值配置"""
+    """加载企业发版基准值配置"""
     if os.path.exists(BASELINE2_CONFIG_FILE):
         try:
             with open(BASELINE2_CONFIG_FILE, 'r', encoding='utf-8') as f:
@@ -419,13 +422,33 @@ def load_baseline2_config():
     return {}
 
 def save_baseline2_config(config):
-    """保存第二基准值配置"""
+    """保存企业发版基准值配置"""
     try:
         with open(BASELINE2_CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         return True
     except Exception as e:
         logging.error(f"保存第二基准值配置失败: {e}")
+        return False
+
+def load_enterprise_config():
+    """加载开源发版基准值配置"""
+    if os.path.exists(ENTERPRISE_CONFIG_FILE):
+        try:
+            with open(ENTERPRISE_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.error(f"加载企业发版基准值配置失败: {e}")
+    return {}
+
+def save_enterprise_config(config):
+    """保存开源发版基准值配置"""
+    try:
+        with open(ENTERPRISE_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logging.error(f"保存企业发版基准值配置失败: {e}")
         return False
 
 def calculate_performance_percentage(actual_value, baseline_value):
@@ -441,15 +464,15 @@ def calculate_performance_percentage_reverse(actual_value, baseline_value):
     # 对于延迟，值越小越好，所以用基准值减去实际值
     return ((baseline_value - actual_value) / baseline_value) * 100
 
-@app.route('/baseline')
+@app.route('/master')
 @login_required
-def baseline():
+def master():
     """基准值配置页面"""
-    return render_template('baseline.html')
+    return render_template('master.html')
 
 @app.route('/baselines', methods=['GET'])
 @login_required
-def get_baselines():
+def get_masters():
     """获取基准值配置"""
     try:
         baselines = load_baseline_config()
@@ -460,7 +483,7 @@ def get_baselines():
 
 @app.route('/baselines', methods=['POST'])
 @login_required
-def save_baselines():
+def save_masters():
     """保存基准值配置"""
     try:
         baselines = request.json
@@ -472,35 +495,66 @@ def save_baselines():
         logging.error(f"保存基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/baseline2')
+@app.route('/opensource')
 @login_required
-def baseline2():
-    """第二基准值配置页面"""
-    return render_template('baseline2.html')
+def opensource_page():
+    """开源发版基准值配置页面"""
+    return render_template('opensource.html')
 
-@app.route('/baselines2', methods=['GET'])
+@app.route('/opensources', methods=['GET'])
 @login_required
-def get_baselines2():
-    """获取第二基准值配置"""
+def get_opensource_config():
+    """获取开源发版基准值配置"""
+    try:
+        baselines = load_enterprise_config()
+        return jsonify(baselines)
+    except Exception as e:
+        logging.error(f"获取开源发版基准值失败: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/opensources', methods=['POST'])
+@login_required
+def save_opensource_config():
+    """保存开源发版基准值配置"""
+    try:
+        baselines = request.json
+        if save_enterprise_config(baselines):
+            return jsonify({"message": "开源发版基准值保存成功"})
+        else:
+            return jsonify({"error": "保存失败"}), 500
+    except Exception as e:
+        logging.error(f"保存开源发版基准值失败: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/enterprise')
+@login_required
+def enterprise_page():
+    """企业发版基准值配置页面"""
+    return render_template('enterprise.html')
+
+@app.route('/enterprises', methods=['GET'])
+@login_required
+def get_enterprise_config():
+    """获取企业发版基准值配置"""
     try:
         baselines = load_baseline2_config()
         return jsonify(baselines)
     except Exception as e:
-        logging.error(f"获取第二基准值失败: {e}")
+        logging.error(f"获取企业发版基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/baselines2', methods=['POST'])
+@app.route('/enterprises', methods=['POST'])
 @login_required
-def save_baselines2():
-    """保存第二基准值配置"""
+def save_enterprise_config_api():
+    """保存企业发版基准值配置"""
     try:
         baselines = request.json
         if save_baseline2_config(baselines):
-            return jsonify({"message": "第二基准值保存成功"})
+            return jsonify({"message": "企业发版基准值保存成功"})
         else:
             return jsonify({"error": "保存失败"}), 500
     except Exception as e:
-        logging.error(f"保存第二基准值失败: {e}")
+        logging.error(f"保存企业发版基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/export-csv', methods=['POST'])

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第二基准值配置 - TSBS Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .baseline-table {
+            font-size: 12px;
+        }
+        .baseline-table th {
+            background-color: #f8f9fa;
+            text-align: center;
+            vertical-align: middle;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .baseline-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .baseline-input {
+            width: 80px;
+            font-size: 11px;
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 2px 4px;
+        }
+        .config-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+        .sticky-column {
+            position: sticky;
+            left: 0;
+            background-color: #f8f9fa;
+            z-index: 5;
+        }
+        .save-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .baseline2-header {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">TSBS Analytics</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="{{ url_for('index') }}">数据分析</a>
+                <a class="nav-link" href="{{ url_for('master') }}">Master基准值配置</a>
+                <a class="nav-link" href="{{ url_for('enterprise_page') }}">企业发版基准值配置</a>
+                <a class="nav-link active" href="{{ url_for('opensource_page') }}">开源发版基准值配置</a>
+                <a class="nav-link" href="#" onclick="logout()">登出</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-primary">企业发版基准值配置</h2>
+                <p class="text-muted">配置企业发版基准值，用于与master基准值进行对比分析</p>
+
+                <!-- 配置信息 -->
+                <div class="config-section baseline2-header">
+                    <h5>配置说明</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Scales:</strong> <span id="scales-info"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Clusters:</strong> <span id="clusters-info"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Execution Types:</strong> <span id="execution-types-info"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Workers:</strong> <span id="workers-info"></span>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">总计配置组合数: <span id="total-combinations"></span></small>
+                    </div>
+                </div>
+
+                <!-- 基准值表格 -->
+                <div class="table-container">
+                    <table class="table table-bordered baseline-table" id="baseline-table">
+                        <thead id="baseline-thead">
+                            <!-- 动态生成表头 -->
+                        </thead>
+                        <tbody id="baseline-tbody">
+                            <!-- 动态生成表格内容 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="mb-3">
+                    <button class="btn btn-primary me-2" onclick="loadOptionsAndBaselines()">
+                        <i class="fas fa-refresh"></i> 重新加载数据
+                    </button>
+                    <button class="btn btn-info me-2" onclick="fillBaselines()">
+                        <i class="fas fa-fill"></i> 重新填充基准值
+                    </button>
+                </div>
+                
+                <button class="btn btn-success save-btn" onclick="saveBaselines()">
+                    <i class="fas fa-save"></i> 保存企业发版基准值
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    <script>
+        let options = {};
+        let currentBaselines = {};
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 首先检查认证状态
+            await checkAuthStatus();
+            // 然后加载数据
+            await loadOptionsAndBaselines();
+        });
+
+        // 检查登录状态
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/check-auth');
+                const data = await response.json();
+                if (!data.authenticated) {
+                    window.location.href = '/login';
+                    return;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                window.location.href = '/login';
+                return;
+            }
+        }
+
+        // 登出功能
+        function logout() {
+            if (confirm('确定要登出吗？')) {
+                fetch('/api/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    // 即使API调用失败也跳转到登录页
+                    window.location.href = '/login';
+                });
+            }
+        }
+
+        // 加载选项和基准值
+        async function loadOptionsAndBaselines() {
+            try {
+                // 先加载选项
+                await loadOptions();
+                // 然后加载基准值
+                await loadBaselines();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                alert('页面初始化失败: ' + error.message);
+            }
+        }
+
+        // 加载选项
+        async function loadOptions() {
+            try {
+                const response = await fetch('/options');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                options = await response.json();
+                console.log('加载的选项:', options);
+                
+                // 显示配置信息
+                document.getElementById('scales-info').textContent = options.scales?.join(', ') || '无';
+                document.getElementById('clusters-info').textContent = options.clusters?.join(', ') || '无';
+                document.getElementById('execution-types-info').textContent = options.execution_types?.join(', ') || '无';
+                document.getElementById('workers-info').textContent = options.workers?.join(', ') || '无';
+                
+                // 计算总组合数
+                const totalCombinations = (options.scales?.length || 0) * 
+                                        (options.clusters?.length || 0) * 
+                                        (options.execution_types?.length || 0) * 
+                                        (options.workers?.length || 0);
+                document.getElementById('total-combinations').textContent = totalCombinations;
+                
+                generateTableHeader();
+                generateTable();
+                
+                console.log('表格生成完成');
+            } catch (error) {
+                console.error('加载选项失败:', error);
+                alert('加载配置选项失败: ' + error.message);
+                throw error;
+            }
+        }
+
+        // 生成表头
+        function generateTableHeader() {
+            const thead = document.getElementById('baseline-thead');
+            thead.innerHTML = '';
+            
+            const queryTypes = options.query_types || [];
+            const queryTypesCount = queryTypes.length;
+            
+            // 第一行表头
+            const headerRow1 = document.createElement('tr');
+            headerRow1.innerHTML = `
+                <th class="sticky-column" rowspan="2">Scale</th>
+                <th class="sticky-column" rowspan="2" style="left: 60px;">Cluster</th>
+                <th class="sticky-column" rowspan="2" style="left: 120px;">Execution Type</th>
+                <th class="sticky-column" rowspan="2" style="left: 200px;">Workers</th>
+                <th colspan="2">导入速度 (import_speed)</th>
+                <th colspan="${queryTypesCount}">查询延迟 (mean_ms)</th>
+            `;
+            
+            // 第二行表头
+            const headerRow2 = document.createElement('tr');
+            let headerRow2Html = `
+                <th>基准值</th>
+                <th>单位</th>
+            `;
+            
+            // 动态添加查询类型列
+            queryTypes.forEach(queryType => {
+                headerRow2Html += `<th>${queryType}</th>`;
+            });
+            
+            headerRow2.innerHTML = headerRow2Html;
+            
+            thead.appendChild(headerRow1);
+            thead.appendChild(headerRow2);
+        }
+
+        // 加载现有基准值（使用不同的API端点）
+        async function loadBaselines() {
+            try {
+                console.log('开始加载企业发版基准值...');
+                const response = await fetch('/opensources');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                currentBaselines = await response.json();
+                console.log('加载的企业发版基准值:', currentBaselines);
+                
+                // 等待一小段时间确保DOM更新完成
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                fillBaselines();
+            } catch (error) {
+                console.error('加载企业发版基准值失败:', error);
+                alert('加载企业发版基准值失败: ' + error.message);
+                throw error;
+            }
+        }
+
+        // 生成表格  
+        function generateTable() {
+            const tbody = document.getElementById('baseline-tbody');
+            tbody.innerHTML = '';
+
+            if (!options.scales || !options.clusters || !options.execution_types || !options.workers) {
+                const queryTypesCount = (options.query_types?.length || 0) + 6; // 6 is for basic columns + import speed
+                tbody.innerHTML = `<tr><td colspan="${queryTypesCount}" class="text-center">无可用配置选项</td></tr>`;
+                return;
+            }
+
+            console.log('开始生成表格...');
+            let rowCount = 0;
+            const processedRows = new Set(); // 用于跟踪已处理的行，避免重复
+            
+            // 确保数组去重
+            const uniqueScales = [...new Set(options.scales)];
+            const uniqueClusters = [...new Set(options.clusters)];
+            const uniqueExecutionTypes = [...new Set(options.execution_types)];
+            const uniqueWorkers = [...new Set(options.workers)];
+            
+            uniqueScales.forEach(scale => {
+                uniqueClusters.forEach(cluster => {
+                    uniqueExecutionTypes.forEach(execType => {
+                        uniqueWorkers.forEach(worker => {
+                            const rowKey = `${scale}_${cluster}_${execType}_${worker}`;
+                            if (!processedRows.has(rowKey)) {
+                                processedRows.add(rowKey);
+                                const row = createTableRow(scale, cluster, execType, worker);
+                                tbody.appendChild(row);
+                                rowCount++;
+                            }
+                        });
+                    });
+                });
+            });
+            
+            console.log(`表格生成完成，共 ${rowCount} 行，去重后无重复行`);
+        }
+
+        // 创建表格行
+        function createTableRow(scale, cluster, execType, worker) {
+            const row = document.createElement('tr');
+            const key = `${scale}_${cluster}_${execType}_${worker}`;
+            const queryTypes = options.query_types || [];
+            
+            console.log(`创建行: ${key}`);
+            
+            let rowHtml = `
+                <td class="sticky-column">${scale}</td>
+                <td class="sticky-column" style="left: 60px;">${cluster}</td>
+                <td class="sticky-column" style="left: 120px;">${execType}</td>
+                <td class="sticky-column" style="left: 200px;">${worker}</td>
+                <td><input type="number" class="baseline-input" data-key="${key}" data-metric="import_speed" placeholder="0" step="0.01"></td>
+                <td>rows/sec</td>
+            `;
+            
+            // 动态添加查询类型输入框
+            queryTypes.forEach(queryType => {
+                // 使用查询类型名称作为metric，但需要处理特殊字符（与后端保持一致）
+                const metricKey = queryType.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase().replace(/_/g, '-');
+                console.log(`查询类型转换: ${queryType} => ${metricKey}`);
+                rowHtml += `<td><input type="number" class="baseline-input" data-key="${key}" data-metric="${metricKey}" data-query-type="${queryType}" placeholder="0" step="0.01"></td>`;
+            });
+            
+            row.innerHTML = rowHtml;
+            return row;
+        }
+
+        // 填充已有的基准值
+        function fillBaselines() {
+            console.log('开始填充企业发版基准值到表格...');
+            console.log('当前企业发版基准值数据:', currentBaselines);
+            
+            let filledCount = 0;
+            let totalInputs = 0;
+            
+            document.querySelectorAll('.baseline-input').forEach(input => {
+                totalInputs++;
+                const key = input.dataset.key;
+                const metric = input.dataset.metric;
+                
+                console.log(`检查输入框: key=${key}, metric=${metric}`);
+                
+                if (currentBaselines[key]) {
+                    console.log(`找到配置键: ${key}`, currentBaselines[key]);
+                    if (currentBaselines[key][metric] !== undefined) {
+                        input.value = currentBaselines[key][metric];
+                        filledCount++;
+                        console.log(`✓ 填充 ${key}.${metric} = ${currentBaselines[key][metric]}`);
+                    } else {
+                        console.log(`✗ 未找到指标 ${metric} 在配置 ${key} 中`);
+                    }
+                } else {
+                    console.log(`✗ 未找到配置键: ${key}`);
+                }
+            });
+            
+            console.log(`总共 ${totalInputs} 个输入框，填充了 ${filledCount} 个企业发版基准值`);
+            
+            // 显示一些基准值键的示例
+            console.log('企业发版基准值配置键示例:', Object.keys(currentBaselines).slice(0, 5));
+        }
+
+        // 保存基准值（使用不同的API端点）
+        async function saveBaselines() {
+            const baselines = {};
+            
+            document.querySelectorAll('.baseline-input').forEach(input => {
+                const key = input.dataset.key;
+                const metric = input.dataset.metric;
+                const value = parseFloat(input.value) || 0;
+                
+                if (!baselines[key]) {
+                    baselines[key] = {};
+                }
+                baselines[key][metric] = value;
+            });
+
+            try {
+                const response = await fetch('/opensources', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(baselines)
+                });
+
+                if (response.ok) {
+                    alert('企业发版基准值保存成功！');
+                    currentBaselines = baselines;
+                } else {
+                    throw new Error('保存失败');
+                }
+            } catch (error) {
+                console.error('保存企业发版基准值失败:', error);
+                alert('保存企业发版基准值失败，请重试');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -679,8 +679,9 @@
     <div class="container">
         <div class="header">
             <div class="nav-links">
-                <a href="/baseline" class="nav-link">基准值配置</a>
-                <a href="/baseline2" class="nav-link">第二基准值配置</a>
+                <a href="/master" class="nav-link">Master基准值配置</a>
+                <a href="/enterprise" class="nav-link">企业发版基准值配置</a>
+                <a href="/opensource" class="nav-link">开源发版基准值配置</a>
                 <a href="#" onclick="logout()" class="nav-link">登出</a>
             </div>
             <h1>TSBS Analytics</h1>
@@ -741,8 +742,9 @@
                 <div class="filter-group">
                     <label for="baseline-type">基准值类型</label>
                     <select id="baseline-type" class="filter-select select2-single" style="width: 100%">
-                        <option value="baseline1">标准基准值</option>
-                        <option value="baseline2">第二基准值</option>
+                        <option value="baseline1">Master基准值</option>
+                        <option value="baseline2">企业发版基准值</option>
+                        <option value="enterprise">开源发版基准值</option>
                     </select>
                 </div>
             </div>
@@ -1218,7 +1220,8 @@
         if (cluster) conditionParts.push(`集群: ${cluster}`);
         if (worker) conditionParts.push(`工作线程: ${worker}`);
         if (phase) conditionParts.push(`执行类型: ${phase}`);
-        const baselineTypeName = baselineType === 'baseline2' ? '第二基准值' : '标准基准值';
+                    const baselineTypeName = baselineType === 'baseline2' ? '企业发版基准值' : 
+                                   baselineType === 'enterprise' ? '开源发版基准值' : 'Master基准值';
         conditionParts.push(`基准值类型: ${baselineTypeName}`);
         
         const titleText = document.createElement('div');

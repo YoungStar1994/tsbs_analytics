@@ -567,4 +567,4 @@ class TSBSDataLoader:
         logging.info("Forced data reload completed")
     
 # 修正基础路径为实际路径
-loader = TSBSDataLoader('/data1/reports/tsbs_dist_server_gitee')
+loader = TSBSDataLoader('/Users/yangxing/Desktop/tsbs_dist_server_gitee')
