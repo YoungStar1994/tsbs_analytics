@@ -7,9 +7,9 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 # 设置PID文件路径
-PID_FILE="$PROJECT_DIR/app.pid"
-LOG_FILE="$PROJECT_DIR/app.log"
-ERROR_LOG_FILE="$PROJECT_DIR/app_error.log"
+PID_FILE="$PROJECT_DIR/logs/app.pid"
+LOG_FILE="$PROJECT_DIR/logs/app.log"
+ERROR_LOG_FILE="$PROJECT_DIR/logs/app_error.log"
 
 # 检查是否已经在运行
 if [ -f "$PID_FILE" ]; then

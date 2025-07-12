@@ -20,12 +20,12 @@ def setup_logging():
     log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     
     # 创建文件处理器
-    file_handler = logging.FileHandler('app.log', encoding='utf-8')
+    file_handler = logging.FileHandler('logs/app.log', encoding='utf-8')
     file_handler.setFormatter(log_formatter)
     file_handler.setLevel(logging.INFO)
     
     # 创建错误文件处理器
-    error_handler = logging.FileHandler('app_error.log', encoding='utf-8')
+    error_handler = logging.FileHandler('logs/app_error.log', encoding='utf-8')
     error_handler.setFormatter(log_formatter)
     error_handler.setLevel(logging.ERROR)
     
@@ -74,14 +74,15 @@ def login_required(f):
     return decorated_function
 
 # 基准值配置文件路径
-BASELINE_CONFIG_FILE = 'master_config.json'
-BASELINE2_CONFIG_FILE = 'enterprise_config.json'  # 企业发版基准值配置文件
-ENTERPRISE_CONFIG_FILE = 'opensource_config.json'  # 开源发版基准值配置文件
-PID_FILE = 'app.pid'
+BASELINE_CONFIG_FILE = 'config/master_config.json'
+BASELINE2_CONFIG_FILE = 'config/enterprise_config.json'  # 企业发版基准值配置文件
+ENTERPRISE_CONFIG_FILE = 'config/opensource_config.json'  # 开源发版基准值配置文件
+PID_FILE = 'logs/app.pid'
 
 def write_pid_file():
     """写入PID文件"""
     try:
+        os.makedirs(os.path.dirname(PID_FILE), exist_ok=True)
         with open(PID_FILE, 'w') as f:
             f.write(str(os.getpid()))
         logging.info(f"PID file written: {PID_FILE} (PID: {os.getpid()})")

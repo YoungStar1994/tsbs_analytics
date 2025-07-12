@@ -26,38 +26,51 @@
             padding: 20px;
         }
 
+        /* 修改header为flex布局 */
         .header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
             color: white;
-            position: relative;
+            background: none;
+            padding-top: 20px;
+            flex-wrap: wrap;
         }
 
-        .header h1 {
+        .header-title {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .header-title h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        .header p {
+        .header-title p {
             font-size: 1.1rem;
             opacity: 0.9;
         }
 
         .header .nav-links {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+            display: flex;
+            gap: 24px;
+            position: static;
+            top: unset;
+            right: unset;
         }
 
         .nav-link {
             color: white;
             text-decoration: none;
-            margin-left: 15px;
             padding: 8px 16px;
             border-radius: 20px;
             background: rgba(255,255,255,0.1);
             transition: all 0.3s ease;
+            font-size: 1.1rem;
         }
 
         .nav-link:hover {
@@ -678,14 +691,16 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="header-title">
+                <h1>TSBS Analytics</h1>
+                <p>时间序列基准测试数据分析平台</p>
+            </div>
             <div class="nav-links">
                 <a href="/master" class="nav-link">Master基准值配置</a>
                 <a href="/enterprise" class="nav-link">企业发版基准值配置</a>
                 <a href="/opensource" class="nav-link">开源发版基准值配置</a>
                 <a href="#" onclick="logout()" class="nav-link">登出</a>
             </div>
-            <h1>TSBS Analytics</h1>
-            <p>时间序列基准测试数据分析平台</p>
         </div>
 
         <div class="filter-panel">

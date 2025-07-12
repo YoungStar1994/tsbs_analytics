@@ -7,7 +7,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
 # 设置PID文件路径
-PID_FILE="$PROJECT_DIR/app.pid"
+PID_FILE="$PROJECT_DIR/logs/app.pid"
 
 # 检查PID文件是否存在
 if [ ! -f "$PID_FILE" ]; then

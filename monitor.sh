@@ -5,7 +5,7 @@
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
-PID_FILE="$PROJECT_DIR/app.pid"
+PID_FILE="$PROJECT_DIR/logs/app.pid"
 LOG_FILE="$PROJECT_DIR/app.log"
 ERROR_LOG_FILE="$PROJECT_DIR/app_error.log"
 HEALTH_LOG="$PROJECT_DIR/health.log"
