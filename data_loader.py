@@ -348,12 +348,8 @@ class TSBSDataLoader:
                     # 等待文件完全写入
                     time.sleep(5)
                     logging.info(f"New CSV file detected: {event.src_path}")
-                    # 获取包含该CSV文件的目录
-                    csv_dir = os.path.dirname(event.src_path)
-                    if os.path.basename(csv_dir) == 'query_result':
-                        dir_path = os.path.dirname(csv_dir)  # 向上一级到主目录
-                    else:
-                        dir_path = csv_dir  # 如果CSV不在query_result子目录中
+                    # 获取包含该CSV文件的目录 - CSV文件一定在query_result子目录中
+                    dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
                     self.loader.load_single_directory(dir_path)
             
             def on_modified(self, event):
@@ -361,11 +357,8 @@ class TSBSDataLoader:
                     # CSV文件被修改时重新加载
                     time.sleep(2)
                     logging.info(f"CSV file modified: {event.src_path}")
-                    csv_dir = os.path.dirname(event.src_path)
-                    if os.path.basename(csv_dir) == 'query_result':
-                        dir_path = os.path.dirname(csv_dir)  # 向上一级到主目录
-                    else:
-                        dir_path = csv_dir  # 如果CSV不在query_result子目录中
+                    # CSV文件一定在query_result子目录中
+                    dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
                     # 先移除旧数据再重新加载
                     dir_name = os.path.basename(dir_path)
                     if dir_name in self.loader.known_dirs:
@@ -375,12 +368,8 @@ class TSBSDataLoader:
             def on_deleted(self, event):
                 if not event.is_directory and str(event.src_path).endswith('TSBS_TEST_RESULT.csv'):
                     logging.info(f"CSV file deleted: {event.src_path}")
-                    # 获取包含该CSV文件的目录并移除数据
-                    csv_dir = os.path.dirname(event.src_path)
-                    if os.path.basename(csv_dir) == 'query_result':
-                        dir_path = os.path.dirname(csv_dir)  # 向上一级到主目录
-                    else:
-                        dir_path = csv_dir  # 如果CSV不在query_result子目录中
+                    # 获取包含该CSV文件的目录并移除数据 - CSV文件一定在query_result子目录中
+                    dir_path = os.path.dirname(os.path.dirname(event.src_path))  # 向上两级到主目录
                     self.loader.remove_directory_data(dir_path)
                 elif event.is_directory:
                     # 目录被删除时也要移除数据
