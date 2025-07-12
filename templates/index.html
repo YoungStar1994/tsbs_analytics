@@ -699,7 +699,7 @@
                 <a href="/master" class="nav-link">Master基准值配置</a>
                 <a href="/enterprise" class="nav-link">企业发版基准值配置</a>
                 <a href="/opensource" class="nav-link">开源发版基准值配置</a>
-                <a href="/upload-csv" class="nav-link">CSV文件上传</a>
+
                 <a href="#" onclick="logout()" class="nav-link">登出</a>
             </div>
         </div>
@@ -1236,8 +1236,8 @@
         if (cluster) conditionParts.push(`集群: ${cluster}`);
         if (worker) conditionParts.push(`工作线程: ${worker}`);
         if (phase) conditionParts.push(`执行类型: ${phase}`);
-                    const baselineTypeName = baselineType === 'baseline2' ? '企业发版基准值' : 
-                                   baselineType === 'enterprise' ? '开源发版基准值' : 'Master基准值';
+                    const baselineTypeName = baselineType === 'enterprise' ? '企业发版基准值' : 
+                                   baselineType === 'opensource' ? '开源发版基准值' : 'Master基准值';
         conditionParts.push(`基准值类型: ${baselineTypeName}`);
         
         const titleText = document.createElement('div');

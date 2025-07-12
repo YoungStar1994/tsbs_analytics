@@ -67,7 +67,7 @@
                 <a class="nav-link" href="{{ url_for('master') }}">Master基准值配置</a>
                 <a class="nav-link" href="{{ url_for('enterprise_page') }}">企业发版基准值配置</a>
                 <a class="nav-link active" href="{{ url_for('opensource_page') }}">开源发版基准值配置</a>
-                <a class="nav-link" href="{{ url_for('upload_csv_page') }}">CSV文件上传</a>
+
                 <a class="nav-link" href="#" onclick="logout()">登出</a>
             </div>
         </div>
@@ -76,8 +76,8 @@
     <div class="container-fluid mt-4">
         <div class="row">
             <div class="col-12">
-                <h2 class="text-primary">企业发版基准值配置</h2>
-                <p class="text-muted">配置企业发版基准值，用于与master基准值进行对比分析</p>
+                <h2 class="text-primary">开源发版基准值配置</h2>
+                <p class="text-muted">配置开源发版基准值</p>
 
                 <!-- 配置信息 -->
                 <div class="config-section baseline2-header">
@@ -107,8 +107,14 @@
                         <i class="fas fa-refresh"></i> 重新加载数据
                     </button>
                     <button class="btn btn-success ms-2" onclick="saveBaselines()">
-                        <i class="fas fa-save"></i> 保存企业发版基准值
+                        <i class="fas fa-save"></i> 保存开源发版基准值
                     </button>
+                    <form id="csv-upload-form" style="display:inline-block; margin-left:10px;">
+                        <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
+                        <button type="button" class="btn btn-warning ms-2" onclick="document.getElementById('csv-file-input').click();">
+                            <i class="fas fa-upload"></i> 上传CSV并更新
+                        </button>
+                    </form>
                 </div>
                 
                 <!-- 基准值表格 -->
@@ -261,24 +267,24 @@
             thead.appendChild(headerRow2);
         }
 
-        // 加载现有基准值（使用不同的API端点）
+        // 加载现有基准值（使用开源发版API端点）
         async function loadBaselines() {
             try {
-                console.log('开始加载企业发版基准值...');
+                console.log('开始加载开源发版基准值...');
                 const response = await fetch('/opensources');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 currentBaselines = await response.json();
-                console.log('加载的企业发版基准值:', currentBaselines);
+                console.log('加载的开源发版基准值:', currentBaselines);
                 
                 // 等待一小段时间确保DOM更新完成
                 await new Promise(resolve => setTimeout(resolve, 100));
                 
                 fillBaselines();
             } catch (error) {
-                console.error('加载企业发版基准值失败:', error);
-                alert('加载企业发版基准值失败: ' + error.message);
+                console.error('加载开源发版基准值失败:', error);
+                alert('加载开源发版基准值失败: ' + error.message);
                 throw error;
             }
         }
@@ -354,8 +360,8 @@
 
         // 填充已有的基准值
         function fillBaselines() {
-            console.log('开始填充企业发版基准值到表格...');
-            console.log('当前企业发版基准值数据:', currentBaselines);
+            console.log('开始填充开源发版基准值到表格...');
+            console.log('当前开源发版基准值数据:', currentBaselines);
             
             let filledCount = 0;
             let totalInputs = 0;
@@ -381,13 +387,13 @@
                 }
             });
             
-            console.log(`总共 ${totalInputs} 个输入框，填充了 ${filledCount} 个企业发版基准值`);
+            console.log(`总共 ${totalInputs} 个输入框，填充了 ${filledCount} 个开源发版基准值`);
             
             // 显示一些基准值键的示例
-            console.log('企业发版基准值配置键示例:', Object.keys(currentBaselines).slice(0, 5));
+            console.log('开源发版基准值配置键示例:', Object.keys(currentBaselines).slice(0, 5));
         }
 
-        // 保存基准值（使用不同的API端点）
+        // 保存基准值（使用开源发版API端点）
         async function saveBaselines() {
             const baselines = {};
             
@@ -412,16 +418,48 @@
                 });
 
                 if (response.ok) {
-                    alert('企业发版基准值保存成功！');
+                    alert('开源发版基准值保存成功！');
                     currentBaselines = baselines;
                 } else {
                     throw new Error('保存失败');
                 }
             } catch (error) {
-                console.error('保存企业发版基准值失败:', error);
-                alert('保存企业发版基准值失败，请重试');
+                console.error('保存开源发版基准值失败:', error);
+                alert('保存开源发版基准值失败，请重试');
             }
         }
+
+        // CSV上传逻辑
+        document.getElementById('csv-file-input').addEventListener('change', async function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 文件格式验证
+            if (!file.name.endsWith('.csv')) {
+                alert('请选择CSV格式的文件');
+                event.target.value = '';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch('/api/upload-opensource-csv', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    alert('CSV上传并更新成功！' + data.message);
+                    await loadOptionsAndBaselines();
+                } else {
+                    alert('CSV上传失败: ' + (data.error || data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('CSV上传失败: ' + error.message);
+            }
+            event.target.value = '';
+        });
     </script>
 </body>
 </html>
