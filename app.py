@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 from data_loader import loader
 from datetime import datetime
 import pandas as pd
+from pandas import DataFrame
 import logging
 import json
 import os
@@ -13,6 +14,7 @@ import secrets
 from functools import wraps
 import io
 import zipfile
+from typing import Optional, Dict, Any, List
 
 # 配置日志 - 支持文件输出
 def setup_logging():
@@ -173,7 +175,7 @@ def login():
 def api_login():
     """API登录接口"""
     try:
-        data = request.json
+        data = request.json or {}
         username = data.get('username', '').strip()
         password = data.get('password', '')
         
@@ -220,7 +222,7 @@ def check_auth():
 def get_data():
     """处理数据筛选请求，增加健壮性处理"""
     try:
-        filters = request.json
+        filters = request.json or {}
         
         # 获取当前数据集
         df = loader.get_data()
@@ -260,35 +262,35 @@ def get_data():
         if filters.get('scales'):
             try:
                 scales = [int(s) for s in filters['scales']]
-                filtered = filtered[filtered['scale'].isin(scales)]
+                filtered = filtered[filtered['scale'].isin(scales)]  # type: ignore
             except:
                 pass
             
         if filters.get('clusters'):
             try:
                 clusters = [int(c) for c in filters['clusters']]
-                filtered = filtered[filtered['cluster'].isin(clusters)]
+                filtered = filtered[filtered['cluster'].isin(clusters)]  # type: ignore
             except:
                 pass
             
         if filters.get('query_types'):
-            if 'query_type' in filtered.columns:
-                filtered = filtered[filtered['query_type'].isin(filters['query_types'])]
+            if 'query_type' in filtered.columns:  # type: ignore
+                filtered = filtered[filtered['query_type'].isin(filters['query_types'])]  # type: ignore
             
         if filters.get('workers'):
             try:
                 workers = [int(w) for w in filters['workers']]
-                filtered = filtered[filtered['worker'].isin(workers)]
+                filtered = filtered[filtered['worker'].isin(workers)]  # type: ignore
             except:
                 pass
         if filters.get('execution_types'):
-            if 'phase' in filtered.columns:
-                filtered = filtered[filtered['phase'].astype(str).isin(filters['execution_types'])]
+            if 'phase' in filtered.columns:  # type: ignore
+                filtered = filtered[filtered['phase'].astype(str).isin(filters['execution_types'])]  # type: ignore
         
         # 转换时间为北京时间用于表格显示
         table_data = filtered.copy()
-        if 'datetime' in table_data.columns:
-            table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)
+        if 'datetime' in table_data.columns:  # type: ignore
+            table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)  # type: ignore
         
         # 添加基准值对比
         baseline_type = filters.get('baseline_type', 'master')
@@ -303,7 +305,7 @@ def get_data():
             logging.info(f"Using master baseline with {len(baselines)} configurations")
             
         if baselines:
-            for idx, row in table_data.iterrows():
+            for idx, row in table_data.iterrows():  # type: ignore
                 baseline_key = f"{row.get('scale', '')}_{row.get('cluster', '')}_{row.get('phase', '')}_{row.get('worker', '')}"
                 if baseline_key in baselines:
                     baseline_data = baselines[baseline_key]
@@ -315,7 +317,7 @@ def get_data():
                             actual_import = row.get('import_speed', 0)
                             percentage = calculate_performance_percentage(actual_import, baseline_import)
                             if percentage is not None:
-                                table_data.at[idx, 'import_speed_baseline_pct'] = round(percentage, 2)
+                                table_data.at[idx, 'import_speed_baseline_pct'] = round(percentage, 2)  # type: ignore
                                 # 调试日志
                                 logging.info(f"Import speed comparison - Baseline: {baseline_import}, Actual: {actual_import}, Percentage: {percentage}%")
                     
@@ -332,7 +334,7 @@ def get_data():
                                 # 对于延迟，值越小越好，所以计算反向百分比
                                 percentage = calculate_performance_percentage_reverse(actual_value, baseline_value)
                                 if percentage is not None:
-                                    table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)
+                                    table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)  # type: ignore
                                     # 调试日志
                                     logging.info(f"Query {query_type} comparison - Baseline: {baseline_value}ms, Actual: {actual_value}ms, Percentage: {percentage}%")
                 else:
@@ -341,7 +343,7 @@ def get_data():
         
         # 返回数据
         return jsonify({
-            'table_data': table_data.replace({pd.NaT: None}).to_dict(orient='records'),
+            'table_data': table_data.replace({pd.NaT: None}).to_dict(orient='records'),  # type: ignore
             'chart_data': prepare_chart_data(filtered, filters.get('metric', 'mean_ms'))
         })
     except Exception as e:
@@ -568,7 +570,7 @@ def save_enterprise_config_api():
 def export_csv():
     """导出筛选结果为Excel文件 - 每个表格作为一个sheet页"""
     try:
-        request_data = request.json
+        request_data = request.json or {}
         export_data = request_data.get('export_data', {})
         baseline_type = request_data.get('baseline_type', 'master')
         
@@ -579,7 +581,7 @@ def export_csv():
         memory_file = io.BytesIO()
         
         # 使用pandas的ExcelWriter创建多sheet的Excel文件
-        with pd.ExcelWriter(memory_file, engine='openpyxl') as writer:
+        with pd.ExcelWriter(memory_file, engine='openpyxl', mode='w') as writer:  # type: ignore
             for table_key, table_info in export_data.items():
                 metadata = table_info['metadata']
                 data_rows = table_info['data']
@@ -686,7 +688,7 @@ def upload_enterprise_csv():
         if file.filename == '':
             return jsonify({'error': '没有选择文件'}), 400
         
-        if not file.filename.endswith('.csv'):
+        if not file.filename or not file.filename.endswith('.csv'):
             return jsonify({'error': '请上传CSV格式的文件'}), 400
         
         # 读取CSV文件
@@ -722,7 +724,7 @@ def upload_opensource_csv():
         if file.filename == '':
             return jsonify({'error': '没有选择文件'}), 400
         
-        if not file.filename.endswith('.csv'):
+        if not file.filename or not file.filename.endswith('.csv'):
             return jsonify({'error': '请上传CSV格式的文件'}), 400
         
         # 读取CSV文件
