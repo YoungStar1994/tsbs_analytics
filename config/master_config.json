@@ -1,578 +1,2978 @@
 {
   "100_1_insert_1": {
     "import_speed": 1656591.0491780816,
-    "cpu-max-all-1": 5.66,
-    "cpu-max-all-8": 16.48333333333333,
-    "double-groupby-1": 39.60333333333333,
-    "double-groupby-5": 58.129999999999995,
-    "double-groupby-all": 73.07333333333334,
-    "groupby-orderby-limit": 20.006666666666664,
-    "high-cpu-1": 9.916666666666666,
-    "high-cpu-all": 41.13666666666667,
-    "lastpoint": 6.076666666666667,
-    "single-groupby-1-1-1": 4.48,
-    "single-groupby-1-1-12": 5.659999999999999,
-    "single-groupby-1-8-1": 7.239999999999999,
-    "single-groupby-5-1-1": 4.033333333333334,
-    "single-groupby-5-1-12": 8.37,
-    "single-groupby-5-8-1": 9.633333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 6.059342105263158,
+      "med_ms": 5.365,
+      "std_ms": 1.3955523021621854,
+      "range_ms": 14.379999999999999
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 14.65828947368421,
+      "med_ms": 15.375,
+      "std_ms": 2.6362050442042095,
+      "range_ms": 17.810000000000002
+    },
+    "double-groupby-1": {
+      "mean_ms": 42.22013157894737,
+      "med_ms": 39.015,
+      "std_ms": 8.099871191308505,
+      "range_ms": 62.4
+    },
+    "double-groupby-5": {
+      "mean_ms": 61.190394736842094,
+      "med_ms": 56.91,
+      "std_ms": 11.396491324472281,
+      "range_ms": 93.95000000000002
+    },
+    "double-groupby-all": {
+      "mean_ms": 80.48684210526316,
+      "med_ms": 73.405,
+      "std_ms": 17.07462001221121,
+      "range_ms": 141.49
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 43.61907894736842,
+      "med_ms": 20.119999999999997,
+      "std_ms": 42.591721298162525,
+      "range_ms": 253.21999999999997
+    },
+    "high-cpu-1": {
+      "mean_ms": 9.091052631578945,
+      "med_ms": 7.995,
+      "std_ms": 1.7524965650540705,
+      "range_ms": 23.45
+    },
+    "high-cpu-all": {
+      "mean_ms": 54.97434210526316,
+      "med_ms": 42.55,
+      "std_ms": 30.376193895243087,
+      "range_ms": 162.70999999999998
+    },
+    "lastpoint": {
+      "mean_ms": 6.591973684210527,
+      "med_ms": 5.96,
+      "std_ms": 0.8228617052487691,
+      "range_ms": 34.379999999999995
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.664736842105263,
+      "med_ms": 3.77,
+      "std_ms": 0.7457318082424548,
+      "range_ms": 13.49
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.7301315789473675,
+      "med_ms": 5.725,
+      "std_ms": 1.927803927388919,
+      "range_ms": 18.05
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 6.546842105263158,
+      "med_ms": 6.3149999999999995,
+      "std_ms": 0.6796885767787397,
+      "range_ms": 11.32
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.491052631578947,
+      "med_ms": 3.965,
+      "std_ms": 0.8991693632790483,
+      "range_ms": 10.93
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.533684210526316,
+      "med_ms": 8.455,
+      "std_ms": 2.247583497658623,
+      "range_ms": 17.33
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.554605263157892,
+      "med_ms": 8.39,
+      "std_ms": 1.3106216751750281,
+      "range_ms": 12.95
+    }
   },
   "100_1_insert_8": {
     "import_speed": 1656591.0491780816,
-    "cpu-max-all-1": 4.676666666666667,
-    "cpu-max-all-8": 16.293333333333333,
-    "double-groupby-1": 49.946666666666665,
-    "double-groupby-5": 72.92,
-    "double-groupby-all": 105.02333333333333,
-    "groupby-orderby-limit": 21.856666666666666,
-    "high-cpu-1": 9.88,
-    "high-cpu-all": 116.02666666666666,
-    "lastpoint": 14.61,
-    "single-groupby-1-1-1": 4.43,
-    "single-groupby-1-1-12": 6.813333333333333,
-    "single-groupby-1-8-1": 6.533333333333334,
-    "single-groupby-5-1-1": 3.453333333333333,
-    "single-groupby-5-1-12": 9.45,
-    "single-groupby-5-8-1": 9.19
+    "cpu-max-all-1": {
+      "mean_ms": 5.191052631578947,
+      "med_ms": 4.705,
+      "std_ms": 1.2934012823532308,
+      "range_ms": 15.26
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 14.474210526315789,
+      "med_ms": 14.739999999999998,
+      "std_ms": 2.844809665880605,
+      "range_ms": 48.269999999999996
+    },
+    "double-groupby-1": {
+      "mean_ms": 53.39802631578947,
+      "med_ms": 48.415,
+      "std_ms": 18.900461018697357,
+      "range_ms": 291.8
+    },
+    "double-groupby-5": {
+      "mean_ms": 79.4128947368421,
+      "med_ms": 72.685,
+      "std_ms": 26.854491905615564,
+      "range_ms": 460.25
+    },
+    "double-groupby-all": {
+      "mean_ms": 109.36434210526316,
+      "med_ms": 102.94,
+      "std_ms": 34.70693830098054,
+      "range_ms": 514.0
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 62.672763157894735,
+      "med_ms": 21.555,
+      "std_ms": 70.88138462903942,
+      "range_ms": 515.86
+    },
+    "high-cpu-1": {
+      "mean_ms": 8.878157894736841,
+      "med_ms": 7.64,
+      "std_ms": 2.697356587736132,
+      "range_ms": 27.17
+    },
+    "high-cpu-all": {
+      "mean_ms": 115.70447368421054,
+      "med_ms": 113.445,
+      "std_ms": 36.431596191391776,
+      "range_ms": 295.44
+    },
+    "lastpoint": {
+      "mean_ms": 11.598684210526315,
+      "med_ms": 10.6,
+      "std_ms": 3.674779029041161,
+      "range_ms": 24.53
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.805526315789474,
+      "med_ms": 3.495,
+      "std_ms": 1.038588009092912,
+      "range_ms": 16.82
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.441973684210526,
+      "med_ms": 5.955,
+      "std_ms": 1.7430639840899644,
+      "range_ms": 19.38
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 6.096315789473685,
+      "med_ms": 5.745,
+      "std_ms": 0.9971517331616933,
+      "range_ms": 15.809999999999999
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.638026315789473,
+      "med_ms": 3.25,
+      "std_ms": 1.034001959684593,
+      "range_ms": 15.29
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.732236842105262,
+      "med_ms": 8.865,
+      "std_ms": 2.557777993328955,
+      "range_ms": 30.080000000000002
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 7.744342105263157,
+      "med_ms": 7.945,
+      "std_ms": 1.518009517340666,
+      "range_ms": 15.61
+    }
   },
   "100_1_prepare_1": {
     "import_speed": 1105710.8542465756,
-    "cpu-max-all-1": 5.226666666666667,
-    "cpu-max-all-8": 16.723333333333333,
-    "double-groupby-1": 37.68,
-    "double-groupby-5": 56.953333333333326,
-    "double-groupby-all": 74.46,
-    "groupby-orderby-limit": 19.993333333333332,
-    "high-cpu-1": 9.97,
-    "high-cpu-all": 45.79333333333333,
-    "lastpoint": 6.650000000000001,
-    "single-groupby-1-1-1": 4.016666666666667,
-    "single-groupby-1-1-12": 5.68,
-    "single-groupby-1-8-1": 6.586666666666667,
-    "single-groupby-5-1-1": 3.78,
-    "single-groupby-5-1-12": 8.26,
-    "single-groupby-5-8-1": 8.563333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 7.101485148514851,
+      "med_ms": 5.23,
+      "std_ms": 6.151991122577894,
+      "range_ms": 42.190000000000005
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.905841584158416,
+      "med_ms": 16.09,
+      "std_ms": 5.491302626395077,
+      "range_ms": 45.71
+    },
+    "double-groupby-1": {
+      "mean_ms": 54.68653465346533,
+      "med_ms": 38.79,
+      "std_ms": 75.67111236708027,
+      "range_ms": 621.01
+    },
+    "double-groupby-5": {
+      "mean_ms": 75.559801980198,
+      "med_ms": 56.63,
+      "std_ms": 84.41521465920935,
+      "range_ms": 581.47
+    },
+    "double-groupby-all": {
+      "mean_ms": 97.26138613861386,
+      "med_ms": 73.09,
+      "std_ms": 95.89557394405337,
+      "range_ms": 668.9399999999999
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 70.71949999999998,
+      "med_ms": 19.58,
+      "std_ms": 185.63172985793813,
+      "range_ms": 2235.6400000000003
+    },
+    "high-cpu-1": {
+      "mean_ms": 9.3357,
+      "med_ms": 7.855,
+      "std_ms": 1.2819675967792319,
+      "range_ms": 19.77
+    },
+    "high-cpu-all": {
+      "mean_ms": 63.843999999999994,
+      "med_ms": 43.620000000000005,
+      "std_ms": 36.150493968152276,
+      "range_ms": 230.03
+    },
+    "lastpoint": {
+      "mean_ms": 7.178700000000001,
+      "med_ms": 6.03,
+      "std_ms": 2.7681732498913685,
+      "range_ms": 44.0
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.183564356435643,
+      "med_ms": 3.48,
+      "std_ms": 2.5885013363560065,
+      "range_ms": 27.229999999999997
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 8.651485148514851,
+      "med_ms": 5.92,
+      "std_ms": 8.929356347031806,
+      "range_ms": 68.88
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 6.992277227722773,
+      "med_ms": 6.48,
+      "std_ms": 2.725226185544282,
+      "range_ms": 25.34
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.766732673267327,
+      "med_ms": 3.86,
+      "std_ms": 2.3221404388670774,
+      "range_ms": 17.400000000000002
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 11.387722772277229,
+      "med_ms": 8.36,
+      "std_ms": 9.992730746016138,
+      "range_ms": 74.77
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.876039603960397,
+      "med_ms": 8.35,
+      "std_ms": 3.024395172330468,
+      "range_ms": 26.479999999999997
+    }
   },
   "100_1_prepare_8": {
     "import_speed": 1105710.8542465756,
-    "cpu-max-all-1": 5.223333333333334,
-    "cpu-max-all-8": 16.73,
-    "double-groupby-1": 47.98666666666666,
-    "double-groupby-5": 77.14,
-    "double-groupby-all": 104.61333333333334,
-    "groupby-orderby-limit": 20.926666666666666,
-    "high-cpu-1": 10.253333333333332,
-    "high-cpu-all": 109.50333333333333,
-    "lastpoint": 15.38,
-    "single-groupby-1-1-1": 3.9133333333333327,
-    "single-groupby-1-1-12": 6.993333333333332,
-    "single-groupby-1-8-1": 6.739999999999999,
-    "single-groupby-5-1-1": 3.2866666666666666,
-    "single-groupby-5-1-12": 10.596666666666666,
-    "single-groupby-5-8-1": 9.093333333333334
+    "cpu-max-all-1": {
+      "mean_ms": 6.802999999999998,
+      "med_ms": 4.6850000000000005,
+      "std_ms": 6.077847256449217,
+      "range_ms": 53.160000000000004
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 19.3924,
+      "med_ms": 15.7,
+      "std_ms": 15.740870120854698,
+      "range_ms": 178.85
+    },
+    "double-groupby-1": {
+      "mean_ms": 121.56890000000001,
+      "med_ms": 50.69,
+      "std_ms": 338.95065823951427,
+      "range_ms": 3295.15
+    },
+    "double-groupby-5": {
+      "mean_ms": 168.0268,
+      "med_ms": 77.17,
+      "std_ms": 429.0055752478014,
+      "range_ms": 3611.1200000000003
+    },
+    "double-groupby-all": {
+      "mean_ms": 210.8465,
+      "med_ms": 103.785,
+      "std_ms": 493.0755185370245,
+      "range_ms": 5412.46
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 128.02747474747474,
+      "med_ms": 21.02,
+      "std_ms": 327.2918445717062,
+      "range_ms": 2699.15
+    },
+    "high-cpu-1": {
+      "mean_ms": 9.365151515151515,
+      "med_ms": 7.74,
+      "std_ms": 1.7801188699338648,
+      "range_ms": 23.96
+    },
+    "high-cpu-all": {
+      "mean_ms": 132.31769999999997,
+      "med_ms": 125.13499999999999,
+      "std_ms": 40.96756413088508,
+      "range_ms": 440.25
+    },
+    "lastpoint": {
+      "mean_ms": 12.618888888888886,
+      "med_ms": 12.58,
+      "std_ms": 3.5896588687019824,
+      "range_ms": 30.57
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.2393,
+      "med_ms": 3.4050000000000002,
+      "std_ms": 2.4677991892339697,
+      "range_ms": 16.7
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 9.1605,
+      "med_ms": 6.0,
+      "std_ms": 9.77358844338179,
+      "range_ms": 92.94
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 7.284899999999999,
+      "med_ms": 6.08,
+      "std_ms": 3.9338619303260614,
+      "range_ms": 36.13
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.509899999999999,
+      "med_ms": 3.2199999999999998,
+      "std_ms": 3.12235746696549,
+      "range_ms": 22.68
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 12.4433,
+      "med_ms": 9.245000000000001,
+      "std_ms": 10.360119832289294,
+      "range_ms": 72.75999999999999
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 9.2227,
+      "med_ms": 8.205,
+      "std_ms": 3.937442859614254,
+      "range_ms": 39.04
+    }
   },
   "100_3_insert_1": {
     "import_speed": 803453.5439655184,
-    "cpu-max-all-1": 7.03,
-    "cpu-max-all-8": 15.463333333333333,
-    "double-groupby-1": 33.983333333333334,
-    "double-groupby-5": 53.07333333333333,
-    "double-groupby-all": 69.36666666666666,
-    "groupby-orderby-limit": 43.193333333333335,
-    "high-cpu-1": 14.54,
-    "high-cpu-all": 131.29999999999998,
-    "lastpoint": 16.19333333333333,
-    "single-groupby-1-1-1": 5.8566666666666665,
-    "single-groupby-1-1-12": 7.726666666666667,
-    "single-groupby-1-8-1": 10.263333333333334,
-    "single-groupby-5-1-1": 5.223333333333334,
-    "single-groupby-5-1-12": 10.393333333333333,
-    "single-groupby-5-8-1": 12.183333333333332
+    "cpu-max-all-1": {
+      "mean_ms": 6.7055,
+      "med_ms": 6.1850000000000005,
+      "std_ms": 1.117967928044268,
+      "range_ms": 15.169999999999998
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.025333333333334,
+      "med_ms": 15.725000000000001,
+      "std_ms": 3.18855818150401,
+      "range_ms": 23.990000000000002
+    },
+    "double-groupby-1": {
+      "mean_ms": 34.19833333333334,
+      "med_ms": 34.065,
+      "std_ms": 7.778997401013304,
+      "range_ms": 50.4
+    },
+    "double-groupby-5": {
+      "mean_ms": 52.04366666666667,
+      "med_ms": 51.415000000000006,
+      "std_ms": 13.264332953472067,
+      "range_ms": 83.62
+    },
+    "double-groupby-all": {
+      "mean_ms": 69.12383333333334,
+      "med_ms": 69.69,
+      "std_ms": 18.66470866269487,
+      "range_ms": 114.96000000000001
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 44.08866666666666,
+      "med_ms": 50.644999999999996,
+      "std_ms": 11.084475395897629,
+      "range_ms": 70.0
+    },
+    "high-cpu-1": {
+      "mean_ms": 13.246,
+      "med_ms": 12.0,
+      "std_ms": 3.4970109270245087,
+      "range_ms": 34.39
+    },
+    "high-cpu-all": {
+      "mean_ms": 124.69483333333332,
+      "med_ms": 128.45499999999998,
+      "std_ms": 35.94593140701065,
+      "range_ms": 201.72
+    },
+    "lastpoint": {
+      "mean_ms": 15.215499999999999,
+      "med_ms": 15.54,
+      "std_ms": 2.5770988977556835,
+      "range_ms": 20.97
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.665737704918032,
+      "med_ms": 4.72,
+      "std_ms": 0.8011272454410585,
+      "range_ms": 17.51
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 7.447704918032787,
+      "med_ms": 6.91,
+      "std_ms": 1.4527231824434905,
+      "range_ms": 17.09
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 10.071311475409836,
+      "med_ms": 10.33,
+      "std_ms": 1.9559255911288616,
+      "range_ms": 17.6
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 5.309016393442622,
+      "med_ms": 4.74,
+      "std_ms": 0.8109473984544923,
+      "range_ms": 10.89
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.772459016393444,
+      "med_ms": 9.23,
+      "std_ms": 2.055107990461576,
+      "range_ms": 19.32
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 11.363442622950819,
+      "med_ms": 11.75,
+      "std_ms": 2.1621639509573907,
+      "range_ms": 17.31
+    }
   },
   "100_3_insert_8": {
     "import_speed": 803453.5439655184,
-    "cpu-max-all-1": 6.723333333333334,
-    "cpu-max-all-8": 16.63,
-    "double-groupby-1": 50.00333333333333,
-    "double-groupby-5": 72.46333333333332,
-    "double-groupby-all": 98.18333333333334,
-    "groupby-orderby-limit": 59.300000000000004,
-    "high-cpu-1": 14.333333333333334,
-    "high-cpu-all": 159.69,
-    "lastpoint": 18.05,
-    "single-groupby-1-1-1": 4.62,
-    "single-groupby-1-1-12": 7.776666666666666,
-    "single-groupby-1-8-1": 10.736666666666665,
-    "single-groupby-5-1-1": 4.923333333333333,
-    "single-groupby-5-1-12": 9.563333333333334,
-    "single-groupby-5-8-1": 10.993333333333332
+    "cpu-max-all-1": {
+      "mean_ms": 5.8605,
+      "med_ms": 5.5,
+      "std_ms": 1.1845852095328844,
+      "range_ms": 17.560000000000002
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.160833333333333,
+      "med_ms": 15.155000000000001,
+      "std_ms": 4.016202900061609,
+      "range_ms": 29.7
+    },
+    "double-groupby-1": {
+      "mean_ms": 45.68366666666666,
+      "med_ms": 47.16,
+      "std_ms": 11.738911965096841,
+      "range_ms": 82.05
+    },
+    "double-groupby-5": {
+      "mean_ms": 66.35483333333333,
+      "med_ms": 66.805,
+      "std_ms": 18.135792355960934,
+      "range_ms": 120.80000000000001
+    },
+    "double-groupby-all": {
+      "mean_ms": 85.93816666666667,
+      "med_ms": 88.16499999999999,
+      "std_ms": 24.576652106934965,
+      "range_ms": 153.1
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 56.822333333333326,
+      "med_ms": 59.125,
+      "std_ms": 16.962606867796367,
+      "range_ms": 115.42999999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 13.207666666666665,
+      "med_ms": 12.27,
+      "std_ms": 3.9331853510417885,
+      "range_ms": 39.73
+    },
+    "high-cpu-all": {
+      "mean_ms": 152.47266666666664,
+      "med_ms": 155.67000000000002,
+      "std_ms": 48.336895192349274,
+      "range_ms": 281.37
+    },
+    "lastpoint": {
+      "mean_ms": 17.640499999999996,
+      "med_ms": 17.805,
+      "std_ms": 4.63016543431793,
+      "range_ms": 34.260000000000005
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.1578333333333335,
+      "med_ms": 3.725,
+      "std_ms": 0.7520234662464402,
+      "range_ms": 11.07
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 7.051833333333334,
+      "med_ms": 6.665,
+      "std_ms": 2.170837135774238,
+      "range_ms": 38.54
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 9.82583333333333,
+      "med_ms": 9.98,
+      "std_ms": 2.387788347423279,
+      "range_ms": 21.18
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.532833333333333,
+      "med_ms": 4.025,
+      "std_ms": 0.8501467304394201,
+      "range_ms": 7.4399999999999995
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 8.9995,
+      "med_ms": 8.78,
+      "std_ms": 2.264009062238556,
+      "range_ms": 43.67
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 10.890666666666668,
+      "med_ms": 11.030000000000001,
+      "std_ms": 2.4404055419211677,
+      "range_ms": 24.12
+    }
   },
   "100_3_prepare_1": {
     "import_speed": 846911.3353448267,
-    "cpu-max-all-1": 6.863333333333334,
-    "cpu-max-all-8": 15.803333333333335,
-    "double-groupby-1": 36.443333333333335,
-    "double-groupby-5": 56.73,
-    "double-groupby-all": 76.55333333333333,
-    "groupby-orderby-limit": 46.76,
-    "high-cpu-1": 14.33,
-    "high-cpu-all": 122.84333333333332,
-    "lastpoint": 15.703333333333333,
-    "single-groupby-1-1-1": 5.95,
-    "single-groupby-1-1-12": 7.8066666666666675,
-    "single-groupby-1-8-1": 10.64,
-    "single-groupby-5-1-1": 5.553333333333334,
-    "single-groupby-5-1-12": 10.06,
-    "single-groupby-5-8-1": 11.913333333333334
+    "cpu-max-all-1": {
+      "mean_ms": 6.7064383561643846,
+      "med_ms": 6.15,
+      "std_ms": 0.9827220838385219,
+      "range_ms": 9.96
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.205342465753422,
+      "med_ms": 15.7,
+      "std_ms": 2.8679726105695584,
+      "range_ms": 22.89
+    },
+    "double-groupby-1": {
+      "mean_ms": 34.61684931506849,
+      "med_ms": 34.2,
+      "std_ms": 7.451967092414132,
+      "range_ms": 54.23
+    },
+    "double-groupby-5": {
+      "mean_ms": 52.56917808219178,
+      "med_ms": 51.72,
+      "std_ms": 12.272932475056265,
+      "range_ms": 83.19
+    },
+    "double-groupby-all": {
+      "mean_ms": 70.37698630136985,
+      "med_ms": 69.65,
+      "std_ms": 16.775998371096488,
+      "range_ms": 109.33
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 44.13986301369863,
+      "med_ms": 49.17,
+      "std_ms": 9.52766694847034,
+      "range_ms": 68.39
+    },
+    "high-cpu-1": {
+      "mean_ms": 12.581780821917809,
+      "med_ms": 11.45,
+      "std_ms": 2.9933269963118487,
+      "range_ms": 40.8
+    },
+    "high-cpu-all": {
+      "mean_ms": 113.76616438356164,
+      "med_ms": 117.22,
+      "std_ms": 29.942250696138068,
+      "range_ms": 174.98
+    },
+    "lastpoint": {
+      "mean_ms": 14.916438356164381,
+      "med_ms": 14.89,
+      "std_ms": 2.150046750049231,
+      "range_ms": 21.39
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.583150684931508,
+      "med_ms": 4.45,
+      "std_ms": 0.6388767850087648,
+      "range_ms": 14.770000000000001
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 7.40958904109589,
+      "med_ms": 7.1,
+      "std_ms": 1.3348766467731976,
+      "range_ms": 14.100000000000001
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 10.034931506849317,
+      "med_ms": 10.32,
+      "std_ms": 1.8073377622653155,
+      "range_ms": 18.35
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 5.309589041095891,
+      "med_ms": 4.8,
+      "std_ms": 0.783754210260115,
+      "range_ms": 12.76
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.855205479452055,
+      "med_ms": 9.49,
+      "std_ms": 1.8717587611574196,
+      "range_ms": 19.49
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 11.529315068493151,
+      "med_ms": 11.86,
+      "std_ms": 2.1279876571064893,
+      "range_ms": 26.83
+    }
   },
   "100_3_prepare_8": {
     "import_speed": 846911.3353448267,
-    "cpu-max-all-1": 6.446666666666666,
-    "cpu-max-all-8": 19.126666666666665,
-    "double-groupby-1": 46.78666666666667,
-    "double-groupby-5": 67.76666666666667,
-    "double-groupby-all": 88.03666666666668,
-    "groupby-orderby-limit": 58.02333333333333,
-    "high-cpu-1": 15.186666666666666,
-    "high-cpu-all": 135.27,
-    "lastpoint": 20.92,
-    "single-groupby-1-1-1": 4.353333333333333,
-    "single-groupby-1-1-12": 7.493333333333333,
-    "single-groupby-1-8-1": 10.670000000000002,
-    "single-groupby-5-1-1": 5.4433333333333325,
-    "single-groupby-5-1-12": 9.903333333333334,
-    "single-groupby-5-8-1": 11.829999999999998
+    "cpu-max-all-1": {
+      "mean_ms": 5.764931506849315,
+      "med_ms": 5.32,
+      "std_ms": 1.0863996646513852,
+      "range_ms": 13.870000000000001
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.63356164383562,
+      "med_ms": 15.01,
+      "std_ms": 4.72162265241958,
+      "range_ms": 42.730000000000004
+    },
+    "double-groupby-1": {
+      "mean_ms": 45.03082191780822,
+      "med_ms": 45.66,
+      "std_ms": 11.008618309890041,
+      "range_ms": 89.45
+    },
+    "double-groupby-5": {
+      "mean_ms": 65.98479452054795,
+      "med_ms": 67.0,
+      "std_ms": 16.27381111117466,
+      "range_ms": 125.47
+    },
+    "double-groupby-all": {
+      "mean_ms": 86.61780821917809,
+      "med_ms": 86.56,
+      "std_ms": 22.114729269989525,
+      "range_ms": 151.17
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 56.197260273972596,
+      "med_ms": 59.16,
+      "std_ms": 15.041237968062074,
+      "range_ms": 118.00999999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 12.495479452054795,
+      "med_ms": 10.89,
+      "std_ms": 3.4576690290071506,
+      "range_ms": 36.19
+    },
+    "high-cpu-all": {
+      "mean_ms": 139.33301369863017,
+      "med_ms": 138.9,
+      "std_ms": 41.71130584429024,
+      "range_ms": 258.04
+    },
+    "lastpoint": {
+      "mean_ms": 16.911232876712333,
+      "med_ms": 16.36,
+      "std_ms": 3.865907592591895,
+      "range_ms": 32.39
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.043150684931507,
+      "med_ms": 3.49,
+      "std_ms": 0.7590397382225209,
+      "range_ms": 11.68
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.673561643835616,
+      "med_ms": 6.3,
+      "std_ms": 1.3704402879924449,
+      "range_ms": 11.760000000000002
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 9.890273972602738,
+      "med_ms": 9.91,
+      "std_ms": 2.2416672692705135,
+      "range_ms": 19.169999999999998
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.593972602739726,
+      "med_ms": 4.11,
+      "std_ms": 0.8676784794400569,
+      "range_ms": 13.07
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.056712328767123,
+      "med_ms": 8.83,
+      "std_ms": 1.9575374657933828,
+      "range_ms": 14.2
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 10.884931506849314,
+      "med_ms": 11.01,
+      "std_ms": 2.2739442747543257,
+      "range_ms": 30.139999999999997
+    }
   },
   "4000_1_insert_1": {
     "import_speed": 1611053.6094520534,
-    "cpu-max-all-1": 4.866666666666666,
-    "cpu-max-all-8": 15.820000000000002,
-    "double-groupby-1": 292.81666666666666,
-    "double-groupby-5": 499.14000000000004,
-    "double-groupby-all": 762.0233333333332,
-    "groupby-orderby-limit": 42.86333333333334,
-    "high-cpu-1": 6.72,
-    "high-cpu-all": 872.02,
-    "lastpoint": 42.57333333333333,
-    "single-groupby-1-1-1": 3.34,
-    "single-groupby-1-1-12": 5.3500000000000005,
-    "single-groupby-1-8-1": 6.836666666666666,
-    "single-groupby-5-1-1": 3.78,
-    "single-groupby-5-1-12": 7.8566666666666665,
-    "single-groupby-5-8-1": 8.223333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 5.724545454545455,
+      "med_ms": 4.88,
+      "std_ms": 1.4399639482462065,
+      "range_ms": 16.97
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 14.262467532467536,
+      "med_ms": 15.04,
+      "std_ms": 2.408105914266797,
+      "range_ms": 20.400000000000002
+    },
+    "double-groupby-1": {
+      "mean_ms": 592.6167532467533,
+      "med_ms": 291.36,
+      "std_ms": 517.485094167332,
+      "range_ms": 1781.81
+    },
+    "double-groupby-5": {
+      "mean_ms": 988.0914285714287,
+      "med_ms": 496.0,
+      "std_ms": 849.0467406446173,
+      "range_ms": 2916.42
+    },
+    "double-groupby-all": {
+      "mean_ms": 1484.572077922078,
+      "med_ms": 762.17,
+      "std_ms": 1261.3927236729644,
+      "range_ms": 4509.16
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1124.6076623376625,
+      "med_ms": 41.19,
+      "std_ms": 1895.493790810816,
+      "range_ms": 10433.619999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 7.1464935064935045,
+      "med_ms": 4.53,
+      "std_ms": 0.9531551017455636,
+      "range_ms": 20.660000000000004
+    },
+    "high-cpu-all": {
+      "mean_ms": 1423.831038961039,
+      "med_ms": 871.81,
+      "std_ms": 1208.0924883104208,
+      "range_ms": 4033.5800000000004
+    },
+    "lastpoint": {
+      "mean_ms": 49.648181818181826,
+      "med_ms": 41.66,
+      "std_ms": 18.435553731514542,
+      "range_ms": 243.73000000000002
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.279220779220779,
+      "med_ms": 3.32,
+      "std_ms": 1.6970142249146125,
+      "range_ms": 26.94
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.615454545454544,
+      "med_ms": 5.46,
+      "std_ms": 2.1844019688973204,
+      "range_ms": 29.57
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 6.2448051948051955,
+      "med_ms": 5.96,
+      "std_ms": 1.0310592539887398,
+      "range_ms": 17.880000000000003
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.039480519480519,
+      "med_ms": 3.58,
+      "std_ms": 0.819147336056309,
+      "range_ms": 7.93
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.243506493506493,
+      "med_ms": 8.05,
+      "std_ms": 2.2202161856768567,
+      "range_ms": 19.07
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 7.739999999999998,
+      "med_ms": 7.87,
+      "std_ms": 0.8487653571977047,
+      "range_ms": 16.09
+    }
   },
   "4000_1_insert_8": {
     "import_speed": 1611053.6094520534,
-    "cpu-max-all-1": 4.48,
-    "cpu-max-all-8": 16.64333333333333,
-    "double-groupby-1": 688.4333333333334,
-    "double-groupby-5": 1172.7133333333334,
-    "double-groupby-all": 1711.4533333333331,
-    "groupby-orderby-limit": 100.06,
-    "high-cpu-1": 8.450000000000001,
-    "high-cpu-all": 4845.663333333333,
-    "lastpoint": 58.18,
-    "single-groupby-1-1-1": 4.673333333333333,
-    "single-groupby-1-1-12": 6.243333333333333,
-    "single-groupby-1-8-1": 6.653333333333333,
-    "single-groupby-5-1-1": 3.3066666666666666,
-    "single-groupby-5-1-12": 8.796666666666667,
-    "single-groupby-5-8-1": 8.166666666666666
+    "cpu-max-all-1": {
+      "mean_ms": 5.0654545454545445,
+      "med_ms": 4.66,
+      "std_ms": 1.235880833821246,
+      "range_ms": 12.87
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 14.23688311688312,
+      "med_ms": 14.05,
+      "std_ms": 2.9662621613476428,
+      "range_ms": 34.81
+    },
+    "double-groupby-1": {
+      "mean_ms": 1133.6212987012987,
+      "med_ms": 791.26,
+      "std_ms": 860.6874719425265,
+      "range_ms": 9293.289999999999
+    },
+    "double-groupby-5": {
+      "mean_ms": 1794.8635064935067,
+      "med_ms": 1336.38,
+      "std_ms": 1260.2844851844973,
+      "range_ms": 13802.19
+    },
+    "double-groupby-all": {
+      "mean_ms": 2572.2984415584415,
+      "med_ms": 1968.64,
+      "std_ms": 1742.058811204406,
+      "range_ms": 18439.010000000002
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1808.6376623376625,
+      "med_ms": 116.0,
+      "std_ms": 2734.8565932723996,
+      "range_ms": 16435.030000000002
+    },
+    "high-cpu-1": {
+      "mean_ms": 7.239610389610389,
+      "med_ms": 4.58,
+      "std_ms": 2.15990097333824,
+      "range_ms": 25.099999999999998
+    },
+    "high-cpu-all": {
+      "mean_ms": 4939.781428571429,
+      "med_ms": 5474.05,
+      "std_ms": 1396.095040453262,
+      "range_ms": 8171.76
+    },
+    "lastpoint": {
+      "mean_ms": 70.99441558441558,
+      "med_ms": 62.83,
+      "std_ms": 21.02588057443208,
+      "range_ms": 216.43
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.562857142857143,
+      "med_ms": 2.93,
+      "std_ms": 1.2080180126128057,
+      "range_ms": 23.479999999999997
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.728051948051947,
+      "med_ms": 6.0,
+      "std_ms": 2.1215517154847814,
+      "range_ms": 28.84
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 6.069740259740259,
+      "med_ms": 5.61,
+      "std_ms": 1.203953983674291,
+      "range_ms": 24.27
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.529610389610389,
+      "med_ms": 3.23,
+      "std_ms": 0.7302278691910267,
+      "range_ms": 15.030000000000001
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 8.720259740259742,
+      "med_ms": 8.12,
+      "std_ms": 1.9240930700393928,
+      "range_ms": 32.300000000000004
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 7.444025974025974,
+      "med_ms": 7.43,
+      "std_ms": 1.6355920059240903,
+      "range_ms": 17.060000000000002
+    }
   },
   "4000_1_prepare_1": {
     "import_speed": 1121010.6526027396,
-    "cpu-max-all-1": 4.656666666666667,
-    "cpu-max-all-8": 16.016666666666666,
-    "double-groupby-1": 292.0466666666667,
-    "double-groupby-5": 489.94,
-    "double-groupby-all": 751.6333333333332,
-    "groupby-orderby-limit": 45.32333333333333,
-    "high-cpu-1": 7.546666666666667,
-    "high-cpu-all": 885.0100000000001,
-    "lastpoint": 44.72666666666667,
-    "single-groupby-1-1-1": 3.6366666666666667,
-    "single-groupby-1-1-12": 5.566666666666666,
-    "single-groupby-1-8-1": 6.396666666666666,
-    "single-groupby-5-1-1": 3.7866666666666666,
-    "single-groupby-5-1-12": 7.87,
-    "single-groupby-5-8-1": 8.133333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 6.7548039215686275,
+      "med_ms": 4.95,
+      "std_ms": 5.914074792750079,
+      "range_ms": 45.199999999999996
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.075490196078432,
+      "med_ms": 15.32,
+      "std_ms": 5.969003370955423,
+      "range_ms": 56.13
+    },
+    "double-groupby-1": {
+      "mean_ms": 963.2787254901963,
+      "med_ms": 293.2,
+      "std_ms": 2833.1135836895915,
+      "range_ms": 19325.54
+    },
+    "double-groupby-5": {
+      "mean_ms": 1458.5139215686277,
+      "med_ms": 498.935,
+      "std_ms": 3601.1090494237874,
+      "range_ms": 24621.79
+    },
+    "double-groupby-all": {
+      "mean_ms": 2038.0011764705885,
+      "med_ms": 765.615,
+      "std_ms": 4270.380834336895,
+      "range_ms": 29368.38
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 514.529405940594,
+      "med_ms": 41.42,
+      "std_ms": 1355.0509472774977,
+      "range_ms": 16395.12
+    },
+    "high-cpu-1": {
+      "mean_ms": 7.355148514851485,
+      "med_ms": 4.87,
+      "std_ms": 1.248816731038935,
+      "range_ms": 22.79
+    },
+    "high-cpu-all": {
+      "mean_ms": 1585.1167326732675,
+      "med_ms": 866.21,
+      "std_ms": 1245.7231244920429,
+      "range_ms": 4687.97
+    },
+    "lastpoint": {
+      "mean_ms": 54.133465346534656,
+      "med_ms": 44.07,
+      "std_ms": 27.113445020345296,
+      "range_ms": 191.32
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.7401960784313735,
+      "med_ms": 3.27,
+      "std_ms": 2.4700218383578445,
+      "range_ms": 23.32
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 8.016764705882354,
+      "med_ms": 5.59,
+      "std_ms": 8.077383063344794,
+      "range_ms": 59.26
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 6.836176470588235,
+      "med_ms": 6.3100000000000005,
+      "std_ms": 2.6127122753752143,
+      "range_ms": 25.34
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.417156862745098,
+      "med_ms": 3.62,
+      "std_ms": 2.190637764838043,
+      "range_ms": 21.84
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 11.093333333333334,
+      "med_ms": 8.235,
+      "std_ms": 9.713837668204285,
+      "range_ms": 66.59
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.327745098039216,
+      "med_ms": 8.04,
+      "std_ms": 2.788828103667814,
+      "range_ms": 23.83
+    }
   },
   "4000_1_prepare_8": {
     "import_speed": 1121010.6526027396,
-    "cpu-max-all-1": 4.6066666666666665,
-    "cpu-max-all-8": 16.77333333333333,
-    "double-groupby-1": 722.85,
-    "double-groupby-5": 1191.8133333333333,
-    "double-groupby-all": 1787.1133333333335,
-    "groupby-orderby-limit": 102.08666666666666,
-    "high-cpu-1": 8.043333333333335,
-    "high-cpu-all": 4885.633333333334,
-    "lastpoint": 61.556666666666665,
-    "single-groupby-1-1-1": 2.6333333333333333,
-    "single-groupby-1-1-12": 6.543333333333334,
-    "single-groupby-1-8-1": 6.303333333333334,
-    "single-groupby-5-1-1": 3.533333333333333,
-    "single-groupby-5-1-12": 9.456666666666667,
-    "single-groupby-5-8-1": 8.656666666666666
+    "cpu-max-all-1": {
+      "mean_ms": 6.370792079207921,
+      "med_ms": 4.42,
+      "std_ms": 5.976705561288478,
+      "range_ms": 56.36
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 18.65831683168317,
+      "med_ms": 15.03,
+      "std_ms": 15.524655169716779,
+      "range_ms": 208.79
+    },
+    "double-groupby-1": {
+      "mean_ms": 3932.5928712871287,
+      "med_ms": 805.79,
+      "std_ms": 14881.138652831669,
+      "range_ms": 174716.05000000002
+    },
+    "double-groupby-5": {
+      "mean_ms": 5156.626237623764,
+      "med_ms": 1325.57,
+      "std_ms": 17328.055375776872,
+      "range_ms": 143260.18
+    },
+    "double-groupby-all": {
+      "mean_ms": 6219.025742574256,
+      "med_ms": 1937.09,
+      "std_ms": 18411.28120703876,
+      "range_ms": 169464.75999999998
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 2284.9838613861384,
+      "med_ms": 115.45,
+      "std_ms": 7897.63680931454,
+      "range_ms": 108114.56999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 7.847029702970298,
+      "med_ms": 5.45,
+      "std_ms": 2.0138388935336686,
+      "range_ms": 28.22
+    },
+    "high-cpu-all": {
+      "mean_ms": 5259.571782178218,
+      "med_ms": 5391.87,
+      "std_ms": 971.8535723084996,
+      "range_ms": 14627.640000000001
+    },
+    "lastpoint": {
+      "mean_ms": 89.81980198019801,
+      "med_ms": 61.9,
+      "std_ms": 68.78620918440262,
+      "range_ms": 551.37
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.7881188118811884,
+      "med_ms": 2.66,
+      "std_ms": 2.518857166602063,
+      "range_ms": 20.71
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 9.296732673267325,
+      "med_ms": 5.93,
+      "std_ms": 9.365231242090172,
+      "range_ms": 76.71000000000001
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 7.102475247524753,
+      "med_ms": 5.97,
+      "std_ms": 3.926343440388422,
+      "range_ms": 43.05
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.133465346534654,
+      "med_ms": 3.17,
+      "std_ms": 2.613191319304258,
+      "range_ms": 22.05
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 11.491683168316833,
+      "med_ms": 8.17,
+      "std_ms": 9.971654734226105,
+      "range_ms": 74.82
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.871980198019802,
+      "med_ms": 7.73,
+      "std_ms": 3.9529677508934933,
+      "range_ms": 37.94
+    }
   },
   "4000_3_insert_1": {
     "import_speed": 983859.2120689654,
-    "cpu-max-all-1": 7.44,
-    "cpu-max-all-8": 17.406666666666666,
-    "double-groupby-1": 239.26,
-    "double-groupby-5": 488.9666666666667,
-    "double-groupby-all": 750.2633333333333,
-    "groupby-orderby-limit": 49.64666666666667,
-    "high-cpu-1": 9.576666666666668,
-    "high-cpu-all": 4467.346666666667,
-    "lastpoint": 55.48333333333333,
-    "single-groupby-1-1-1": 6.95,
-    "single-groupby-1-1-12": 8.93,
-    "single-groupby-1-8-1": 11.81,
-    "single-groupby-5-1-1": 5.776666666666666,
-    "single-groupby-5-1-12": 10.723333333333334,
-    "single-groupby-5-8-1": 13.216666666666667
+    "cpu-max-all-1": {
+      "mean_ms": 6.840983606557377,
+      "med_ms": 7.38,
+      "std_ms": 1.1155218583216746,
+      "range_ms": 12.889999999999999
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.713442622950824,
+      "med_ms": 15.87,
+      "std_ms": 3.378308198514902,
+      "range_ms": 27.35
+    },
+    "double-groupby-1": {
+      "mean_ms": 223.26147540983604,
+      "med_ms": 221.43,
+      "std_ms": 66.06770837143932,
+      "range_ms": 350.65
+    },
+    "double-groupby-5": {
+      "mean_ms": 442.8755737704918,
+      "med_ms": 444.14,
+      "std_ms": 132.38680408213642,
+      "range_ms": 690.23
+    },
+    "double-groupby-all": {
+      "mean_ms": 710.289344262295,
+      "med_ms": 718.01,
+      "std_ms": 213.69045769421442,
+      "range_ms": 1118.22
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 45.97327868852459,
+      "med_ms": 47.29,
+      "std_ms": 10.67836812147366,
+      "range_ms": 64.46
+    },
+    "high-cpu-1": {
+      "mean_ms": 8.896229508196722,
+      "med_ms": 7.53,
+      "std_ms": 2.08624076905042,
+      "range_ms": 21.11
+    },
+    "high-cpu-all": {
+      "mean_ms": 4119.504918032787,
+      "med_ms": 4465.66,
+      "std_ms": 1239.1273506136256,
+      "range_ms": 4786.07
+    },
+    "lastpoint": {
+      "mean_ms": 54.592622950819674,
+      "med_ms": 57.86,
+      "std_ms": 14.208290056822383,
+      "range_ms": 195.64000000000001
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.9554098360655745,
+      "med_ms": 5.5,
+      "std_ms": 0.9021688196978283,
+      "range_ms": 14.879999999999999
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 8.237049180327869,
+      "med_ms": 8.37,
+      "std_ms": 2.209447400190294,
+      "range_ms": 17.66
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 10.592786885245904,
+      "med_ms": 10.83,
+      "std_ms": 2.0808909399161544,
+      "range_ms": 16.68
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 5.4416393442622955,
+      "med_ms": 5.96,
+      "std_ms": 0.7497247946810636,
+      "range_ms": 10.83
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.881639344262297,
+      "med_ms": 10.91,
+      "std_ms": 2.068031415241613,
+      "range_ms": 11.12
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 11.995573770491806,
+      "med_ms": 12.26,
+      "std_ms": 2.3751789578823765,
+      "range_ms": 43.06
+    }
   },
   "4000_3_insert_8": {
     "import_speed": 983859.2120689654,
-    "cpu-max-all-1": 6.300000000000001,
-    "cpu-max-all-8": 16.246666666666666,
-    "double-groupby-1": 448.0466666666666,
-    "double-groupby-5": 827.5566666666667,
-    "double-groupby-all": 1296.8566666666668,
-    "groupby-orderby-limit": 73.06,
-    "high-cpu-1": 8.996666666666668,
-    "high-cpu-all": 6249.086666666666,
-    "lastpoint": 76.02000000000001,
-    "single-groupby-1-1-1": 4.543333333333333,
-    "single-groupby-1-1-12": 7.4366666666666665,
-    "single-groupby-1-8-1": 11.076666666666666,
-    "single-groupby-5-1-1": 5.1866666666666665,
-    "single-groupby-5-1-12": 10.35,
-    "single-groupby-5-8-1": 11.733333333333334
+    "cpu-max-all-1": {
+      "mean_ms": 5.853770491803278,
+      "med_ms": 6.22,
+      "std_ms": 1.0347047307234178,
+      "range_ms": 10.78
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 14.828852459016394,
+      "med_ms": 15.03,
+      "std_ms": 3.5076022666776496,
+      "range_ms": 45.12
+    },
+    "double-groupby-1": {
+      "mean_ms": 412.25573770491803,
+      "med_ms": 422.3,
+      "std_ms": 124.86386456803018,
+      "range_ms": 774.21
+    },
+    "double-groupby-5": {
+      "mean_ms": 766.0126229508197,
+      "med_ms": 803.77,
+      "std_ms": 231.90694098353072,
+      "range_ms": 1234.02
+    },
+    "double-groupby-all": {
+      "mean_ms": 1195.926393442623,
+      "med_ms": 1296.96,
+      "std_ms": 361.69523754137174,
+      "range_ms": 2027.04
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 69.0427868852459,
+      "med_ms": 73.25,
+      "std_ms": 18.202165176259257,
+      "range_ms": 122.64999999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 8.519016393442623,
+      "med_ms": 7.05,
+      "std_ms": 2.2283818530629147,
+      "range_ms": 23.900000000000002
+    },
+    "high-cpu-all": {
+      "mean_ms": 5745.977868852459,
+      "med_ms": 6507.52,
+      "std_ms": 1730.5458167363602,
+      "range_ms": 7247.73
+    },
+    "lastpoint": {
+      "mean_ms": 68.56491803278689,
+      "med_ms": 75.36,
+      "std_ms": 18.112206898751168,
+      "range_ms": 99.38000000000001
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.22327868852459,
+      "med_ms": 4.62,
+      "std_ms": 0.6753362651585145,
+      "range_ms": 7.23
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.89688524590164,
+      "med_ms": 7.51,
+      "std_ms": 1.4905575477916606,
+      "range_ms": 9.51
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 10.214426229508197,
+      "med_ms": 10.58,
+      "std_ms": 2.143027861531564,
+      "range_ms": 17.12
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.739508196721311,
+      "med_ms": 5.07,
+      "std_ms": 0.8176825509318153,
+      "range_ms": 9.09
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.33672131147541,
+      "med_ms": 9.9,
+      "std_ms": 1.9321945393010813,
+      "range_ms": 17.86
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 11.417704918032786,
+      "med_ms": 11.67,
+      "std_ms": 2.5326194565065254,
+      "range_ms": 20.9
+    }
   },
   "4000_3_prepare_1": {
     "import_speed": 992240.2241379316,
-    "cpu-max-all-1": 7.039999999999999,
-    "cpu-max-all-8": 16.706666666666667,
-    "double-groupby-1": 231.87666666666667,
-    "double-groupby-5": 475.8866666666666,
-    "double-groupby-all": 756.5466666666666,
-    "groupby-orderby-limit": 48.71333333333334,
-    "high-cpu-1": 8.943333333333333,
-    "high-cpu-all": 3550.126666666667,
-    "lastpoint": 58.70666666666667,
-    "single-groupby-1-1-1": 5.989999999999999,
-    "single-groupby-1-1-12": 7.8566666666666665,
-    "single-groupby-1-8-1": 10.776666666666666,
-    "single-groupby-5-1-1": 5.246666666666667,
-    "single-groupby-5-1-12": 10.226666666666667,
-    "single-groupby-5-8-1": 12.576666666666668
+    "cpu-max-all-1": {
+      "mean_ms": 6.752191780821918,
+      "med_ms": 7.27,
+      "std_ms": 0.9944851356010842,
+      "range_ms": 12.83
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 15.703013698630135,
+      "med_ms": 15.74,
+      "std_ms": 3.078796069232396,
+      "range_ms": 38.59
+    },
+    "double-groupby-1": {
+      "mean_ms": 225.68424657534248,
+      "med_ms": 221.83,
+      "std_ms": 60.66299054608099,
+      "range_ms": 346.82
+    },
+    "double-groupby-5": {
+      "mean_ms": 446.54575342465756,
+      "med_ms": 447.73,
+      "std_ms": 121.18054757626243,
+      "range_ms": 644.01
+    },
+    "double-groupby-all": {
+      "mean_ms": 727.8253424657535,
+      "med_ms": 724.0,
+      "std_ms": 198.46336534373705,
+      "range_ms": 1077.46
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 46.22424657534247,
+      "med_ms": 47.33,
+      "std_ms": 9.829349181265515,
+      "range_ms": 69.42999999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 8.41027397260274,
+      "med_ms": 7.48,
+      "std_ms": 1.7268202735750564,
+      "range_ms": 18.21
+    },
+    "high-cpu-all": {
+      "mean_ms": 3325.4916438356167,
+      "med_ms": 3527.68,
+      "std_ms": 913.0324786498466,
+      "range_ms": 4042.36
+    },
+    "lastpoint": {
+      "mean_ms": 54.944657534246566,
+      "med_ms": 58.08,
+      "std_ms": 12.839288562216602,
+      "range_ms": 63.120000000000005
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 6.052602739726027,
+      "med_ms": 5.44,
+      "std_ms": 1.183508235193219,
+      "range_ms": 17.660000000000004
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 8.497808219178081,
+      "med_ms": 8.51,
+      "std_ms": 2.659068470230872,
+      "range_ms": 28.18
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 10.925753424657534,
+      "med_ms": 10.94,
+      "std_ms": 2.1532868401896534,
+      "range_ms": 19.6
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 5.38986301369863,
+      "med_ms": 5.83,
+      "std_ms": 0.6946011908336021,
+      "range_ms": 13.360000000000001
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.935342465753424,
+      "med_ms": 10.93,
+      "std_ms": 1.8460280801642608,
+      "range_ms": 18.03
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 11.983150684931507,
+      "med_ms": 12.01,
+      "std_ms": 2.1826155796762188,
+      "range_ms": 51.18
+    }
   },
   "4000_3_prepare_8": {
     "import_speed": 992240.2241379316,
-    "cpu-max-all-1": 6.153333333333332,
-    "cpu-max-all-8": 16.029999999999998,
-    "double-groupby-1": 432.7866666666667,
-    "double-groupby-5": 827.75,
-    "double-groupby-all": 1314.0,
-    "groupby-orderby-limit": 77.52999999999999,
-    "high-cpu-1": 8.36,
-    "high-cpu-all": 5307.92,
-    "lastpoint": 74.06333333333333,
-    "single-groupby-1-1-1": 4.483333333333333,
-    "single-groupby-1-1-12": 7.213333333333334,
-    "single-groupby-1-8-1": 10.49,
-    "single-groupby-5-1-1": 4.953333333333333,
-    "single-groupby-5-1-12": 9.816666666666666,
-    "single-groupby-5-8-1": 11.87
+    "cpu-max-all-1": {
+      "mean_ms": 5.720547945205479,
+      "med_ms": 6.07,
+      "std_ms": 1.0448350353723561,
+      "range_ms": 13.04
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 14.795068493150682,
+      "med_ms": 14.9,
+      "std_ms": 3.2273381374713224,
+      "range_ms": 26.099999999999998
+    },
+    "double-groupby-1": {
+      "mean_ms": 409.832602739726,
+      "med_ms": 415.33,
+      "std_ms": 113.28714672885442,
+      "range_ms": 798.26
+    },
+    "double-groupby-5": {
+      "mean_ms": 765.8328767123287,
+      "med_ms": 804.8,
+      "std_ms": 210.58068297685446,
+      "range_ms": 1324.54
+    },
+    "double-groupby-all": {
+      "mean_ms": 1208.5612328767124,
+      "med_ms": 1279.04,
+      "std_ms": 335.3622164952778,
+      "range_ms": 1978.8799999999999
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 69.93575342465753,
+      "med_ms": 73.25,
+      "std_ms": 16.804252844461082,
+      "range_ms": 110.87
+    },
+    "high-cpu-1": {
+      "mean_ms": 7.958356164383562,
+      "med_ms": 6.88,
+      "std_ms": 1.8445987321084754,
+      "range_ms": 19.509999999999998
+    },
+    "high-cpu-all": {
+      "mean_ms": 4917.812191780821,
+      "med_ms": 5563.9,
+      "std_ms": 1346.9581658657225,
+      "range_ms": 6243.57
+    },
+    "lastpoint": {
+      "mean_ms": 67.89424657534248,
+      "med_ms": 73.55,
+      "std_ms": 16.896746474938784,
+      "range_ms": 104.46000000000001
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.1627397260273975,
+      "med_ms": 4.4,
+      "std_ms": 0.7353273274799549,
+      "range_ms": 9.229999999999999
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 6.812465753424657,
+      "med_ms": 7.0,
+      "std_ms": 1.3926521269604801,
+      "range_ms": 15.530000000000001
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 10.142191780821918,
+      "med_ms": 10.37,
+      "std_ms": 2.0526833701925002,
+      "range_ms": 18.91
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.621369863013699,
+      "med_ms": 4.85,
+      "std_ms": 0.7382549150765629,
+      "range_ms": 12.92
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 9.08808219178082,
+      "med_ms": 9.54,
+      "std_ms": 1.9856286840515938,
+      "range_ms": 16.409999999999997
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 11.37205479452055,
+      "med_ms": 11.52,
+      "std_ms": 2.504670059721833,
+      "range_ms": 23.41
+    }
   },
   "100000_1_insert_1": {
     "import_speed": 1156418.0283561633,
-    "cpu-max-all-1": 3.61,
-    "cpu-max-all-8": 4.963333333333333,
-    "double-groupby-1": 1044.5366666666666,
-    "double-groupby-5": 1935.2666666666664,
-    "double-groupby-all": 3043.66,
-    "groupby-orderby-limit": 154.73000000000002,
-    "high-cpu-1": 4.126666666666666,
-    "high-cpu-all": 3143.2666666666664,
-    "lastpoint": 266.22666666666663,
-    "single-groupby-1-1-1": 3.5833333333333335,
-    "single-groupby-1-1-12": 3.34,
-    "single-groupby-1-8-1": 3.6333333333333333,
-    "single-groupby-5-1-1": 3.353333333333333,
-    "single-groupby-5-1-12": 3.6833333333333336,
-    "single-groupby-5-8-1": 4.663333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 4.004605263157894,
+      "med_ms": 3.545,
+      "std_ms": 0.8420901626935581,
+      "range_ms": 11.330000000000002
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 5.1635526315789475,
+      "med_ms": 4.675,
+      "std_ms": 0.5645758383007392,
+      "range_ms": 14.74
+    },
+    "double-groupby-1": {
+      "mean_ms": 1796.2313157894735,
+      "med_ms": 1262.5300000000002,
+      "std_ms": 1517.4914599617728,
+      "range_ms": 9398.630000000001
+    },
+    "double-groupby-5": {
+      "mean_ms": 3242.2965789473683,
+      "med_ms": 2311.295,
+      "std_ms": 2648.4067205958895,
+      "range_ms": 16324.08
+    },
+    "double-groupby-all": {
+      "mean_ms": 5047.818684210526,
+      "med_ms": 3705.28,
+      "std_ms": 4058.3452683691476,
+      "range_ms": 24767.420000000002
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1039.643421052632,
+      "med_ms": 152.585,
+      "std_ms": 1859.4636044763392,
+      "range_ms": 7730.24
+    },
+    "high-cpu-1": {
+      "mean_ms": 4.203815789473684,
+      "med_ms": 3.42,
+      "std_ms": 0.4132278374142226,
+      "range_ms": 17.04
+    },
+    "high-cpu-all": {
+      "mean_ms": 4715.959868421052,
+      "med_ms": 3653.76,
+      "std_ms": 4017.4146663937972,
+      "range_ms": 22981.649999999998
+    },
+    "lastpoint": {
+      "mean_ms": 488.8857894736843,
+      "med_ms": 257.03,
+      "std_ms": 427.14870398106297,
+      "range_ms": 1767.59
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.028947368421052,
+      "med_ms": 3.145,
+      "std_ms": 0.9743203839222064,
+      "range_ms": 14.21
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.8268421052631574,
+      "med_ms": 3.14,
+      "std_ms": 1.1882785425719182,
+      "range_ms": 13.91
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 4.392236842105262,
+      "med_ms": 3.895,
+      "std_ms": 0.7788343404245612,
+      "range_ms": 11.98
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.684473684210526,
+      "med_ms": 3.33,
+      "std_ms": 0.8596129279884711,
+      "range_ms": 11.1
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.226578947368422,
+      "med_ms": 3.75,
+      "std_ms": 0.9231504790756185,
+      "range_ms": 14.290000000000001
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 4.748947368421052,
+      "med_ms": 4.07,
+      "std_ms": 0.4841365618565859,
+      "range_ms": 11.13
+    }
   },
   "100000_1_insert_8": {
     "import_speed": 1156418.0283561633,
-    "cpu-max-all-1": 3.0966666666666662,
-    "cpu-max-all-8": 4.84,
-    "double-groupby-1": 2696.48,
-    "double-groupby-5": 4439.6033333333335,
-    "double-groupby-all": 6516.586666666666,
-    "groupby-orderby-limit": 472.28,
-    "high-cpu-1": 3.813333333333333,
-    "high-cpu-all": 17730.456666666665,
-    "lastpoint": 842.9066666666666,
-    "single-groupby-1-1-1": 3.0966666666666662,
-    "single-groupby-1-1-12": 3.6366666666666667,
-    "single-groupby-1-8-1": 4.066666666666666,
-    "single-groupby-5-1-1": 2.9466666666666668,
-    "single-groupby-5-1-12": 3.1666666666666665,
-    "single-groupby-5-8-1": 4.213333333333332
+    "cpu-max-all-1": {
+      "mean_ms": 3.4651315789473687,
+      "med_ms": 2.895,
+      "std_ms": 1.1499895575422152,
+      "range_ms": 28.14
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 4.665131578947369,
+      "med_ms": 4.095000000000001,
+      "std_ms": 0.8855589472885512,
+      "range_ms": 20.740000000000002
+    },
+    "double-groupby-1": {
+      "mean_ms": 3823.6930263157883,
+      "med_ms": 2396.415,
+      "std_ms": 2431.763223616981,
+      "range_ms": 55305.340000000004
+    },
+    "double-groupby-5": {
+      "mean_ms": 6182.156973684211,
+      "med_ms": 3971.005,
+      "std_ms": 3686.1993521425356,
+      "range_ms": 79205.02
+    },
+    "double-groupby-all": {
+      "mean_ms": 8996.366052631582,
+      "med_ms": 5795.07,
+      "std_ms": 5344.270208684707,
+      "range_ms": 108594.01999999999
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 2170.8813157894742,
+      "med_ms": 503.08500000000004,
+      "std_ms": 2951.9013865644147,
+      "range_ms": 19164.329999999998
+    },
+    "high-cpu-1": {
+      "mean_ms": 4.185657894736842,
+      "med_ms": 3.145,
+      "std_ms": 1.792082837018658,
+      "range_ms": 21.2
+    },
+    "high-cpu-all": {
+      "mean_ms": 17291.372236842104,
+      "med_ms": 20867.58,
+      "std_ms": 4932.597771754108,
+      "range_ms": 47456.39
+    },
+    "lastpoint": {
+      "mean_ms": 1083.414605263158,
+      "med_ms": 916.94,
+      "std_ms": 511.2734240213437,
+      "range_ms": 3008.17
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.0618421052631577,
+      "med_ms": 2.6550000000000002,
+      "std_ms": 0.9656316903475718,
+      "range_ms": 32.84
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.5701315789473673,
+      "med_ms": 2.9050000000000002,
+      "std_ms": 1.3479856511808548,
+      "range_ms": 28.55
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 3.964999999999999,
+      "med_ms": 3.4050000000000002,
+      "std_ms": 0.8270356703310927,
+      "range_ms": 30.04
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.143552631578947,
+      "med_ms": 2.775,
+      "std_ms": 0.7654692747108245,
+      "range_ms": 26.0
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 3.742763157894737,
+      "med_ms": 3.26,
+      "std_ms": 1.1424191859782593,
+      "range_ms": 32.03
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 4.272105263157894,
+      "med_ms": 3.575,
+      "std_ms": 0.6529957953707893,
+      "range_ms": 22.91
+    }
   },
   "100000_1_prepare_1": {
     "import_speed": 1101608.5021917804,
-    "cpu-max-all-1": 3.6633333333333336,
-    "cpu-max-all-8": 4.8533333333333335,
-    "double-groupby-1": 1064.3999999999999,
-    "double-groupby-5": 1951.5933333333332,
-    "double-groupby-all": 3069.5933333333337,
-    "groupby-orderby-limit": 153.88333333333333,
-    "high-cpu-1": 3.85,
-    "high-cpu-all": 2772.433333333333,
-    "lastpoint": 268.08,
-    "single-groupby-1-1-1": 3.4266666666666663,
-    "single-groupby-1-1-12": 3.403333333333333,
-    "single-groupby-1-8-1": 3.9766666666666666,
-    "single-groupby-5-1-1": 3.266666666666667,
-    "single-groupby-5-1-12": 3.83,
-    "single-groupby-5-8-1": 4.903333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 3.5838666666666668,
+      "med_ms": 3.47,
+      "std_ms": 0.29060465079393183,
+      "range_ms": 9.07
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 4.947733333333333,
+      "med_ms": 4.47,
+      "std_ms": 0.3522459726174669,
+      "range_ms": 10.7
+    },
+    "double-groupby-1": {
+      "mean_ms": 1037.16,
+      "med_ms": 1249.92,
+      "std_ms": 44.11121647516558,
+      "range_ms": 1264.85
+    },
+    "double-groupby-5": {
+      "mean_ms": 1918.7701333333334,
+      "med_ms": 2325.89,
+      "std_ms": 58.37008789433842,
+      "range_ms": 2331.68
+    },
+    "double-groupby-all": {
+      "mean_ms": 3024.3464,
+      "med_ms": 3663.49,
+      "std_ms": 72.1577489543719,
+      "range_ms": 4400.77
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 155.95226666666667,
+      "med_ms": 150.53,
+      "std_ms": 4.987996828423246,
+      "range_ms": 131.69
+    },
+    "high-cpu-1": {
+      "mean_ms": 4.029866666666666,
+      "med_ms": 3.32,
+      "std_ms": 0.454442020008658,
+      "range_ms": 11.35
+    },
+    "high-cpu-all": {
+      "mean_ms": 2741.461866666667,
+      "med_ms": 3180.67,
+      "std_ms": 101.02696582346466,
+      "range_ms": 3941.95
+    },
+    "lastpoint": {
+      "mean_ms": 268.61466666666666,
+      "med_ms": 254.97,
+      "std_ms": 7.298376223208524,
+      "range_ms": 324.20000000000005
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.575333333333333,
+      "med_ms": 3.06,
+      "std_ms": 0.5991284961967299,
+      "range_ms": 18.32
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.3989333333333334,
+      "med_ms": 3.16,
+      "std_ms": 0.5829968553374308,
+      "range_ms": 18.04
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 4.022666666666667,
+      "med_ms": 3.62,
+      "std_ms": 0.5861494444006333,
+      "range_ms": 8.12
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.223733333333333,
+      "med_ms": 3.23,
+      "std_ms": 0.32292904974803854,
+      "range_ms": 5.52
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 3.850000000000001,
+      "med_ms": 3.72,
+      "std_ms": 0.3247410610883027,
+      "range_ms": 7.92
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 4.625066666666666,
+      "med_ms": 3.91,
+      "std_ms": 0.3531570867587509,
+      "range_ms": 8.8
+    }
   },
   "100000_1_prepare_8": {
     "import_speed": 1101608.5021917804,
-    "cpu-max-all-1": 2.8766666666666665,
-    "cpu-max-all-8": 4.523333333333333,
-    "double-groupby-1": 2735.4166666666665,
-    "double-groupby-5": 4549.2266666666665,
-    "double-groupby-all": 6623.706666666666,
-    "groupby-orderby-limit": 490.96000000000004,
-    "high-cpu-1": 7.406666666666666,
-    "high-cpu-all": 15883.31,
-    "lastpoint": 755.4666666666666,
-    "single-groupby-1-1-1": 2.6133333333333337,
-    "single-groupby-1-1-12": 3.19,
-    "single-groupby-1-8-1": 3.89,
-    "single-groupby-5-1-1": 2.9599999999999995,
-    "single-groupby-5-1-12": 3.2433333333333336,
-    "single-groupby-5-8-1": 4.826666666666667
+    "cpu-max-all-1": {
+      "mean_ms": 2.8998666666666666,
+      "med_ms": 2.73,
+      "std_ms": 0.5659588690368245,
+      "range_ms": 7.23
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 4.534,
+      "med_ms": 3.94,
+      "std_ms": 0.8972721422719515,
+      "range_ms": 13.74
+    },
+    "double-groupby-1": {
+      "mean_ms": 2795.8414666666663,
+      "med_ms": 2229.89,
+      "std_ms": 122.86651909852166,
+      "range_ms": 5189.47
+    },
+    "double-groupby-5": {
+      "mean_ms": 4633.672933333333,
+      "med_ms": 3857.53,
+      "std_ms": 148.35967906530522,
+      "range_ms": 9524.189999999999
+    },
+    "double-groupby-all": {
+      "mean_ms": 6780.6836,
+      "med_ms": 5562.37,
+      "std_ms": 199.93447769706955,
+      "range_ms": 12426.11
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 496.8487999999999,
+      "med_ms": 477.55,
+      "std_ms": 29.222506550278688,
+      "range_ms": 714.15
+    },
+    "high-cpu-1": {
+      "mean_ms": 4.892799999999999,
+      "med_ms": 3.32,
+      "std_ms": 1.9911897570670278,
+      "range_ms": 15.84
+    },
+    "high-cpu-all": {
+      "mean_ms": 15833.466933333333,
+      "med_ms": 18547.71,
+      "std_ms": 429.5093090139698,
+      "range_ms": 25856.25
+    },
+    "lastpoint": {
+      "mean_ms": 800.1316,
+      "med_ms": 709.98,
+      "std_ms": 220.62419446014795,
+      "range_ms": 1801.9799999999998
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 2.6733333333333333,
+      "med_ms": 2.42,
+      "std_ms": 0.7714243290793308,
+      "range_ms": 7.890000000000001
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 2.9524,
+      "med_ms": 2.66,
+      "std_ms": 0.7054859164989606,
+      "range_ms": 7.76
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 3.7974666666666668,
+      "med_ms": 3.37,
+      "std_ms": 0.6695381492740599,
+      "range_ms": 13.07
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 2.7537333333333334,
+      "med_ms": 2.61,
+      "std_ms": 0.39893701099138285,
+      "range_ms": 10.690000000000001
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 3.3921333333333337,
+      "med_ms": 3.08,
+      "std_ms": 0.6747517928705206,
+      "range_ms": 10.25
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 4.499866666666668,
+      "med_ms": 3.62,
+      "std_ms": 0.9534779768050505,
+      "range_ms": 12.78
+    }
   },
   "100000_3_insert_1": {
     "import_speed": 675948.7232758619,
-    "cpu-max-all-1": 5.11,
-    "cpu-max-all-8": 10.026666666666666,
-    "double-groupby-1": 770.0,
-    "double-groupby-5": 1721.8166666666668,
-    "double-groupby-all": 3052.936666666667,
-    "groupby-orderby-limit": 178.96,
-    "high-cpu-1": 5.919999999999999,
-    "high-cpu-all": 16449.53,
-    "lastpoint": 239.70333333333335,
-    "single-groupby-1-1-1": 5.6066666666666665,
-    "single-groupby-1-1-12": 4.92,
-    "single-groupby-1-8-1": 9.616666666666667,
-    "single-groupby-5-1-1": 4.546666666666666,
-    "single-groupby-5-1-12": 5.483333333333333,
-    "single-groupby-5-8-1": 9.88
+    "cpu-max-all-1": {
+      "mean_ms": 5.021451612903227,
+      "med_ms": 4.61,
+      "std_ms": 0.6245466467876913,
+      "range_ms": 13.78
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 9.46967741935484,
+      "med_ms": 9.524999999999999,
+      "std_ms": 1.5637669606915887,
+      "range_ms": 16.7
+    },
+    "double-groupby-1": {
+      "mean_ms": 761.9758064516129,
+      "med_ms": 898.96,
+      "std_ms": 229.8136183922078,
+      "range_ms": 1592.25
+    },
+    "double-groupby-5": {
+      "mean_ms": 1624.0083870967742,
+      "med_ms": 2062.56,
+      "std_ms": 484.6108939601924,
+      "range_ms": 3587.25
+    },
+    "double-groupby-all": {
+      "mean_ms": 2864.3643548387095,
+      "med_ms": 3690.625,
+      "std_ms": 860.3145717903556,
+      "range_ms": 6288.0
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 166.12161290322575,
+      "med_ms": 177.56,
+      "std_ms": 46.59099097442387,
+      "range_ms": 211.04
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.597903225806451,
+      "med_ms": 4.395,
+      "std_ms": 1.0461328271881019,
+      "range_ms": 9.8
+    },
+    "high-cpu-all": {
+      "mean_ms": 15210.235483870969,
+      "med_ms": 19202.559999999998,
+      "std_ms": 4541.085110060015,
+      "range_ms": 26100.38
+    },
+    "lastpoint": {
+      "mean_ms": 223.73290322580644,
+      "med_ms": 237.3,
+      "std_ms": 64.4663405727589,
+      "range_ms": 344.83
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.395806451612903,
+      "med_ms": 4.425,
+      "std_ms": 0.757717773461854,
+      "range_ms": 14.620000000000001
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 4.79258064516129,
+      "med_ms": 4.485,
+      "std_ms": 0.8041163268832643,
+      "range_ms": 11.07
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.830322580645161,
+      "med_ms": 8.79,
+      "std_ms": 1.7189722126917428,
+      "range_ms": 22.310000000000002
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.58241935483871,
+      "med_ms": 4.295,
+      "std_ms": 0.5152770557762231,
+      "range_ms": 8.290000000000001
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 5.185483870967742,
+      "med_ms": 5.01,
+      "std_ms": 0.7403182244859852,
+      "range_ms": 8.46
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 9.368225806451612,
+      "med_ms": 9.245000000000001,
+      "std_ms": 1.585450780593256,
+      "range_ms": 41.949999999999996
+    }
   },
   "100000_3_insert_8": {
     "import_speed": 675948.7232758619,
-    "cpu-max-all-1": 4.526666666666666,
-    "cpu-max-all-8": 9.906666666666666,
-    "double-groupby-1": 1538.7266666666667,
-    "double-groupby-5": 3301.9733333333334,
-    "double-groupby-all": 5134.526666666667,
-    "groupby-orderby-limit": 360.85999999999996,
-    "high-cpu-1": 6.02,
-    "high-cpu-all": 22196.87,
-    "lastpoint": 479.96333333333337,
-    "single-groupby-1-1-1": 4.413333333333333,
-    "single-groupby-1-1-12": 4.586666666666667,
-    "single-groupby-1-8-1": 9.68,
-    "single-groupby-5-1-1": 4.596666666666668,
-    "single-groupby-5-1-12": 4.97,
-    "single-groupby-5-8-1": 10.163333333333334
+    "cpu-max-all-1": {
+      "mean_ms": 4.214838709677419,
+      "med_ms": 3.9699999999999998,
+      "std_ms": 0.6782275403651662,
+      "range_ms": 6.54
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 8.984838709677422,
+      "med_ms": 9.24,
+      "std_ms": 1.67709911721663,
+      "range_ms": 11.78
+    },
+    "double-groupby-1": {
+      "mean_ms": 1543.175,
+      "med_ms": 1617.76,
+      "std_ms": 472.7101004575533,
+      "range_ms": 3632.64
+    },
+    "double-groupby-5": {
+      "mean_ms": 2994.7740322580644,
+      "med_ms": 3457.2799999999997,
+      "std_ms": 905.2962318045625,
+      "range_ms": 6076.65
+    },
+    "double-groupby-all": {
+      "mean_ms": 4767.095161290321,
+      "med_ms": 5646.59,
+      "std_ms": 1436.0297001035465,
+      "range_ms": 9068.220000000001
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 316.5038709677419,
+      "med_ms": 332.92,
+      "std_ms": 94.18934495367697,
+      "range_ms": 569.25
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.215161290322581,
+      "med_ms": 4.390000000000001,
+      "std_ms": 1.4770903409061709,
+      "range_ms": 24.45
+    },
+    "high-cpu-all": {
+      "mean_ms": 20366.338870967735,
+      "med_ms": 26139.644999999997,
+      "std_ms": 6081.735656379064,
+      "range_ms": 32767.230000000003
+    },
+    "lastpoint": {
+      "mean_ms": 475.12629032258053,
+      "med_ms": 468.66999999999996,
+      "std_ms": 147.2620738820606,
+      "range_ms": 904.9100000000001
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.7537096774193546,
+      "med_ms": 3.56,
+      "std_ms": 0.7540322945446619,
+      "range_ms": 15.72
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 4.072096774193548,
+      "med_ms": 3.8,
+      "std_ms": 0.8488645011430852,
+      "range_ms": 11.139999999999999
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.730806451612901,
+      "med_ms": 8.945,
+      "std_ms": 2.176842576133876,
+      "range_ms": 22.119999999999997
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.149354838709678,
+      "med_ms": 4.045,
+      "std_ms": 0.8308081607051269,
+      "range_ms": 10.3
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.518709677419356,
+      "med_ms": 4.55,
+      "std_ms": 0.7681945703645654,
+      "range_ms": 7.56
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.817419354838709,
+      "med_ms": 8.97,
+      "std_ms": 1.767836443257988,
+      "range_ms": 14.16
+    }
   },
   "100000_3_prepare_1": {
     "import_speed": 748343.520862069,
-    "cpu-max-all-1": 4.8999999999999995,
-    "cpu-max-all-8": 9.746666666666668,
-    "double-groupby-1": 777.3133333333334,
-    "double-groupby-5": 1720.3033333333333,
-    "double-groupby-all": 3139.353333333333,
-    "groupby-orderby-limit": 181.76666666666665,
-    "high-cpu-1": 5.81,
-    "high-cpu-all": 11407.546666666667,
-    "lastpoint": 239.97000000000003,
-    "single-groupby-1-1-1": 5.376666666666666,
-    "single-groupby-1-1-12": 4.7299999999999995,
-    "single-groupby-1-8-1": 9.040000000000001,
-    "single-groupby-5-1-1": 4.696666666666666,
-    "single-groupby-5-1-12": 5.17,
-    "single-groupby-5-8-1": 9.780000000000001
+    "cpu-max-all-1": {
+      "mean_ms": 5.098493150684932,
+      "med_ms": 4.58,
+      "std_ms": 0.5581085896750757,
+      "range_ms": 15.46
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 9.766986301369863,
+      "med_ms": 9.72,
+      "std_ms": 1.4116889853917567,
+      "range_ms": 17.38
+    },
+    "double-groupby-1": {
+      "mean_ms": 769.3509722222223,
+      "med_ms": 905.44,
+      "std_ms": 212.20477823906833,
+      "range_ms": 1478.77
+    },
+    "double-groupby-5": {
+      "mean_ms": 1644.0091666666667,
+      "med_ms": 2065.6000000000004,
+      "std_ms": 455.74845828005596,
+      "range_ms": 3103.06
+    },
+    "double-groupby-all": {
+      "mean_ms": 2926.354444444444,
+      "med_ms": 3695.29,
+      "std_ms": 810.9192484812736,
+      "range_ms": 5343.96
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 168.68055555555554,
+      "med_ms": 177.565,
+      "std_ms": 43.82208948062124,
+      "range_ms": 239.44
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.573194444444445,
+      "med_ms": 4.515,
+      "std_ms": 1.0495778177256123,
+      "range_ms": 10.709999999999999
+    },
+    "high-cpu-all": {
+      "mean_ms": 10675.204861111111,
+      "med_ms": 13299.71,
+      "std_ms": 2935.497028492331,
+      "range_ms": 18132.77
+    },
+    "lastpoint": {
+      "mean_ms": 225.97291666666666,
+      "med_ms": 236.685,
+      "std_ms": 60.240337368766596,
+      "range_ms": 323.23
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.604794520547945,
+      "med_ms": 4.37,
+      "std_ms": 1.057541842604087,
+      "range_ms": 21.470000000000002
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 4.99,
+      "med_ms": 4.62,
+      "std_ms": 0.8051138635828683,
+      "range_ms": 8.1
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 9.004520547945207,
+      "med_ms": 8.85,
+      "std_ms": 1.639839966019627,
+      "range_ms": 16.340000000000003
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.585068493150684,
+      "med_ms": 4.33,
+      "std_ms": 0.5908847492618149,
+      "range_ms": 16.689999999999998
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 5.211643835616438,
+      "med_ms": 5.0,
+      "std_ms": 0.7168062145118871,
+      "range_ms": 10.719999999999999
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 9.486301369863012,
+      "med_ms": 9.38,
+      "std_ms": 1.5472533970172535,
+      "range_ms": 34.9
+    }
   },
   "100000_3_prepare_8": {
     "import_speed": 748343.520862069,
-    "cpu-max-all-1": 4.1933333333333325,
-    "cpu-max-all-8": 9.43,
-    "double-groupby-1": 1680.5366666666669,
-    "double-groupby-5": 3130.033333333333,
-    "double-groupby-all": 5205.2,
-    "groupby-orderby-limit": 322.34,
-    "high-cpu-1": 5.546666666666667,
-    "high-cpu-all": 16543.546666666665,
-    "lastpoint": 511.5233333333333,
-    "single-groupby-1-1-1": 3.85,
-    "single-groupby-1-1-12": 3.8466666666666662,
-    "single-groupby-1-8-1": 8.906666666666666,
-    "single-groupby-5-1-1": 3.94,
-    "single-groupby-5-1-12": 4.596666666666668,
-    "single-groupby-5-8-1": 9.203333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 4.11513888888889,
+      "med_ms": 3.8099999999999996,
+      "std_ms": 0.7145036552712177,
+      "range_ms": 10.39
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 8.965833333333332,
+      "med_ms": 9.075,
+      "std_ms": 1.6357939451489347,
+      "range_ms": 32.3
+    },
+    "double-groupby-1": {
+      "mean_ms": 1550.5456944444445,
+      "med_ms": 1551.105,
+      "std_ms": 436.3602488409377,
+      "range_ms": 3540.29
+    },
+    "double-groupby-5": {
+      "mean_ms": 3011.6109722222222,
+      "med_ms": 3473.98,
+      "std_ms": 840.9480027823055,
+      "range_ms": 5991.540000000001
+    },
+    "double-groupby-all": {
+      "mean_ms": 4826.659166666667,
+      "med_ms": 5590.530000000001,
+      "std_ms": 1348.5688346067232,
+      "range_ms": 9395.060000000001
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 319.50138888888887,
+      "med_ms": 319.56,
+      "std_ms": 89.14313504025075,
+      "range_ms": 554.2
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.009305555555556,
+      "med_ms": 4.33,
+      "std_ms": 1.1688592324659175,
+      "range_ms": 12.909999999999998
+    },
+    "high-cpu-all": {
+      "mean_ms": 15387.848611111112,
+      "med_ms": 19604.48,
+      "std_ms": 4232.385559631295,
+      "range_ms": 24957.52
+    },
+    "lastpoint": {
+      "mean_ms": 491.2872222222222,
+      "med_ms": 490.67,
+      "std_ms": 139.06337957440178,
+      "range_ms": 971.9200000000001
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.647083333333333,
+      "med_ms": 3.48,
+      "std_ms": 0.6271586664933735,
+      "range_ms": 5.61
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.904583333333333,
+      "med_ms": 3.7350000000000003,
+      "std_ms": 0.7111207926155309,
+      "range_ms": 12.260000000000002
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.715277777777779,
+      "med_ms": 8.6,
+      "std_ms": 1.925150787745094,
+      "range_ms": 22.950000000000003
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.8900000000000006,
+      "med_ms": 3.75,
+      "std_ms": 0.5645264748841018,
+      "range_ms": 5.59
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.4631944444444445,
+      "med_ms": 4.425,
+      "std_ms": 0.7668920749470478,
+      "range_ms": 8.190000000000001
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.93625,
+      "med_ms": 9.004999999999999,
+      "std_ms": 1.7188568404693187,
+      "range_ms": 19.27
+    }
   },
   "1000000_1_insert_1": {
     "import_speed": 249336.24054794502,
-    "cpu-max-all-1": 3.5533333333333332,
-    "cpu-max-all-8": 4.489999999999999,
-    "double-groupby-1": 2228.826666666667,
-    "double-groupby-5": 3597.5933333333337,
-    "double-groupby-all": 5313.936666666667,
-    "groupby-orderby-limit": 1429.8866666666665,
-    "high-cpu-1": 3.6366666666666667,
-    "high-cpu-all": 1643.7633333333333,
-    "lastpoint": 7659.099999999999,
-    "single-groupby-1-1-1": 3.33,
-    "single-groupby-1-1-12": 2.796666666666667,
-    "single-groupby-1-8-1": 3.4466666666666668,
-    "single-groupby-5-1-1": 3.25,
-    "single-groupby-5-1-12": 3.1233333333333335,
-    "single-groupby-5-8-1": 3.83
+    "cpu-max-all-1": {
+      "mean_ms": 4.153707865168539,
+      "med_ms": 3.61,
+      "std_ms": 0.921344597983236,
+      "range_ms": 12.809999999999999
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 4.711573033707865,
+      "med_ms": 4.3,
+      "std_ms": 0.8341406831371765,
+      "range_ms": 15.11
+    },
+    "double-groupby-1": {
+      "mean_ms": 3719.2103370786513,
+      "med_ms": 2860.03,
+      "std_ms": 2718.5068323009473,
+      "range_ms": 24116.260000000002
+    },
+    "double-groupby-5": {
+      "mean_ms": 10248.553977272728,
+      "med_ms": 4733.695,
+      "std_ms": 10235.700506065197,
+      "range_ms": 49233.57
+    },
+    "double-groupby-all": {
+      "mean_ms": 17643.905000000002,
+      "med_ms": 6912.38,
+      "std_ms": 18918.94359474505,
+      "range_ms": 88844.32
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1441.266511627907,
+      "med_ms": 1464.4450000000002,
+      "std_ms": 399.6133573983952,
+      "range_ms": 66704.83
+    },
+    "high-cpu-1": {
+      "mean_ms": 4.239318181818182,
+      "med_ms": 3.36,
+      "std_ms": 1.384580766007045,
+      "range_ms": 27.14
+    },
+    "high-cpu-all": {
+      "mean_ms": 6784.773295454546,
+      "med_ms": 1677.985,
+      "std_ms": 12898.427120881406,
+      "range_ms": 210827.31
+    },
+    "lastpoint": {
+      "mean_ms": 20139.24104651163,
+      "med_ms": 7859.709999999999,
+      "std_ms": 24507.06040659318,
+      "range_ms": 310303.74000000005
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.202359550561797,
+      "med_ms": 2.98,
+      "std_ms": 2.3098268443917007,
+      "range_ms": 26.73
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.4342696629213485,
+      "med_ms": 2.73,
+      "std_ms": 1.178847557073943,
+      "range_ms": 10.92
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 4.54191011235955,
+      "med_ms": 3.46,
+      "std_ms": 1.7639772187281877,
+      "range_ms": 19.62
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.7678651685393256,
+      "med_ms": 3.19,
+      "std_ms": 0.9870622987501304,
+      "range_ms": 10.95
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 3.9584269662921345,
+      "med_ms": 3.2,
+      "std_ms": 1.2013816845581708,
+      "range_ms": 14.510000000000002
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 4.255168539325843,
+      "med_ms": 3.86,
+      "std_ms": 0.7932601206407508,
+      "range_ms": 11.85
+    }
   },
   "1000000_1_insert_8": {
     "import_speed": 249336.24054794502,
-    "cpu-max-all-1": 3.3233333333333337,
-    "cpu-max-all-8": 3.736666666666667,
-    "double-groupby-1": 4018.3633333333332,
-    "double-groupby-5": 5788.566666666667,
-    "double-groupby-all": 7934.423333333333,
-    "groupby-orderby-limit": 3436.7333333333336,
-    "high-cpu-1": 4.016666666666667,
-    "high-cpu-all": 3247.8266666666664,
-    "lastpoint": 10998.243333333332,
-    "single-groupby-1-1-1": 2.5900000000000003,
-    "single-groupby-1-1-12": 2.856666666666667,
-    "single-groupby-1-8-1": 3.39,
-    "single-groupby-5-1-1": 2.4499999999999997,
-    "single-groupby-5-1-12": 2.6233333333333335,
-    "single-groupby-5-8-1": 3.39
+    "cpu-max-all-1": {
+      "mean_ms": 3.846470588235295,
+      "med_ms": 2.92,
+      "std_ms": 1.8241695474421027,
+      "range_ms": 111.7
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 4.153411764705881,
+      "med_ms": 3.52,
+      "std_ms": 1.6260583022268595,
+      "range_ms": 61.08
+    },
+    "double-groupby-1": {
+      "mean_ms": 4821.811294117647,
+      "med_ms": 3837.44,
+      "std_ms": 2007.0424078667813,
+      "range_ms": 17223.15
+    },
+    "double-groupby-5": {
+      "mean_ms": 14196.614941176467,
+      "med_ms": 6697.73,
+      "std_ms": 31123.02725491955,
+      "range_ms": 386656.36
+    },
+    "double-groupby-all": {
+      "mean_ms": 27628.807882352947,
+      "med_ms": 9892.35,
+      "std_ms": 74900.78235571059,
+      "range_ms": 926642.57
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 4504.373647058824,
+      "med_ms": 3115.01,
+      "std_ms": 2965.5141320571356,
+      "range_ms": 68209.56999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.063294117647059,
+      "med_ms": 3.28,
+      "std_ms": 2.5977982381768046,
+      "range_ms": 60.5
+    },
+    "high-cpu-all": {
+      "mean_ms": 10626.65505882353,
+      "med_ms": 2340.22,
+      "std_ms": 29207.879495937745,
+      "range_ms": 356186.48
+    },
+    "lastpoint": {
+      "mean_ms": 33288.58482352941,
+      "med_ms": 9212.42,
+      "std_ms": 97809.02959017556,
+      "range_ms": 1256336.8900000001
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.232117647058823,
+      "med_ms": 2.52,
+      "std_ms": 1.6358528386758762,
+      "range_ms": 39.36
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.116,
+      "med_ms": 2.27,
+      "std_ms": 1.596259914389168,
+      "range_ms": 39.160000000000004
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 4.777882352941178,
+      "med_ms": 3.19,
+      "std_ms": 2.810382576107679,
+      "range_ms": 42.730000000000004
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.705411764705883,
+      "med_ms": 2.53,
+      "std_ms": 3.0931050637788284,
+      "range_ms": 111.14
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 3.480117647058823,
+      "med_ms": 2.58,
+      "std_ms": 2.003960064066984,
+      "range_ms": 70.5
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 3.8511764705882356,
+      "med_ms": 3.17,
+      "std_ms": 1.4704837329816283,
+      "range_ms": 48.61
+    }
   },
   "1000000_1_prepare_1": {
     "import_speed": 268025.58027397265,
-    "cpu-max-all-1": 3.563333333333333,
-    "cpu-max-all-8": 4.840000000000001,
-    "double-groupby-1": 2113.1233333333334,
-    "double-groupby-5": 3489.3700000000003,
-    "double-groupby-all": 5230.423333333333,
-    "groupby-orderby-limit": 1465.1599999999999,
-    "high-cpu-1": 3.11,
-    "high-cpu-all": 1598.0666666666666,
-    "lastpoint": 7803.683333333333,
-    "single-groupby-1-1-1": 3.3766666666666665,
-    "single-groupby-1-1-12": 2.4499999999999997,
-    "single-groupby-1-8-1": 3.2899999999999996,
-    "single-groupby-5-1-1": 3.033333333333333,
-    "single-groupby-5-1-12": 3.2133333333333334,
-    "single-groupby-5-8-1": 3.6966666666666668
+    "cpu-max-all-1": {
+      "mean_ms": 3.570933333333333,
+      "med_ms": 3.36,
+      "std_ms": 0.4016996771602271,
+      "range_ms": 10.31
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 4.391466666666666,
+      "med_ms": 4.18,
+      "std_ms": 0.43844224659994113,
+      "range_ms": 10.34
+    },
+    "double-groupby-1": {
+      "mean_ms": 2106.085866666667,
+      "med_ms": 2802.56,
+      "std_ms": 183.57484960734777,
+      "range_ms": 2916.29
+    },
+    "double-groupby-5": {
+      "mean_ms": 3458.1848,
+      "med_ms": 4510.46,
+      "std_ms": 168.683810269151,
+      "range_ms": 5445.9800000000005
+    },
+    "double-groupby-all": {
+      "mean_ms": 5191.9864,
+      "med_ms": 6761.22,
+      "std_ms": 138.59835740261386,
+      "range_ms": 8675.99
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1441.7803999999999,
+      "med_ms": 1457.54,
+      "std_ms": 46.60150822405598,
+      "range_ms": 616.86
+    },
+    "high-cpu-1": {
+      "mean_ms": 3.405733333333333,
+      "med_ms": 3.08,
+      "std_ms": 0.49161942359680794,
+      "range_ms": 13.629999999999999
+    },
+    "high-cpu-all": {
+      "mean_ms": 1605.3274666666666,
+      "med_ms": 1640.89,
+      "std_ms": 78.68495388458851,
+      "range_ms": 1155.84
+    },
+    "lastpoint": {
+      "mean_ms": 7741.063466666668,
+      "med_ms": 7827.71,
+      "std_ms": 171.80734185373703,
+      "range_ms": 2409.9799999999996
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.3344,
+      "med_ms": 2.89,
+      "std_ms": 0.5158520634361672,
+      "range_ms": 27.76
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 2.6364,
+      "med_ms": 2.59,
+      "std_ms": 0.34724257429843686,
+      "range_ms": 6.8
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 3.4076,
+      "med_ms": 3.25,
+      "std_ms": 0.41617576848042254,
+      "range_ms": 10.24
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 3.1282666666666668,
+      "med_ms": 2.96,
+      "std_ms": 0.3574662083191782,
+      "range_ms": 13.739999999999998
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 3.2153333333333336,
+      "med_ms": 3.08,
+      "std_ms": 0.29531171498775494,
+      "range_ms": 8.0
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 3.8324000000000003,
+      "med_ms": 3.69,
+      "std_ms": 0.3906295680813978,
+      "range_ms": 9.85
+    }
   },
   "1000000_1_prepare_8": {
     "import_speed": 268025.58027397265,
-    "cpu-max-all-1": 2.86,
-    "cpu-max-all-8": 4.33,
-    "double-groupby-1": 3702.653333333333,
-    "double-groupby-5": 5319.146666666667,
-    "double-groupby-all": 7607.133333333334,
-    "groupby-orderby-limit": 3416.6133333333332,
-    "high-cpu-1": 3.276666666666667,
-    "high-cpu-all": 2787.15,
-    "lastpoint": 10199.81,
-    "single-groupby-1-1-1": 2.6833333333333336,
-    "single-groupby-1-1-12": 2.4166666666666665,
-    "single-groupby-1-8-1": 3.2466666666666666,
-    "single-groupby-5-1-1": 2.483333333333333,
-    "single-groupby-5-1-12": 3.4433333333333334,
-    "single-groupby-5-8-1": 3.3266666666666667
+    "cpu-max-all-1": {
+      "mean_ms": 2.8593333333333333,
+      "med_ms": 2.72,
+      "std_ms": 0.5294166430912254,
+      "range_ms": 8.36
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 3.6384000000000007,
+      "med_ms": 3.49,
+      "std_ms": 0.7006252805771312,
+      "range_ms": 8.540000000000001
+    },
+    "double-groupby-1": {
+      "mean_ms": 3709.7893333333327,
+      "med_ms": 3776.26,
+      "std_ms": 440.182953589335,
+      "range_ms": 7093.09
+    },
+    "double-groupby-5": {
+      "mean_ms": 5371.234400000001,
+      "med_ms": 6302.72,
+      "std_ms": 446.01103982894557,
+      "range_ms": 9912.16
+    },
+    "double-groupby-all": {
+      "mean_ms": 7509.056533333335,
+      "med_ms": 9433.6,
+      "std_ms": 462.93683898326765,
+      "range_ms": 14300.41
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 2737.6504,
+      "med_ms": 2314.88,
+      "std_ms": 532.5832854661757,
+      "range_ms": 5634.849999999999
+    },
+    "high-cpu-1": {
+      "mean_ms": 4.266399999999999,
+      "med_ms": 2.87,
+      "std_ms": 2.1430577043850976,
+      "range_ms": 13.22
+    },
+    "high-cpu-all": {
+      "mean_ms": 2938.5948,
+      "med_ms": 2177.28,
+      "std_ms": 209.66520962071246,
+      "range_ms": 4722.49
+    },
+    "lastpoint": {
+      "mean_ms": 10406.974533333332,
+      "med_ms": 8814.08,
+      "std_ms": 1329.15451752618,
+      "range_ms": 19980.03
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 2.5326666666666666,
+      "med_ms": 2.29,
+      "std_ms": 0.6775379381685263,
+      "range_ms": 6.69
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 2.4122666666666666,
+      "med_ms": 2.19,
+      "std_ms": 0.810838027170844,
+      "range_ms": 12.22
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 3.1595999999999997,
+      "med_ms": 2.96,
+      "std_ms": 0.7643535335983765,
+      "range_ms": 8.28
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 2.5788,
+      "med_ms": 2.35,
+      "std_ms": 0.6604809058761858,
+      "range_ms": 9.48
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 2.7201333333333335,
+      "med_ms": 2.47,
+      "std_ms": 0.7349563203298498,
+      "range_ms": 9.129999999999999
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 3.1541333333333337,
+      "med_ms": 3.0,
+      "std_ms": 0.5167363626342436,
+      "range_ms": 11.5
+    }
   },
   "1000000_3_insert_1": {
     "import_speed": 219756.8901724138,
-    "cpu-max-all-1": 4.953333333333334,
-    "cpu-max-all-8": 9.839999999999998,
-    "double-groupby-1": 3481.5833333333335,
-    "double-groupby-5": 5009.166666666667,
-    "double-groupby-all": 7591.82,
-    "groupby-orderby-limit": 1996.8766666666668,
-    "high-cpu-1": 5.233333333333333,
-    "high-cpu-all": 3653.28,
-    "lastpoint": 3644.413333333334,
-    "single-groupby-1-1-1": 4.5633333333333335,
-    "single-groupby-1-1-12": 4.3966666666666665,
-    "single-groupby-1-8-1": 8.326666666666666,
-    "single-groupby-5-1-1": 4.3533333333333335,
-    "single-groupby-5-1-12": 4.573333333333334,
-    "single-groupby-5-8-1": 8.733333333333333
+    "cpu-max-all-1": {
+      "mean_ms": 5.183064516129032,
+      "med_ms": 5.695,
+      "std_ms": 0.7272958869984376,
+      "range_ms": 6.039999999999999
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 9.40306451612903,
+      "med_ms": 9.64,
+      "std_ms": 1.5884538195216884,
+      "range_ms": 19.52
+    },
+    "double-groupby-1": {
+      "mean_ms": 3200.348225806452,
+      "med_ms": 3799.74,
+      "std_ms": 1068.4557230338025,
+      "range_ms": 6422.82
+    },
+    "double-groupby-5": {
+      "mean_ms": 4500.827419354838,
+      "med_ms": 5812.605,
+      "std_ms": 1493.1528093770603,
+      "range_ms": 9197.79
+    },
+    "double-groupby-all": {
+      "mean_ms": 7144.399032258063,
+      "med_ms": 9578.75,
+      "std_ms": 2376.995238538587,
+      "range_ms": 16679.140000000003
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1815.6425806451612,
+      "med_ms": 1996.29,
+      "std_ms": 597.6274437098737,
+      "range_ms": 2188.65
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.906935483870968,
+      "med_ms": 6.375,
+      "std_ms": 1.4989948421369037,
+      "range_ms": 12.61
+    },
+    "high-cpu-all": {
+      "mean_ms": 3353.0808064516127,
+      "med_ms": 3797.95,
+      "std_ms": 1134.607775191748,
+      "range_ms": 4780.429999999999
+    },
+    "lastpoint": {
+      "mean_ms": 3289.29193548387,
+      "med_ms": 3656.6400000000003,
+      "std_ms": 1086.2316627331675,
+      "range_ms": 3823.2400000000002
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.472903225806451,
+      "med_ms": 4.9350000000000005,
+      "std_ms": 0.8616632545558147,
+      "range_ms": 18.919999999999998
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 4.679032258064516,
+      "med_ms": 5.13,
+      "std_ms": 0.7915469595079582,
+      "range_ms": 10.82
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.43016129032258,
+      "med_ms": 8.515,
+      "std_ms": 1.5087042447574435,
+      "range_ms": 14.190000000000001
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.671290322580645,
+      "med_ms": 5.14,
+      "std_ms": 0.5166140832888253,
+      "range_ms": 8.85
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.771290322580645,
+      "med_ms": 5.165,
+      "std_ms": 0.6812343759579221,
+      "range_ms": 12.59
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.800322580645162,
+      "med_ms": 8.92,
+      "std_ms": 1.4574792608731,
+      "range_ms": 13.450000000000001
+    }
   },
   "1000000_3_insert_8": {
     "import_speed": 219756.8901724138,
-    "cpu-max-all-1": 4.38,
-    "cpu-max-all-8": 9.856666666666667,
-    "double-groupby-1": 3894.346666666667,
-    "double-groupby-5": 5881.993333333333,
-    "double-groupby-all": 8926.76,
-    "groupby-orderby-limit": 3113.763333333334,
-    "high-cpu-1": 4.803333333333334,
-    "high-cpu-all": 3309.6966666666667,
-    "lastpoint": 5961.47,
-    "single-groupby-1-1-1": 3.8200000000000003,
-    "single-groupby-1-1-12": 3.9233333333333333,
-    "single-groupby-1-8-1": 9.226666666666667,
-    "single-groupby-5-1-1": 4.19,
-    "single-groupby-5-1-12": 4.066666666666666,
-    "single-groupby-5-8-1": 9.013333333333334
+    "cpu-max-all-1": {
+      "mean_ms": 4.743870967741937,
+      "med_ms": 5.09,
+      "std_ms": 0.9403580672026728,
+      "range_ms": 12.22
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 9.175483870967744,
+      "med_ms": 9.455,
+      "std_ms": 2.0497490269557592,
+      "range_ms": 15.100000000000001
+    },
+    "double-groupby-1": {
+      "mean_ms": 3957.8500000000004,
+      "med_ms": 3760.0649999999996,
+      "std_ms": 1484.1849746600178,
+      "range_ms": 10396.41
+    },
+    "double-groupby-5": {
+      "mean_ms": 5278.3493548387105,
+      "med_ms": 6339.455,
+      "std_ms": 1780.1633281098448,
+      "range_ms": 11538.11
+    },
+    "double-groupby-all": {
+      "mean_ms": 8179.76935483871,
+      "med_ms": 10934.53,
+      "std_ms": 2731.6720238542134,
+      "range_ms": 19995.920000000002
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 3081.814193548387,
+      "med_ms": 3614.4,
+      "std_ms": 1257.6633638989415,
+      "range_ms": 8568.54
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.366129032258066,
+      "med_ms": 5.654999999999999,
+      "std_ms": 2.911739581918995,
+      "range_ms": 25.900000000000002
+    },
+    "high-cpu-all": {
+      "mean_ms": 3377.752258064516,
+      "med_ms": 3251.2,
+      "std_ms": 1292.6440961885878,
+      "range_ms": 8824.199999999999
+    },
+    "lastpoint": {
+      "mean_ms": 5892.426935483871,
+      "med_ms": 5553.155000000001,
+      "std_ms": 2122.548530817927,
+      "range_ms": 13908.3
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 4.021290322580645,
+      "med_ms": 4.255,
+      "std_ms": 0.8902154535140939,
+      "range_ms": 9.33
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 4.248870967741936,
+      "med_ms": 4.27,
+      "std_ms": 1.7333792494494673,
+      "range_ms": 19.81
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.774193548387094,
+      "med_ms": 8.96,
+      "std_ms": 1.99137282607168,
+      "range_ms": 27.560000000000002
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.545806451612903,
+      "med_ms": 4.640000000000001,
+      "std_ms": 2.4760985628751633,
+      "range_ms": 27.83
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.306451612903225,
+      "med_ms": 4.71,
+      "std_ms": 0.7383435087847452,
+      "range_ms": 6.3500000000000005
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.681612903225805,
+      "med_ms": 8.850000000000001,
+      "std_ms": 1.8864279659320284,
+      "range_ms": 18.02
+    }
   },
   "1000000_3_prepare_1": {
     "import_speed": 278912.6422413796,
-    "cpu-max-all-1": 5.383333333333333,
-    "cpu-max-all-8": 9.64,
-    "double-groupby-1": 3441.4900000000002,
-    "double-groupby-5": 4924.563333333333,
-    "double-groupby-all": 7688.543333333332,
-    "groupby-orderby-limit": 1983.1866666666665,
-    "high-cpu-1": 5.473333333333334,
-    "high-cpu-all": 3962.0533333333333,
-    "lastpoint": 3605.8033333333333,
-    "single-groupby-1-1-1": 5.086666666666667,
-    "single-groupby-1-1-12": 4.8500000000000005,
-    "single-groupby-1-8-1": 8.803333333333335,
-    "single-groupby-5-1-1": 4.62,
-    "single-groupby-5-1-12": 5.073333333333333,
-    "single-groupby-5-8-1": 9.46
+    "cpu-max-all-1": {
+      "mean_ms": 5.241369863013699,
+      "med_ms": 5.61,
+      "std_ms": 0.7058511707082866,
+      "range_ms": 10.61
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 9.589589041095888,
+      "med_ms": 9.67,
+      "std_ms": 1.5395800639172905,
+      "range_ms": 18.200000000000003
+    },
+    "double-groupby-1": {
+      "mean_ms": 3200.1842465753425,
+      "med_ms": 3775.61,
+      "std_ms": 978.234934981989,
+      "range_ms": 6517.09
+    },
+    "double-groupby-5": {
+      "mean_ms": 4660.405138888888,
+      "med_ms": 5975.9349999999995,
+      "std_ms": 1432.9127632390962,
+      "range_ms": 9608.660000000002
+    },
+    "double-groupby-all": {
+      "mean_ms": 7274.793750000001,
+      "med_ms": 9686.275,
+      "std_ms": 2232.1332705243017,
+      "range_ms": 16687.08
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 1833.9563888888888,
+      "med_ms": 1988.795,
+      "std_ms": 556.2635802888683,
+      "range_ms": 2203.84
+    },
+    "high-cpu-1": {
+      "mean_ms": 6.051111111111112,
+      "med_ms": 6.635,
+      "std_ms": 1.4023627502379996,
+      "range_ms": 13.11
+    },
+    "high-cpu-all": {
+      "mean_ms": 3732.977777777778,
+      "med_ms": 4128.125,
+      "std_ms": 1144.410929504625,
+      "range_ms": 4972.26
+    },
+    "lastpoint": {
+      "mean_ms": 3346.9506944444447,
+      "med_ms": 3678.975,
+      "std_ms": 1020.0342984226882,
+      "range_ms": 3876.5699999999997
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 5.564109589041096,
+      "med_ms": 5.07,
+      "std_ms": 0.8399451629197758,
+      "range_ms": 16.03
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 4.694931506849315,
+      "med_ms": 4.98,
+      "std_ms": 0.7208427230364765,
+      "range_ms": 14.73
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.22835616438356,
+      "med_ms": 8.37,
+      "std_ms": 1.4865097205073574,
+      "range_ms": 13.219999999999999
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.687123287671232,
+      "med_ms": 4.97,
+      "std_ms": 0.6566296086245079,
+      "range_ms": 7.260000000000001
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.859315068493151,
+      "med_ms": 5.24,
+      "std_ms": 0.6648858063338632,
+      "range_ms": 7.6000000000000005
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 9.0,
+      "med_ms": 9.24,
+      "std_ms": 1.6246760360829546,
+      "range_ms": 16.9
+    }
   },
   "1000000_3_prepare_8": {
     "import_speed": 278912.6422413796,
-    "cpu-max-all-1": 4.843333333333333,
-    "cpu-max-all-8": 9.206666666666667,
-    "double-groupby-1": 5289.233333333334,
-    "double-groupby-5": 6204.483333333334,
-    "double-groupby-all": 9509.566666666666,
-    "groupby-orderby-limit": 3793.193333333333,
-    "high-cpu-1": 4.87,
-    "high-cpu-all": 3590.3266666666664,
-    "lastpoint": 6040.083333333333,
-    "single-groupby-1-1-1": 4.126666666666666,
-    "single-groupby-1-1-12": 4.38,
-    "single-groupby-1-8-1": 9.523333333333333,
-    "single-groupby-5-1-1": 4.13,
-    "single-groupby-5-1-12": 4.5566666666666675,
-    "single-groupby-5-8-1": 9.526666666666666
+    "cpu-max-all-1": {
+      "mean_ms": 4.521527777777777,
+      "med_ms": 4.87,
+      "std_ms": 0.7634533471680076,
+      "range_ms": 13.27
+    },
+    "cpu-max-all-8": {
+      "mean_ms": 9.153333333333334,
+      "med_ms": 9.315000000000001,
+      "std_ms": 2.0186252468756907,
+      "range_ms": 18.3
+    },
+    "double-groupby-1": {
+      "mean_ms": 3927.9102777777784,
+      "med_ms": 3897.3450000000003,
+      "std_ms": 1323.9352506091661,
+      "range_ms": 9436.53
+    },
+    "double-groupby-5": {
+      "mean_ms": 5411.774305555556,
+      "med_ms": 6414.465,
+      "std_ms": 1673.9942592391733,
+      "range_ms": 12020.439999999999
+    },
+    "double-groupby-all": {
+      "mean_ms": 8433.049583333333,
+      "med_ms": 11214.075,
+      "std_ms": 2590.792622650199,
+      "range_ms": 19342.57
+    },
+    "groupby-orderby-limit": {
+      "mean_ms": 2923.091111111111,
+      "med_ms": 3139.52,
+      "std_ms": 1103.081884794655,
+      "range_ms": 8051.9
+    },
+    "high-cpu-1": {
+      "mean_ms": 5.036388888888889,
+      "med_ms": 5.390000000000001,
+      "std_ms": 1.4285108029836533,
+      "range_ms": 22.029999999999998
+    },
+    "high-cpu-all": {
+      "mean_ms": 3746.601666666666,
+      "med_ms": 3429.89,
+      "std_ms": 1368.1673757853534,
+      "range_ms": 10452.81
+    },
+    "lastpoint": {
+      "mean_ms": 6114.2347222222215,
+      "med_ms": 5635.715,
+      "std_ms": 2102.6790103003523,
+      "range_ms": 17648.7
+    },
+    "single-groupby-1-1-1": {
+      "mean_ms": 3.963194444444445,
+      "med_ms": 4.11,
+      "std_ms": 0.6186145956869028,
+      "range_ms": 12.61
+    },
+    "single-groupby-1-1-12": {
+      "mean_ms": 3.982638888888889,
+      "med_ms": 4.2,
+      "std_ms": 0.5820725308261935,
+      "range_ms": 7.609999999999999
+    },
+    "single-groupby-1-8-1": {
+      "mean_ms": 8.757777777777777,
+      "med_ms": 8.885,
+      "std_ms": 2.007253903125336,
+      "range_ms": 17.630000000000003
+    },
+    "single-groupby-5-1-1": {
+      "mean_ms": 4.074166666666667,
+      "med_ms": 4.37,
+      "std_ms": 0.6366411641034421,
+      "range_ms": 6.04
+    },
+    "single-groupby-5-1-12": {
+      "mean_ms": 4.20888888888889,
+      "med_ms": 4.515000000000001,
+      "std_ms": 0.7134118687845694,
+      "range_ms": 5.67
+    },
+    "single-groupby-5-8-1": {
+      "mean_ms": 8.898333333333333,
+      "med_ms": 8.795,
+      "std_ms": 2.1305365323065826,
+      "range_ms": 27.3
+    }
   }
 }

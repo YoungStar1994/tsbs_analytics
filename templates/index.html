@@ -379,6 +379,12 @@
             text-shadow: 0.5px 0.5px 1px rgba(5, 150, 105, 0.2);
         }
 
+        .performance-neutral {
+            color: #d97706;
+            font-weight: bold;
+            text-shadow: 0.5px 0.5px 1px rgba(217, 119, 6, 0.2);
+        }
+
         .performance-bad {
             color: #dc2626;
             font-weight: bold;
@@ -765,6 +771,16 @@
                 </div>
             </div>
             
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="display-mode">显示模式</label>
+                    <select id="display-mode" class="filter-select select2-single" style="width: 100%">
+                        <option value="percentage">百分比显示</option>
+                        <option value="score">评分显示</option>
+                    </select>
+                </div>
+            </div>
+            
             <div class="control-buttons">
                 <button class="btn btn-primary" onclick="applyFilters()">应用筛选</button>
                 <button class="btn btn-secondary" onclick="clearFilters()">清除筛选</button>
@@ -823,6 +839,18 @@
                 language: 'zh-CN',
                 minimumResultsForSearch: Infinity // 禁用搜索框
             });
+            
+            // 为显示模式选择器添加change事件监听器
+            $('#display-mode').on('change', function() {
+                // 当显示模式改变时，重新渲染数据
+                displayData();
+            });
+            
+            // 为基准值类型选择器添加change事件监听器
+            $('#baseline-type').on('change', function() {
+                // 当基准值类型改变时，自动应用筛选
+                applyFilters();
+            });
             // 设置默认值
             setTimeout(() => {
                 // 分支默认选中 master
@@ -867,6 +895,9 @@
                 }
                 // 基准值类型默认选择标准基准值
                 document.getElementById('baseline-type').value = 'master';
+                
+                // 显示模式默认选择百分比显示
+                document.getElementById('display-mode').value = 'percentage';
             }, 300);
             loadData();
         });
@@ -1150,6 +1181,7 @@
     const workers = getSelectedValues('workers');
     const phases = getSelectedValues('execution_types');
     const baselineType = document.getElementById('baseline-type').value;
+    const displayMode = document.getElementById('display-mode').value;
 
     // 如果某个条件没有选择，使用当前数据中该字段的所有唯一值
     const allBranches = branches.length > 0 ? branches : [...new Set(filteredData.map(row => row.branch))].filter(Boolean);
@@ -1211,7 +1243,13 @@
             }
             groupMap.get(key).queries[row.query_type] = row;
         });
-        const groupedRows = Array.from(groupMap.values());
+        let groupedRows = Array.from(groupMap.values());
+        
+        // 在评分显示模式下，每个分支配置组合只显示一条记录（最新的）
+        if (displayMode === 'score') {
+            // 按时间排序，取最新的记录
+            groupedRows = groupedRows.sort((a, b) => new Date(b.datetime) - new Date(a.datetime)).slice(0, 1);
+        }
         
         // 将分组后的行数累计到总记录数中
         totalRecords += groupedRows.length;
@@ -1260,31 +1298,47 @@
             headerRow.appendChild(th);
         });
         
-        // 先插入导入速度列
-        const thImport = document.createElement('th');
-        thImport.textContent = '导入速度 (rows/sec)';
-        thImport.className = 'header-import-speed';
-        headerRow.appendChild(thImport);
-        
-        // 导入速度基准对比列
-        const thImportBaseline = document.createElement('th');
-        thImportBaseline.textContent = '导入速度对比(%)';
-        thImportBaseline.className = 'header-import-baseline';
-        headerRow.appendChild(thImportBaseline);
-        
-        // 再插入查询类型列
-        queryTypes.forEach(qt => {
-            const th = document.createElement('th');
-            th.textContent = qt;
-            th.className = 'header-query-result';
-            headerRow.appendChild(th);
+        if (displayMode === 'score') {
+            // 评分显示模式：只显示评分列
+            const thImportScore = document.createElement('th');
+            thImportScore.textContent = '导入速度评分';
+            thImportScore.className = 'header-import-speed';
+            headerRow.appendChild(thImportScore);
             
-            // 添加对应的基准对比列
-            const thBaseline = document.createElement('th');
-            thBaseline.textContent = qt + ' 对比(%)';
-            thBaseline.className = 'header-query-baseline';
-            headerRow.appendChild(thBaseline);
-        });
+            // 查询类型评分列
+            queryTypes.forEach(qt => {
+                const th = document.createElement('th');
+                th.textContent = qt + ' 评分';
+                th.className = 'header-query-result';
+                headerRow.appendChild(th);
+            });
+        } else {
+            // 百分比显示模式：显示原始数据和对比
+            const thImport = document.createElement('th');
+            thImport.textContent = '导入速度 (rows/sec)';
+            thImport.className = 'header-import-speed';
+            headerRow.appendChild(thImport);
+            
+            // 导入速度基准对比列
+            const thImportBaseline = document.createElement('th');
+            thImportBaseline.textContent = '导入速度对比(%)';
+            thImportBaseline.className = 'header-import-baseline';
+            headerRow.appendChild(thImportBaseline);
+            
+            // 再插入查询类型列
+            queryTypes.forEach(qt => {
+                const th = document.createElement('th');
+                th.textContent = qt;
+                th.className = 'header-query-result';
+                headerRow.appendChild(th);
+                
+                // 添加对应的基准对比列
+                const thBaseline = document.createElement('th');
+                thBaseline.textContent = qt + ' 对比(%)';
+                thBaseline.className = 'header-query-baseline';
+                headerRow.appendChild(thBaseline);
+            });
+        }
         thead.appendChild(headerRow);
         table.appendChild(thead);
         
@@ -1301,56 +1355,88 @@
                 <td>${row.worker || '-'}</td>
             `;
             
-            // 导入速度列
-            let importSpeed = '--';
-            let importSpeedBaseline = '--';
-            const importSpeeds = Object.values(row.queries)
-                .map(q => q && q.import_speed != null && q.import_speed !== '' && !isNaN(Number(q.import_speed)) ? Number(q.import_speed) : null)
-                .filter(v => v != null);
-            if (importSpeeds.length > 0) {
-                const maxSpeed = Math.max(...importSpeeds);
-                importSpeed = isFinite(maxSpeed) ? maxSpeed.toFixed(2) : '--';
+            if (displayMode === 'score') {
+                // 评分显示模式：只显示评分
                 
-                // 检查是否有基准值对比
-                const firstQuery = Object.values(row.queries).find(q => q && q.import_speed_baseline_pct != null);
-                if (firstQuery && firstQuery.import_speed_baseline_pct != null) {
-                    const pct = firstQuery.import_speed_baseline_pct;
-                    // 对于导入速度：正值表示速度提升（好），负值表示速度下降（坏）
-                    const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
-                    importSpeedBaseline = `<span class="${colorClass}" title="实际值: ${importSpeed} rows/sec">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                // 导入速度评分
+                let importSpeedScore = '--';
+                const firstQuery = Object.values(row.queries).find(q => q && q.import_speed_score != null);
+                if (firstQuery && firstQuery.import_speed_score != null) {
+                    const score = firstQuery.import_speed_score;
+                    const colorClass = score >= 95 ? 'performance-good' : score >= 90 ? 'performance-neutral' : 'performance-bad';
+                    importSpeedScore = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
                 }
-            }
-            tr.innerHTML += `<td class="import-speed-col">${importSpeed}</td>`;
-            tr.innerHTML += `<td class="import-baseline-col">${importSpeedBaseline}</td>`;
-            
-            // 再插入查询类型列
-            queryTypes.forEach(qt => {
-                const q = row.queries[qt];
-                if (q) {
-                    const value = formatNumber(q.mean_ms);
-                    tr.innerHTML += `<td class="query-result-col">${value}</td>`;
-                    
-                    // 添加基准对比列
-                    let baselineComp = '--';
-                    if (q.mean_ms_baseline_pct != null) {
-                        const pct = q.mean_ms_baseline_pct;
-                        // 对于查询延迟：正值表示延迟减少（性能提升，好），负值表示延迟增加（性能下降，坏）
-                        const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
-                        const actualValue = formatNumber(q.mean_ms);
-                        baselineComp = `<span class="${colorClass}" title="实际值: ${actualValue}ms">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                tr.innerHTML += `<td class="import-speed-col">${importSpeedScore}</td>`;
+                
+                // 查询类型评分列
+                queryTypes.forEach(qt => {
+                    const q = row.queries[qt];
+                    if (q && q.query_comprehensive_score != null) {
+                        const score = q.query_comprehensive_score;
+                        const colorClass = score >= 95 ? 'performance-good' : score >= 90 ? 'performance-neutral' : 'performance-bad';
+                        const scoreDisplay = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
+                        tr.innerHTML += `<td class="query-result-col">${scoreDisplay}</td>`;
+                    } else {
+                        tr.innerHTML += '<td>-</td>';
                     }
-                    tr.innerHTML += `<td class="query-baseline-col">${baselineComp}</td>`;
-                } else {
-                    tr.innerHTML += '<td>-</td>';
-                    tr.innerHTML += '<td>-</td>';
+                });
+            } else {
+                // 百分比显示模式：显示原始数据和对比
+                
+                // 导入速度列
+                let importSpeed = '--';
+                let importSpeedBaseline = '--';
+                const importSpeeds = Object.values(row.queries)
+                    .map(q => q && q.import_speed != null && q.import_speed !== '' && !isNaN(Number(q.import_speed)) ? Number(q.import_speed) : null)
+                    .filter(v => v != null);
+                if (importSpeeds.length > 0) {
+                    const maxSpeed = Math.max(...importSpeeds);
+                    importSpeed = isFinite(maxSpeed) ? maxSpeed.toFixed(2) : '--';
+                    
+                    // 检查是否有基准值对比
+                    const firstQuery = Object.values(row.queries).find(q => q && q.import_speed_baseline_pct != null);
+                    if (firstQuery && firstQuery.import_speed_baseline_pct != null) {
+                        const pct = firstQuery.import_speed_baseline_pct;
+                        // 对于导入速度：正值表示速度提升（好），负值表示速度下降（坏）
+                        const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
+                        importSpeedBaseline = `<span class="${colorClass}" title="实际值: ${importSpeed} rows/sec">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                    }
                 }
-            });
+                tr.innerHTML += `<td class="import-speed-col">${importSpeed}</td>`;
+                tr.innerHTML += `<td class="import-baseline-col">${importSpeedBaseline}</td>`;
+                
+                // 再插入查询类型列
+                queryTypes.forEach(qt => {
+                    const q = row.queries[qt];
+                    if (q) {
+                        const value = formatNumber(q.mean_ms);
+                        tr.innerHTML += `<td class="query-result-col">${value}</td>`;
+                        
+                        // 添加基准对比列
+                        let baselineComp = '--';
+                        if (q.mean_ms_baseline_pct != null) {
+                            const pct = q.mean_ms_baseline_pct;
+                            // 对于查询延迟：正值表示延迟减少（性能提升，好），负值表示延迟增加（性能下降，坏）
+                            const colorClass = pct >= 0 ? 'performance-good' : 'performance-bad';
+                            const actualValue = formatNumber(q.mean_ms);
+                            baselineComp = `<span class="${colorClass}" title="实际值: ${actualValue}ms">${pct > 0 ? '+' : ''}${pct}%</span>`;
+                        }
+                        tr.innerHTML += `<td class="query-baseline-col">${baselineComp}</td>`;
+                    } else {
+                        tr.innerHTML += '<td>-</td>';
+                        tr.innerHTML += '<td>-</td>';
+                    }
+                });
+            }
             tbody.appendChild(tr);
         });
         
         if (!groupedRows.length) {
             const tr = document.createElement('tr');
-            const colSpan = 6 + 2 + (queryTypes.length * 2); // 基础列 + 导入速度列 + 查询类型列及对比列
+            // 根据显示模式计算列数
+            const colSpan = displayMode === 'score' ? 
+                6 + 1 + queryTypes.length : // 基础列 + 导入速度评分列 + 查询类型评分列
+                6 + 2 + (queryTypes.length * 2); // 基础列 + 导入速度列 + 查询类型列及对比列
             tr.innerHTML = `<td colspan="${colSpan}" class="no-data-cell">没有找到匹配的数据</td>`;
             tbody.appendChild(tr);
         }

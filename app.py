@@ -292,7 +292,7 @@ def get_data():
         if 'datetime' in table_data.columns:  # type: ignore
             table_data['datetime'] = table_data['datetime'].apply(format_datetime_for_display)  # type: ignore
         
-        # 添加基准值对比
+        # 重新设计评分逻辑：先分组统计，再计算评分
         baseline_type = filters.get('baseline_type', 'master')
         if baseline_type == 'enterprise':
             baselines = load_enterprise_config()
@@ -303,43 +303,14 @@ def get_data():
         else:
             baselines = load_master_config()
             logging.info(f"Using master baseline with {len(baselines)} configurations")
+        
+        # 对筛选后的数据进行分组统计和评分计算
+        if baselines and len(filtered) > 0:
+            # 按照分组维度进行统计
+            grouped_stats = calculate_grouped_statistics(filtered)
             
-        if baselines:
-            for idx, row in table_data.iterrows():  # type: ignore
-                baseline_key = f"{row.get('scale', '')}_{row.get('cluster', '')}_{row.get('phase', '')}_{row.get('worker', '')}"
-                if baseline_key in baselines:
-                    baseline_data = baselines[baseline_key]
-                    
-                    # 导入速度对比
-                    if 'import_speed' in baseline_data and row.get('import_speed') is not None:
-                        baseline_import = baseline_data['import_speed']
-                        if baseline_import and baseline_import > 0:
-                            actual_import = row.get('import_speed', 0)
-                            percentage = calculate_performance_percentage(actual_import, baseline_import)
-                            if percentage is not None:
-                                table_data.at[idx, 'import_speed_baseline_pct'] = round(percentage, 2)  # type: ignore
-                                # 调试日志
-                                logging.info(f"Import speed comparison - Baseline: {baseline_import}, Actual: {actual_import}, Percentage: {percentage}%")
-                    
-                    # 查询类型对比 - 使用实际的查询类型
-                    query_type = row.get('query_type', '')
-                    if query_type and 'mean_ms' in row:
-                        # 将查询类型名称转换为metric key格式（Python正则表达式）
-                        import re
-                        metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
-                        if metric_key in baseline_data:
-                            baseline_value = baseline_data[metric_key]
-                            if baseline_value and baseline_value > 0:
-                                actual_value = row.get('mean_ms', 0)
-                                # 对于延迟，值越小越好，所以计算反向百分比
-                                percentage = calculate_performance_percentage_reverse(actual_value, baseline_value)
-                                if percentage is not None:
-                                    table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)  # type: ignore
-                                    # 调试日志
-                                    logging.info(f"Query {query_type} comparison - Baseline: {baseline_value}ms, Actual: {actual_value}ms, Percentage: {percentage}%")
-                else:
-                    # 调试日志：未找到基准配置
-                    logging.info(f"No baseline found for key: {baseline_key}")
+            # 计算评分并添加到原始数据中
+            table_data = add_scoring_to_table_data(table_data, grouped_stats, baselines)
         
         # 返回数据
         return jsonify({
@@ -349,6 +320,167 @@ def get_data():
     except Exception as e:
         logging.error(f"Error in data route: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def calculate_grouped_statistics(df):
+    """
+    对筛选后的数据进行分组统计
+    
+    Args:
+        df: 筛选后的数据DataFrame
+        
+    Returns:
+        dict: 分组统计结果
+    """
+    if df.empty:
+        return {}
+    
+    # 分组维度：分支、规模、集群、工作线程、执行类型、查询类型
+    group_columns = ['branch', 'scale', 'cluster', 'worker', 'phase', 'query_type']
+    
+    # 确保所有分组列都存在
+    available_columns = [col for col in group_columns if col in df.columns]
+    if not available_columns:
+        return {}
+    
+    grouped_stats = {}
+    
+    try:
+        # 按分组维度分组
+        for group_key, group_df in df.groupby(available_columns):
+            # 构建分组键
+            if len(available_columns) == 1:
+                group_key = [group_key]
+            
+            group_dict = dict(zip(available_columns, group_key))
+            
+            # 构建统计键（与基准值配置键格式一致）
+            stats_key = f"{group_dict.get('scale', '')}_{group_dict.get('cluster', '')}_{group_dict.get('phase', '')}_{group_dict.get('worker', '')}"
+            query_type = group_dict.get('query_type', '')
+            
+            if stats_key not in grouped_stats:
+                grouped_stats[stats_key] = {}
+            
+            # 计算查询性能统计指标
+            if query_type and len(group_df) > 0:
+                # 计算统计指标
+                query_stats = {}
+                
+                # 基本统计指标
+                if 'mean_ms' in group_df.columns:
+                    values = group_df['mean_ms'].dropna()
+                    if len(values) > 0:
+                        query_stats['mean_ms'] = float(values.mean())
+                        query_stats['med_ms'] = float(values.median())
+                        query_stats['std_ms'] = float(values.std()) if len(values) > 1 else 0.0
+                        query_stats['range_ms'] = float(values.max() - values.min()) if len(values) > 1 else 0.0
+                
+                # 如果有原始的min_ms和max_ms，也可以用来计算
+                if 'min_ms' in group_df.columns and 'max_ms' in group_df.columns:
+                    min_values = group_df['min_ms'].dropna()
+                    max_values = group_df['max_ms'].dropna()
+                    if len(min_values) > 0 and len(max_values) > 0:
+                        query_stats['min_ms'] = float(min_values.min())
+                        query_stats['max_ms'] = float(max_values.max())
+                        # 重新计算极差
+                        query_stats['range_ms'] = float(max_values.max() - min_values.min())
+                
+                # 将查询类型名称转换为metric key格式
+                import re
+                metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
+                grouped_stats[stats_key][metric_key] = query_stats
+            
+            # 计算导入速度统计指标
+            if 'import_speed' in group_df.columns:
+                import_speeds = group_df['import_speed'].dropna()
+                if len(import_speeds) > 0:
+                    grouped_stats[stats_key]['import_speed'] = float(import_speeds.mean())
+        
+        logging.info(f"Calculated grouped statistics for {len(grouped_stats)} groups")
+        return grouped_stats
+        
+    except Exception as e:
+        logging.error(f"Error calculating grouped statistics: {str(e)}")
+        return {}
+
+def add_scoring_to_table_data(table_data, grouped_stats, baselines):
+    """
+    将评分信息添加到表格数据中
+    
+    Args:
+        table_data: 原始表格数据
+        grouped_stats: 分组统计结果
+        baselines: 基准值配置
+        
+    Returns:
+        DataFrame: 添加了评分信息的表格数据
+    """
+    if table_data.empty or not grouped_stats or not baselines:
+        return table_data
+    
+    try:
+        for idx, row in table_data.iterrows():  # type: ignore
+            # 构建统计键
+            stats_key = f"{row.get('scale', '')}_{row.get('cluster', '')}_{row.get('phase', '')}_{row.get('worker', '')}"
+            query_type = row.get('query_type', '')
+            
+            # 获取对应的统计数据和基准数据
+            if stats_key in grouped_stats and stats_key in baselines:
+                baseline_data = baselines[stats_key]
+                stats_data = grouped_stats[stats_key]
+                
+                # 导入速度评分
+                if 'import_speed' in baseline_data and 'import_speed' in stats_data:
+                    baseline_import = baseline_data['import_speed']
+                    actual_import = stats_data['import_speed']
+                    
+                    if baseline_import and baseline_import > 0:
+                        # 计算百分比
+                        percentage = calculate_performance_percentage(actual_import, baseline_import)
+                        if percentage is not None:
+                            table_data.at[idx, 'import_speed_baseline_pct'] = round(percentage, 2)  # type: ignore
+                        
+                        # 计算评分
+                        import_score = calculate_import_speed_score(actual_import, baseline_import)
+                        if import_score is not None:
+                            table_data.at[idx, 'import_speed_score'] = import_score  # type: ignore
+                            
+                        logging.info(f"Import speed - Baseline: {baseline_import}, Actual: {actual_import}, Percentage: {percentage}%, Score: {import_score}")
+                
+                # 查询类型评分
+                if query_type:
+                    import re
+                    metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
+                    
+                    if metric_key in baseline_data and metric_key in stats_data:
+                        baseline_metrics = baseline_data[metric_key]
+                        actual_metrics = stats_data[metric_key]
+                        
+                        if isinstance(baseline_metrics, dict) and isinstance(actual_metrics, dict):
+                            # 计算综合评分
+                            score_info = calculate_comprehensive_score(actual_metrics, baseline_metrics)
+                            if score_info:
+                                table_data.at[idx, 'query_comprehensive_score'] = score_info['comprehensive_score']  # type: ignore
+                                table_data.at[idx, 'query_mean_score'] = score_info['detail_scores']['mean_score']  # type: ignore
+                                table_data.at[idx, 'query_median_score'] = score_info['detail_scores']['median_score']  # type: ignore
+                                table_data.at[idx, 'query_std_score'] = score_info['detail_scores']['std_score']  # type: ignore
+                                table_data.at[idx, 'query_range_score'] = score_info['detail_scores']['range_score']  # type: ignore
+                                
+                                logging.info(f"Query {query_type} comprehensive score: {score_info['comprehensive_score']}")
+                            
+                            # 计算平均延迟百分比对比
+                            if 'mean_ms' in baseline_metrics and 'mean_ms' in actual_metrics:
+                                baseline_mean = baseline_metrics['mean_ms']
+                                actual_mean = actual_metrics['mean_ms']
+                                if baseline_mean and baseline_mean > 0:
+                                    percentage = calculate_performance_percentage_reverse(actual_mean, baseline_mean)
+                                    if percentage is not None:
+                                        table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)  # type: ignore
+        
+        return table_data
+        
+    except Exception as e:
+        logging.error(f"Error adding scoring to table data: {str(e)}")
+        return table_data
 
 @app.route('/options', methods=['GET'])
 @login_required
@@ -471,6 +603,161 @@ def calculate_performance_percentage_reverse(actual_value, baseline_value):
         return None
     # 对于延迟，值越小越好，所以用基准值减去实际值
     return ((baseline_value - actual_value) / baseline_value) * 100
+
+# 在calculate_performance_percentage_reverse函数后添加评分体系相关函数
+
+def calculate_deviation_score(actual_value, baseline_value):
+    """
+    计算单项指标的偏差得分
+    
+    Args:
+        actual_value: 实际测试值
+        baseline_value: 基准值
+        
+    Returns:
+        得分 (0-100)
+    """
+    if not baseline_value or baseline_value == 0:
+        return None
+    
+    # 计算偏差率
+    deviation_rate = abs(actual_value - baseline_value) / baseline_value * 100
+    
+    # 根据偏差率计算得分
+    if deviation_rate < 10:
+        return 100
+    else:
+        # 偏差率超过10%时，得分递减
+        score = max(0, 100 - (deviation_rate - 10) * 10)
+        return round(score, 2)
+
+def calculate_comprehensive_score(actual_metrics, baseline_metrics):
+    """
+    计算综合评分
+    
+    Args:
+        actual_metrics: 实际测试指标 {'mean_ms': x, 'med_ms': y, 'std_ms': z, 'range_ms': w}
+        baseline_metrics: 基准指标 {'mean_ms': x, 'med_ms': y, 'std_ms': z, 'range_ms': w}
+        
+    Returns:
+        综合得分和详细得分信息
+    """
+    if not baseline_metrics or not actual_metrics:
+        return None
+    
+    # 计算各项得分
+    mean_score = calculate_deviation_score(
+        actual_metrics.get('mean_ms', 0), 
+        baseline_metrics.get('mean_ms', 0)
+    )
+    
+    median_score = calculate_deviation_score(
+        actual_metrics.get('med_ms', 0), 
+        baseline_metrics.get('med_ms', 0)
+    )
+    
+    std_score = calculate_deviation_score(
+        actual_metrics.get('std_ms', 0), 
+        baseline_metrics.get('std_ms', 0)
+    )
+    
+    range_score = calculate_deviation_score(
+        actual_metrics.get('range_ms', 0), 
+        baseline_metrics.get('range_ms', 0)
+    )
+    
+    # 检查是否有有效得分
+    valid_scores = [score for score in [mean_score, median_score, std_score, range_score] if score is not None]
+    if not valid_scores:
+        return None
+    
+    # 计算加权综合得分
+    # 中心趋势（70%）：均值（50%）+ 中位数（20%）
+    # 离散程度（30%）：标准差（20%）+ 极差（10%）
+    weights = {
+        'mean': 0.5,
+        'median': 0.2, 
+        'std': 0.2,
+        'range': 0.1
+    }
+    
+    comprehensive_score = 0
+    total_weight = 0
+    
+    if mean_score is not None:
+        comprehensive_score += mean_score * weights['mean']
+        total_weight += weights['mean']
+    
+    if median_score is not None:
+        comprehensive_score += median_score * weights['median']
+        total_weight += weights['median']
+        
+    if std_score is not None:
+        comprehensive_score += std_score * weights['std']
+        total_weight += weights['std']
+        
+    if range_score is not None:
+        comprehensive_score += range_score * weights['range']
+        total_weight += weights['range']
+    
+    # 按实际权重计算最终得分
+    if total_weight > 0:
+        final_score = comprehensive_score / total_weight
+    else:
+        final_score = 0
+    
+    # 移除强制90分的限制，让评分体现真实的性能差异
+    
+    return {
+        'comprehensive_score': round(final_score, 2),
+        'detail_scores': {
+            'mean_score': mean_score,
+            'median_score': median_score,
+            'std_score': std_score,
+            'range_score': range_score
+        },
+        'deviation_rates': {
+            'mean_deviation': calculate_deviation_rate(actual_metrics.get('mean_ms', 0), baseline_metrics.get('mean_ms', 0)),
+            'median_deviation': calculate_deviation_rate(actual_metrics.get('med_ms', 0), baseline_metrics.get('med_ms', 0)),
+            'std_deviation': calculate_deviation_rate(actual_metrics.get('std_ms', 0), baseline_metrics.get('std_ms', 0)),
+            'range_deviation': calculate_deviation_rate(actual_metrics.get('range_ms', 0), baseline_metrics.get('range_ms', 0))
+        }
+    }
+
+def calculate_deviation_rate(actual_value, baseline_value):
+    """计算偏差率"""
+    if not baseline_value or baseline_value == 0:
+        return None
+    return round(abs(actual_value - baseline_value) / baseline_value * 100, 2)
+
+def calculate_import_speed_score(actual_speed, baseline_speed):
+    """
+    计算导入速度得分（导入速度越高越好）
+    
+    Args:
+        actual_speed: 实际导入速度
+        baseline_speed: 基准导入速度
+        
+    Returns:
+        得分 (0-100)
+    """
+    if not baseline_speed or baseline_speed == 0:
+        return None
+    
+    # 对于导入速度，值越大越好
+    performance_ratio = actual_speed / baseline_speed
+    
+    if performance_ratio >= 0.9:  # 性能在90%以上
+        # 性能好于或接近基准值
+        if performance_ratio >= 1.1:  # 超过基准值10%
+            return 100
+        else:
+            # 在90%-110%之间，线性计算
+            return round(90 + (performance_ratio - 0.9) * 50, 2)
+    else:
+        # 性能低于90%，得分递减
+        score = max(0, performance_ratio * 100)
+        return round(score, 2)
 
 @app.route('/master')
 @login_required
@@ -829,6 +1116,53 @@ def parse_opensource_csv_from_dataframe(df):
                 opensource_config[config_key][config_metric_name] = float(metric_value)
     
     return opensource_config
+
+@app.route('/api/test-scoring', methods=['POST'])
+@login_required
+def test_scoring():
+    """测试评分功能的API端点"""
+    try:
+        request_data = request.json or {}
+        
+        # 示例实际测试数据
+        actual_metrics = {
+            'mean_ms': request_data.get('actual_mean', 50.0),
+            'med_ms': request_data.get('actual_median', 45.0),
+            'std_ms': request_data.get('actual_std', 10.0),
+            'range_ms': request_data.get('actual_range', 40.0)
+        }
+        
+        # 示例基准数据
+        baseline_metrics = {
+            'mean_ms': request_data.get('baseline_mean', 48.0),
+            'med_ms': request_data.get('baseline_median', 44.0),
+            'std_ms': request_data.get('baseline_std', 9.5),
+            'range_ms': request_data.get('baseline_range', 38.0)
+        }
+        
+        # 计算评分
+        score_info = calculate_comprehensive_score(actual_metrics, baseline_metrics)
+        
+        # 导入速度评分测试
+        actual_import_speed = request_data.get('actual_import_speed', 1500000)
+        baseline_import_speed = request_data.get('baseline_import_speed', 1600000)
+        import_score = calculate_import_speed_score(actual_import_speed, baseline_import_speed)
+        
+        return jsonify({
+            'success': True,
+            'actual_metrics': actual_metrics,
+            'baseline_metrics': baseline_metrics,
+            'score_info': score_info,
+            'import_speed_test': {
+                'actual_import_speed': actual_import_speed,
+                'baseline_import_speed': baseline_import_speed,
+                'import_score': import_score
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Scoring test error: {str(e)}")
+        return jsonify({'error': f'评分测试失败: {str(e)}'}), 500
 
 if __name__ == '__main__':
     try:
