@@ -100,6 +100,16 @@
                     </div>
                 </div>
 
+                <!-- 操作按钮 -->
+                <div class="mb-3 d-flex align-items-center" style="gap: 10px;">
+                    <button class="btn btn-primary" onclick="loadOptionsAndBaselines()">
+                        <i class="fas fa-refresh"></i> 重新加载数据
+                    </button>
+                    <button class="btn btn-success ms-2" onclick="saveBaselines()">
+                        <i class="fas fa-save"></i> 保存企业发版基准值
+                    </button>
+                </div>
+                
                 <!-- 基准值表格 -->
                 <div class="table-container">
                     <table class="table table-bordered baseline-table" id="baseline-table">
@@ -111,20 +121,6 @@
                         </tbody>
                     </table>
                 </div>
-
-                <!-- 操作按钮 -->
-                <div class="mb-3">
-                    <button class="btn btn-primary me-2" onclick="loadOptionsAndBaselines()">
-                        <i class="fas fa-refresh"></i> 重新加载数据
-                    </button>
-                    <button class="btn btn-info me-2" onclick="fillBaselines()">
-                        <i class="fas fa-fill"></i> 重新填充基准值
-                    </button>
-                </div>
-                
-                <button class="btn btn-success save-btn" onclick="saveBaselines()">
-                    <i class="fas fa-save"></i> 保存企业发版基准值
-                </button>
             </div>
         </div>
     </div>
