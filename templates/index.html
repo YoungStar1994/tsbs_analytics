@@ -82,10 +82,39 @@
         .filter-panel {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        /* 分组样式 */
+        .filter-section {
+            margin-bottom: 16px;
+            padding: 14px;
+            background: rgba(248, 250, 252, 0.6);
+            border-radius: 10px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .filter-section:last-of-type {
+            margin-bottom: 12px;
+        }
+
+
+
+        /* 主要筛选条件网格 */
+        .filter-grid-main {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        /* 显示设置网格 */
+        .filter-grid-settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
         }
 
         .filter-row {
@@ -102,16 +131,21 @@
 
         .filter-group label {
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: #374151;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            display: block;
+        }
+
+        .filter-group {
+            position: relative;
         }
 
         .filter-select, .filter-input {
-            padding: 10px 12px;
+            padding: 8px 10px;
             border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
             background: white;
         }
@@ -131,19 +165,29 @@
             display: flex;
             gap: 10px;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 18px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
             border: none;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            text-transform: none;
+            letter-spacing: 0.2px;
+            min-width: 110px;
+            justify-content: center;
+        }
+
+        .btn-icon {
+            font-size: 0.9rem;
         }
 
         .btn-primary {
@@ -513,12 +557,41 @@
                 padding: 10px;
             }
             
+            .filter-panel {
+                padding: 15px;
+            }
+            
+            .filter-section {
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+            
+            .filter-grid-main {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .filter-grid-settings {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
             .filter-row {
                 grid-template-columns: 1fr;
             }
             
             .control-buttons {
                 flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                margin-top: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 260px;
+                padding: 9px 14px;
+                font-size: 0.8rem;
             }
             
             .results-header {
@@ -653,28 +726,73 @@
         }
 
         .select2-container--default .select2-selection--single {
-            height: 42px;
+            height: 36px;
             border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 6px;
             background: white;
         }
 
         .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 38px;
-            padding-left: 12px;
+            line-height: 32px;
+            padding-left: 10px;
             color: #374151;
+            font-size: 0.85rem;
         }
 
         .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 38px;
-            right: 8px;
+            height: 32px;
+            right: 6px;
         }
 
         .select2-container--default .select2-selection--multiple {
             border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 6px;
             background: white;
-            min-height: 42px;
+            min-height: 36px;
+            padding: 2px 4px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+            padding: 0;
+            margin: 0;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            font-size: 0.8rem;
+            padding: 3px 22px 3px 8px;
+            margin: 2px;
+            position: relative;
+            background-color: #f3f4f6 !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 4px !important;
+            color: #374151 !important;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            color: #6b7280 !important;
+            font-size: 0.8rem !important;
+            font-weight: bold !important;
+            line-height: 1;
+            cursor: pointer;
+            border: none !important;
+            background: none !important;
+            padding: 0 !important;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+            color: #dc2626 !important;
+            background-color: rgba(220, 38, 38, 0.1) !important;
         }
 
         .select2-container--default.select2-container--focus .select2-selection--single,
@@ -691,6 +809,110 @@
 
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
             background-color: #667eea;
+        }
+
+        /* 日期范围选择器样式 */
+        .date-range-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .date-shortcuts {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .date-shortcut-btn {
+            padding: 5px 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            background: white;
+            color: #374151;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .date-shortcut-btn:hover {
+            border-color: #667eea;
+            background: #f8fafc;
+            color: #667eea;
+        }
+
+        .date-shortcut-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .date-shortcut-btn.active:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        .date-inputs-row {
+            display: flex;
+            align-items: end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .date-input-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .date-input-group label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+
+        .date-input {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .date-separator {
+            color: #6b7280;
+            font-weight: 500;
+            padding: 0 6px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .date-shortcuts {
+                gap: 4px;
+            }
+            
+            .date-shortcut-btn {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+            
+            .date-inputs-row {
+                flex-direction: column;
+                gap: 6px;
+            }
+            
+            .date-input-group {
+                min-width: 100%;
+            }
+            
+            .date-separator {
+                text-align: center;
+                margin: 0;
+                padding: 3px 0;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -711,82 +933,113 @@
         </div>
 
         <div class="filter-panel">
-            <div class="filter-row">
-                <div class="filter-group">
-                    <label for="branches">分支 (Branches)</label>
-                    <select id="branches" class="filter-select select2-multi" multiple style="width: 100%">
-                        <option value="">加载中...</option>
-                    </select>
+            <!-- 主要筛选条件 -->
+            <div class="filter-section">
+                <div class="filter-grid-main">
+                    <div class="filter-group">
+                        <label for="branches">分支</label>
+                        <select id="branches" class="filter-select select2-multi" multiple style="width: 100%">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="scales">规模</label>
+                        <select id="scales" class="filter-select select2-multi" multiple style="width: 100%">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="clusters">集群</label>
+                        <select id="clusters" class="filter-select select2-multi" multiple style="width: 100%">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="execution_types">执行类型</label>
+                        <select id="execution_types" class="filter-select select2-multi" multiple style="width: 100%">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="workers">工作线程</label>
+                        <select id="workers" class="filter-select select2-multi" multiple style="width: 100%">
+                            <option value="1">1</option>
+                            <option value="8" selected>8</option>
+                        </select>
+                    </div>
                 </div>
-                
-                <div class="filter-group">
-                    <label for="scales">规模 (Scales)</label>
-                    <select id="scales" class="filter-select select2-multi" multiple style="width: 100%">
-                        <option value="">加载中...</option>
-                    </select>
+            </div>
+
+            <!-- 日期范围选择 -->
+            <div class="filter-section">
+                <div class="date-range-container">
+                    <div class="date-shortcuts">
+                        <button type="button" class="date-shortcut-btn" onclick="setDateRange(1)">今天</button>
+                        <button type="button" class="date-shortcut-btn" onclick="setDateRange(3)">最近3天</button>
+                        <button type="button" class="date-shortcut-btn active" onclick="setDateRange(7)">最近7天</button>
+                        <button type="button" class="date-shortcut-btn" onclick="setDateRange(15)">最近15天</button>
+                        <button type="button" class="date-shortcut-btn" onclick="setDateRange(30)">最近30天</button>
+                        <button type="button" class="date-shortcut-btn" onclick="setDateRange(90)">最近90天</button>
+                    </div>
+                    <div class="date-inputs-row">
+                        <div class="date-input-group">
+                            <label for="start_date">开始日期</label>
+                            <input type="date" id="start_date" class="filter-input date-input">
+                        </div>
+                        <div class="date-separator">至</div>
+                        <div class="date-input-group">
+                            <label for="end_date">结束日期</label>
+                            <input type="date" id="end_date" class="filter-input date-input">
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="filter-group">
-                    <label for="clusters">集群 (Clusters)</label>
-                    <select id="clusters" class="filter-select select2-multi" multiple style="width: 100%">
-                        <option value="">加载中...</option>
-                    </select>
-                </div>
-                <!-- 在 filter-row 中的集群筛选控件后添加 -->
-                <div class="filter-group">
-                    <label for="execution_types">执行类型 (Execution Type)</label>
-                    <select id="execution_types" class="filter-select select2-multi" multiple style="width: 100%">
-                        <option value="">加载中...</option>
-                    </select>
+            </div>
+
+            <!-- 显示设置 -->
+            <div class="filter-section">
+                <div class="filter-grid-settings">
+                    <div class="filter-group">
+                        <label for="baseline-type">基准值类型</label>
+                        <select id="baseline-type" class="filter-select select2-single" style="width: 100%">
+                            <option value="master">Master基准值</option>
+                            <option value="master_secondary">Master第二基准值</option>
+                            <option value="enterprise">企业发版基准值</option>
+                            <option value="opensource">开源发版基准值</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="display-mode">显示模式</label>
+                        <select id="display-mode" class="filter-select select2-single" style="width: 100%">
+                            <option value="percentage">百分比显示</option>
+                            <option value="score">评分显示</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             
-            <div class="filter-row">
-                <div class="filter-group">
-                    <label for="start_date">开始日期</label>
-                    <input type="date" id="start_date" class="filter-input">
-                </div>
-                
-                <div class="filter-group">
-                    <label for="end_date">结束日期</label>
-                    <input type="date" id="end_date" class="filter-input">
-                </div>
-                
-                <div class="filter-group">
-                    <label for="workers">工作线程 (Workers)</label>
-                    <!-- 工作线程选择框，1和8可多选，默认8 -->
-                    <select id="workers" class="filter-select select2-multi" multiple style="width: 100%">
-                        <option value="1">1</option>
-                        <option value="8" selected>8</option>
-                    </select>
-                </div>
-                
-                <div class="filter-group">
-                    <label for="baseline-type">基准值类型</label>
-                    <select id="baseline-type" class="filter-select select2-single" style="width: 100%">
-                        <option value="master">Master基准值</option>
-                        <option value="master_secondary">Master第二基准值</option>
-                        <option value="enterprise">企业发版基准值</option>
-                        <option value="opensource">开源发版基准值</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="filter-row">
-                <div class="filter-group">
-                    <label for="display-mode">显示模式</label>
-                    <select id="display-mode" class="filter-select select2-single" style="width: 100%">
-                        <option value="percentage">百分比显示</option>
-                        <option value="score">评分显示</option>
-                    </select>
-                </div>
-            </div>
-            
+            <!-- 操作按钮 -->
             <div class="control-buttons">
-                <button class="btn btn-primary" onclick="applyFilters()">应用筛选</button>
-                <button class="btn btn-secondary" onclick="clearFilters()">清除筛选</button>
-                <button class="btn btn-secondary" onclick="refreshData()">刷新数据</button>
-                <button class="btn btn-success" onclick="exportToCSV()" id="export-btn" style="display: none;">导出Excel</button>
+                <button class="btn btn-primary" onclick="applyFilters()">
+                    <span class="btn-icon">🔍</span>
+                    应用筛选
+                </button>
+                <button class="btn btn-secondary" onclick="clearFilters()">
+                    <span class="btn-icon">🗑️</span>
+                    清除筛选
+                </button>
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    <span class="btn-icon">🔄</span>
+                    刷新数据
+                </button>
+                <button class="btn btn-success" onclick="exportToCSV()" id="export-btn" style="display: none;">
+                    <span class="btn-icon">📊</span>
+                    导出Excel
+                </button>
             </div>
         </div>
 
@@ -814,14 +1067,98 @@
         let currentPage = 1;
         const pageSize = 50;
 
+        // 日期快捷选择函数
+        function setDateRange(days) {
+            const endDate = new Date();
+            const startDate = new Date();
+            
+            if (days === 1) {
+                // 今天
+                startDate.setDate(endDate.getDate());
+            } else {
+                // 最近N天
+                startDate.setDate(endDate.getDate() - (days - 1));
+            }
+            
+            document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
+            document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
+            
+            // 更新快捷按钮的激活状态
+            updateDateShortcutButtons(days);
+        }
+
+        // 更新日期快捷按钮的激活状态
+        function updateDateShortcutButtons(activeDays) {
+            document.querySelectorAll('.date-shortcut-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 根据天数找到对应的按钮并激活
+            const btnTexts = {
+                1: '今天',
+                3: '最近3天', 
+                7: '最近7天',
+                15: '最近15天',
+                30: '最近30天',
+                90: '最近90天'
+            };
+            
+            if (btnTexts[activeDays]) {
+                const targetBtn = Array.from(document.querySelectorAll('.date-shortcut-btn'))
+                    .find(btn => btn.textContent === btnTexts[activeDays]);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                }
+            }
+        }
+
+        // 检测用户手动修改日期输入框时更新按钮状态
+        function checkDateInputChange() {
+            const startDate = new Date(document.getElementById('start_date').value);
+            const endDate = new Date(document.getElementById('end_date').value);
+            
+            if (startDate && endDate) {
+                const diffTime = Math.abs(endDate - startDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                // 检查是否匹配某个快捷选项
+                const today = new Date();
+                const todayStr = today.toISOString().slice(0, 10);
+                const endDateStr = document.getElementById('end_date').value;
+                
+                if (endDateStr === todayStr) {
+                    // 结束日期是今天，检查开始日期
+                    if (diffDays === 1) {
+                        updateDateShortcutButtons(1);
+                    } else if (diffDays === 3) {
+                        updateDateShortcutButtons(3);
+                    } else if (diffDays === 7) {
+                        updateDateShortcutButtons(7);
+                    } else if (diffDays === 15) {
+                        updateDateShortcutButtons(15);
+                    } else if (diffDays === 30) {
+                        updateDateShortcutButtons(30);
+                    } else if (diffDays === 90) {
+                        updateDateShortcutButtons(90);
+                    } else {
+                        // 不匹配任何快捷选项，清除所有激活状态
+                        document.querySelectorAll('.date-shortcut-btn').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                    }
+                } else {
+                    // 结束日期不是今天，清除所有激活状态
+                    document.querySelectorAll('.date-shortcut-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                }
+            }
+        }
+
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             // 设置默认日期为最近7天
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 6);
-            document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
-            document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
+            setDateRange(7);
 
             loadOptions();
             // 初始化 select2
@@ -859,11 +1196,21 @@
                     displayModeSelect.trigger('change.select2');
                 } else {
                     displayModeSelect.prop('disabled', false);
+                    
+                    // Master第二基准值默认选择评分显示
+                    if (baselineType === 'master_secondary') {
+                        displayModeSelect.val('score');
+                        displayModeSelect.trigger('change.select2');
+                    }
                 }
                 
                 // 当基准值类型改变时，自动应用筛选
                 applyFilters();
             });
+            
+            // 为日期输入框添加change事件监听器
+            document.getElementById('start_date').addEventListener('change', checkDateInputChange);
+            document.getElementById('end_date').addEventListener('change', checkDateInputChange);
             // 设置默认值
             setTimeout(() => {
                 // 分支默认选中 master
@@ -912,11 +1259,14 @@
                 // 显示模式默认选择百分比显示
                 document.getElementById('display-mode').value = 'percentage';
                 
-                // 检查初始基准值类型，如果是master则禁用评分模式
+                // 检查初始基准值类型，设置对应的显示模式
                 const initialBaselineType = document.getElementById('baseline-type').value;
                 const displayModeSelect = $('#display-mode');
                 if (initialBaselineType === 'master') {
                     displayModeSelect.prop('disabled', true);
+                    displayModeSelect.trigger('change.select2');
+                } else if (initialBaselineType === 'master_secondary') {
+                    displayModeSelect.val('score');
                     displayModeSelect.trigger('change.select2');
                 }
             }, 300);
@@ -1077,13 +1427,13 @@
             document.getElementById('clusters').selectedIndex = -1;
             document.getElementById('workers').selectedIndex = -1;
             // 恢复最近7天
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(endDate.getDate() - 6);
-            document.getElementById('start_date').value = startDate.toISOString().slice(0, 10);
-            document.getElementById('end_date').value = endDate.toISOString().slice(0, 10);
+            setDateRange(7);
             // 基准值类型默认选择标准基准值
-                            document.getElementById('baseline-type').value = 'master';
+            document.getElementById('baseline-type').value = 'master';
+            // 显示模式默认选择百分比显示
+            document.getElementById('display-mode').value = 'percentage';
+            // 禁用评分模式（因为默认是master基准值）
+            $('#display-mode').prop('disabled', true).trigger('change.select2');
             document.getElementById('execution_types').selectedIndex = -1;
             // 重新设置默认值
             setTimeout(() => {
