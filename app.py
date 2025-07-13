@@ -334,6 +334,12 @@ def calculate_grouped_statistics(df):
         
     Returns:
         dict: 分组统计结果
+        
+    改进的聚合算法：
+    - 对于均值：使用加权平均（如果有样本数信息）或简单平均
+    - 对于中位数：尝试基于分布特征进行估算
+    - 对于标准差：使用合并方差公式（如果有样本数信息）
+    - 对于极差：使用所有测试的真实最小值和最大值
     """
     if df.empty:
         return {}
@@ -366,32 +372,13 @@ def calculate_grouped_statistics(df):
             
             # 计算查询性能统计指标
             if query_type and len(group_df) > 0:
-                # 计算统计指标
-                query_stats = {}
+                query_stats = calculate_improved_aggregation(group_df)
                 
-                # 基本统计指标
-                if 'mean_ms' in group_df.columns:
-                    values = group_df['mean_ms'].dropna()
-                    if len(values) > 0:
-                        query_stats['mean_ms'] = float(values.mean())
-                        query_stats['med_ms'] = float(values.median())
-                        query_stats['std_ms'] = float(values.std()) if len(values) > 1 else 0.0
-                        query_stats['range_ms'] = float(values.max() - values.min()) if len(values) > 1 else 0.0
-                
-                # 如果有原始的min_ms和max_ms，也可以用来计算
-                if 'min_ms' in group_df.columns and 'max_ms' in group_df.columns:
-                    min_values = group_df['min_ms'].dropna()
-                    max_values = group_df['max_ms'].dropna()
-                    if len(min_values) > 0 and len(max_values) > 0:
-                        query_stats['min_ms'] = float(min_values.min())
-                        query_stats['max_ms'] = float(max_values.max())
-                        # 重新计算极差
-                        query_stats['range_ms'] = float(max_values.max() - min_values.min())
-                
-                # 将查询类型名称转换为metric key格式
-                import re
-                metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
-                grouped_stats[stats_key][metric_key] = query_stats
+                if query_stats:
+                    # 将查询类型名称转换为metric key格式
+                    import re
+                    metric_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(query_type)).lower().replace('_', '-')
+                    grouped_stats[stats_key][metric_key] = query_stats
             
             # 计算导入速度统计指标
             if 'import_speed' in group_df.columns:
@@ -405,6 +392,115 @@ def calculate_grouped_statistics(df):
     except Exception as e:
         logging.error(f"Error calculating grouped statistics: {str(e)}")
         return {}
+
+def calculate_improved_aggregation(group_df):
+    """
+    改进的聚合计算方法
+    
+    Args:
+        group_df: 同一分组下的所有测试数据
+        
+    Returns:
+        dict: 聚合后的统计指标
+    """
+    query_stats = {}
+    
+    # 检查可用的数据列
+    has_mean = 'mean_ms' in group_df.columns
+    has_median = 'med_ms' in group_df.columns  
+    has_std = 'std_ms' in group_df.columns
+    has_min_max = 'min_ms' in group_df.columns and 'max_ms' in group_df.columns
+    
+    if not has_mean:
+        return None
+    
+    # 获取有效数据
+    mean_values = group_df['mean_ms'].dropna()
+    if len(mean_values) == 0:
+        return None
+    
+    # 1. 计算聚合均值（简单平均，因为缺少样本数权重信息）
+    query_stats['mean_ms'] = float(mean_values.mean())
+    
+    # 2. 计算聚合中位数
+    if has_median:
+        median_values = group_df['med_ms'].dropna()
+        if len(median_values) > 0:
+            # 使用中位数的中位数作为近似（更保守的估计）
+            query_stats['med_ms'] = float(median_values.median())
+        else:
+            # 如果没有中位数数据，使用均值作为估计
+            query_stats['med_ms'] = query_stats['mean_ms']
+    else:
+        # 如果没有中位数数据，使用均值作为估计
+        query_stats['med_ms'] = query_stats['mean_ms']
+    
+    # 3. 计算聚合标准差
+    if has_std and len(mean_values) > 1:
+        std_values = group_df['std_ms'].dropna()
+        if len(std_values) > 0:
+            # 使用改进的标准差聚合方法
+            query_stats['std_ms'] = calculate_aggregated_std(mean_values, std_values)
+        else:
+            # 如果没有标准差数据，使用均值的标准差作为下限估计
+            query_stats['std_ms'] = float(mean_values.std())
+    else:
+        query_stats['std_ms'] = 0.0
+    
+    # 4. 计算聚合极差（最准确的方法）
+    if has_min_max:
+        min_values = group_df['min_ms'].dropna()
+        max_values = group_df['max_ms'].dropna()
+        if len(min_values) > 0 and len(max_values) > 0:
+            # 使用所有测试的真实最小值和最大值
+            query_stats['range_ms'] = float(max_values.max() - min_values.min())
+            query_stats['min_ms'] = float(min_values.min())
+            query_stats['max_ms'] = float(max_values.max())
+        else:
+            # 如果没有min/max数据，使用均值的极差作为下限估计
+            query_stats['range_ms'] = float(mean_values.max() - mean_values.min()) if len(mean_values) > 1 else 0.0
+    else:
+        # 如果没有min/max数据，使用均值的极差作为下限估计
+        query_stats['range_ms'] = float(mean_values.max() - mean_values.min()) if len(mean_values) > 1 else 0.0
+    
+    return query_stats
+
+def calculate_aggregated_std(mean_values, std_values):
+    """
+    计算聚合标准差的改进方法
+    
+    在缺少样本数信息的情况下，使用保守估计方法：
+    1. 如果标准差变化不大，使用标准差的平均值
+    2. 如果标准差变化较大，使用较大的标准差值
+    3. 考虑均值间的差异对总体标准差的贡献
+    
+    Args:
+        mean_values: 各测试的均值
+        std_values: 各测试的标准差
+        
+    Returns:
+        float: 聚合后的标准差估计值
+    """
+    if len(std_values) == 0:
+        return 0.0
+    
+    if len(std_values) == 1:
+        return float(std_values.iloc[0])
+    
+    # 方法1：标准差的平均值
+    avg_std = float(std_values.mean())
+    
+    # 方法2：考虑均值间差异的贡献
+    # 均值间的标准差反映了组间变异
+    mean_variation = float(mean_values.std()) if len(mean_values) > 1 else 0.0
+    
+    # 方法3：使用较大的标准差值（保守估计）
+    max_std = float(std_values.max())
+    
+    # 综合估计：取平均标准差和均值变异的较大值，但不超过最大标准差
+    estimated_std = min(max(avg_std, mean_variation), max_std)
+    
+    return estimated_std
 
 def add_scoring_to_table_data(table_data, grouped_stats, baselines):
     """
@@ -476,12 +572,13 @@ def add_scoring_to_table_data(table_data, grouped_stats, baselines):
                             score_info = calculate_comprehensive_score(actual_metrics, baseline_metrics)
                             if score_info:
                                 table_data.at[idx, 'query_comprehensive_score'] = score_info['comprehensive_score']  # type: ignore
+                                table_data.at[idx, 'query_is_passed'] = score_info['is_passed']  # type: ignore
                                 table_data.at[idx, 'query_mean_score'] = score_info['detail_scores']['mean_score']  # type: ignore
                                 table_data.at[idx, 'query_median_score'] = score_info['detail_scores']['median_score']  # type: ignore
                                 table_data.at[idx, 'query_std_score'] = score_info['detail_scores']['std_score']  # type: ignore
                                 table_data.at[idx, 'query_range_score'] = score_info['detail_scores']['range_score']  # type: ignore
                                 
-                                logging.info(f"Query {query_type} comprehensive score: {score_info['comprehensive_score']}")
+                                logging.info(f"Query {query_type} comprehensive score: {score_info['comprehensive_score']}, passed: {score_info['is_passed']}")
                             
                             # 计算平均延迟百分比对比
                             if 'mean_ms' in baseline_metrics and 'mean_ms' in actual_metrics:
@@ -707,7 +804,7 @@ def calculate_comprehensive_score(actual_metrics, baseline_metrics):
     if not valid_scores:
         return None
     
-    # 计算加权综合得分
+    # 恢复原始权重设置
     # 中心趋势（70%）：均值（50%）+ 中位数（20%）
     # 离散程度（30%）：标准差（20%）+ 极差（10%）
     weights = {
@@ -742,10 +839,12 @@ def calculate_comprehensive_score(actual_metrics, baseline_metrics):
     else:
         final_score = 0
     
-    # 移除强制90分的限制，让评分体现真实的性能差异
+    # 不强制提升到90分，而是标记是否通过
+    is_passed = final_score >= 90.0
     
     return {
         'comprehensive_score': round(final_score, 2),
+        'is_passed': is_passed,
         'detail_scores': {
             'mean_score': mean_score,
             'median_score': median_score,

@@ -1745,8 +1745,25 @@
                     const q = row.queries[qt];
                     if (q && q.query_comprehensive_score != null) {
                         const score = q.query_comprehensive_score;
-                        const colorClass = score >= 95 ? 'performance-good' : score >= 90 ? 'performance-neutral' : 'performance-bad';
-                        const scoreDisplay = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
+                        const isPassed = q.query_is_passed !== false; // 默认为通过，除非明确标记为不通过
+                        
+                        let colorClass, scoreDisplay;
+                        if (!isPassed) {
+                            // 低于90分，显示不通过
+                            colorClass = 'performance-bad';
+                            scoreDisplay = `<span class="${colorClass}" title="未通过90分标准">${score.toFixed(1)} ✗</span>`;
+                        } else if (score >= 95) {
+                            colorClass = 'performance-good';
+                            scoreDisplay = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
+                        } else if (score >= 90) {
+                            colorClass = 'performance-neutral';
+                            scoreDisplay = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
+                        } else {
+                            // 理论上不应该到这里，因为is_passed应该为false
+                            colorClass = 'performance-bad';
+                            scoreDisplay = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
+                        }
+                        
                         tr.innerHTML += `<td class="query-result-col">${scoreDisplay}</td>`;
                     } else {
                         tr.innerHTML += '<td>-</td>';
