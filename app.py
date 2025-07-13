@@ -77,6 +77,7 @@ def login_required(f):
 
 # 基准值配置文件路径
 MASTER_CONFIG_FILE = 'config/master_config.json'
+MASTER_SECONDARY_CONFIG_FILE = 'config/master_secondary_config.json'  # Master第二基准值配置文件
 ENTERPRISE_CONFIG_FILE = 'config/enterprise_config.json'  # 企业发版基准值配置文件
 OPENSOURCE_CONFIG_FILE = 'config/opensource_config.json'  # 开源发版基准值配置文件
 PID_FILE = 'logs/app.pid'
@@ -300,6 +301,9 @@ def get_data():
         elif baseline_type == 'opensource':
             baselines = load_opensource_config()
             logging.info(f"Using opensource baseline with {len(baselines)} configurations")
+        elif baseline_type == 'master_secondary':
+            baselines = load_master_secondary_config()
+            logging.info(f"Using master secondary baseline with {len(baselines)} configurations")
         else:
             baselines = load_master_config()
             logging.info(f"Using master baseline with {len(baselines)} configurations")
@@ -549,6 +553,26 @@ def save_master_config(config):
         logging.error(f"保存Master基准值配置失败: {e}")
         return False
 
+def load_master_secondary_config():
+    """加载Master第二基准值配置"""
+    if os.path.exists(MASTER_SECONDARY_CONFIG_FILE):
+        try:
+            with open(MASTER_SECONDARY_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.error(f"加载Master第二基准值配置失败: {e}")
+    return {}
+
+def save_master_secondary_config(config):
+    """保存Master第二基准值配置"""
+    try:
+        with open(MASTER_SECONDARY_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        logging.error(f"保存Master第二基准值配置失败: {e}")
+        return False
+
 
 
 def load_enterprise_config():
@@ -790,6 +814,37 @@ def save_masters():
         logging.error(f"保存Master基准值失败: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route('/master-secondary')
+@login_required
+def master_secondary_page():
+    """Master第二基准值配置页面"""
+    return render_template('master_secondary.html')
+
+@app.route('/master-secondaries', methods=['GET'])
+@login_required
+def get_master_secondary_config():
+    """获取Master第二基准值配置"""
+    try:
+        baselines = load_master_secondary_config()
+        return jsonify(baselines)
+    except Exception as e:
+        logging.error(f"获取Master第二基准值失败: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/master-secondaries', methods=['POST'])
+@login_required
+def save_master_secondary_config_api():
+    """保存Master第二基准值配置"""
+    try:
+        baselines = request.json
+        if save_master_secondary_config(baselines):
+            return jsonify({"message": "Master第二基准值保存成功"})
+        else:
+            return jsonify({"error": "保存失败"}), 500
+    except Exception as e:
+        logging.error(f"保存Master第二基准值失败: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/opensource')
 @login_required
 def opensource_page():
@@ -947,7 +1002,7 @@ def export_csv():
         
         # 生成下载文件名
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        baseline_name = "企业发版基准值" if baseline_type == 'enterprise' else "开源发版基准值" if baseline_type == 'opensource' else "Master基准值"
+        baseline_name = "企业发版基准值" if baseline_type == 'enterprise' else "开源发版基准值" if baseline_type == 'opensource' else "Master第二基准值" if baseline_type == 'master_secondary' else "Master基准值"
         download_name = f'TSBS分析数据导出_{baseline_name}_{timestamp}.xlsx'
         
         return send_file(
@@ -1033,6 +1088,42 @@ def upload_opensource_csv():
         
     except Exception as e:
         logging.error(f"Upload opensource CSV error: {str(e)}")
+        return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
+
+@app.route('/api/upload-master-secondary-csv', methods=['POST'])
+@login_required
+def upload_master_secondary_csv():
+    """上传Master第二基准值CSV文件并更新配置"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        if not file.filename or not file.filename.endswith('.csv'):
+            return jsonify({'error': '请上传CSV格式的文件'}), 400
+        
+        # 读取CSV文件
+        csv_content = file.read().decode('utf-8')
+        df = pd.read_csv(io.StringIO(csv_content))
+        
+        # 解析CSV并生成配置
+        master_secondary_config = parse_master_secondary_csv_from_dataframe(df)
+        
+        # 保存配置
+        save_master_secondary_config(master_secondary_config)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Master第二基准值配置更新成功，共处理 {len(master_secondary_config)} 个配置项',
+            'config_count': len(master_secondary_config),
+            'sample_keys': list(master_secondary_config.keys())[:5]  # 显示前5个配置键
+        })
+        
+    except Exception as e:
+        logging.error(f"Upload master secondary CSV error: {str(e)}")
         return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
 
 def parse_enterprise_csv_from_dataframe(df):
@@ -1228,6 +1319,103 @@ def parse_opensource_csv_from_dataframe(df):
                     opensource_config[config_key][config_metric_name] = float(metric_value)
     
     return opensource_config
+
+def parse_master_secondary_csv_from_dataframe(df):
+    """从DataFrame解析Master第二基准值CSV数据（表格格式）"""
+    # 初始化Master第二基准值配置
+    master_secondary_config = {}
+    
+    # 获取表头
+    headers = df.columns.tolist()
+    
+    # 检查是否是表格格式（前4列应该是Scale, Cluster, Execution Type, Workers）
+    expected_basic_columns = ['Scale', 'Cluster', 'Execution Type', 'Workers']
+    if len(headers) >= 4 and all(col in headers[:4] for col in expected_basic_columns):
+        # 表格格式解析
+        for index, row in df.iterrows():
+            # 提取基本配置参数
+            scale = int(row['Scale'])
+            cluster = int(row['Cluster'])
+            exec_type = str(row['Execution Type'])
+            worker = int(row['Workers'])
+            
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置
+            if config_key not in master_secondary_config:
+                master_secondary_config[config_key] = {}
+            
+            # 处理导入速度（第5列应该是导入速度基准值）
+            if len(headers) > 4 and '导入速度' in headers[4]:
+                import_speed_value = row.iloc[4]
+                if pd.notna(import_speed_value) and import_speed_value != '':
+                    master_secondary_config[config_key]['import_speed'] = float(import_speed_value)
+            
+            # 处理查询类型指标（从第7列开始，跳过单位列）
+            col_idx = 6  # 跳过Scale, Cluster, Execution Type, Workers, 导入速度基准值, 导入速度单位
+            while col_idx < len(headers):
+                header = headers[col_idx]
+                # 解析查询类型和指标名称
+                # 格式应该是 "query_type mean_ms" 或类似
+                if ' ' in header:
+                    parts = header.rsplit(' ', 1)  # 从右侧分割，只分割一次
+                    if len(parts) == 2:
+                        query_type = parts[0]
+                        metric_name = parts[1]
+                        
+                        # 转换查询类型名称以匹配配置格式（与前端逻辑保持一致）
+                        import re
+                        config_query_type = re.sub(r'[^a-zA-Z0-9_-]', '-', query_type).lower().replace('_', '-')
+                        
+                        # 获取指标值
+                        metric_value = row.iloc[col_idx]
+                        if pd.notna(metric_value) and metric_value != '':
+                            # 初始化查询类型配置
+                            if config_query_type not in master_secondary_config[config_key]:
+                                master_secondary_config[config_key][config_query_type] = {}
+                            
+                            master_secondary_config[config_key][config_query_type][metric_name] = float(metric_value)
+                
+                col_idx += 1
+    
+    else:
+        # 兼容旧的参数头格式
+        # 获取头部信息
+        exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
+        cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
+        scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
+        worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
+        
+        # 处理每一列（配置）
+        for col_idx in range(1, len(df.columns)):
+            # 提取配置参数
+            exec_type = exec_type_row.iloc[col_idx - 1] 
+            cluster = int(cluster_row.iloc[col_idx - 1])
+            scale = int(scale_row.iloc[col_idx - 1])
+            worker = int(worker_row.iloc[col_idx - 1])
+            
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置（如果不存在）
+            if config_key not in master_secondary_config:
+                master_secondary_config[config_key] = {}
+            
+            # 提取此配置的指标值（从第4行开始）
+            for row_idx in range(4, len(df)):
+                metric_name = str(df.iloc[row_idx, 0])  # 第一列包含指标名称，确保转为字符串
+                metric_value = df.iloc[row_idx, col_idx]
+                
+                # 转换指标名称以匹配配置格式
+                if metric_name == 'import_speed':
+                    master_secondary_config[config_key]['import_speed'] = float(metric_value)
+                else:
+                    # 将下划线转换为连字符以保持一致性
+                    config_metric_name = str(metric_name).replace('_', '-')
+                    master_secondary_config[config_key][config_metric_name] = float(metric_value)
+    
+    return master_secondary_config
 
 @app.route('/api/test-scoring', methods=['POST'])
 @login_required
