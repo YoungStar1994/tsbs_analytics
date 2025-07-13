@@ -1036,84 +1036,196 @@ def upload_opensource_csv():
         return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
 
 def parse_enterprise_csv_from_dataframe(df):
-    """从DataFrame解析企业版CSV数据"""
-    # 获取头部信息
-    exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
-    cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
-    scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
-    worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
-    
+    """从DataFrame解析企业版CSV数据（表格格式）"""
     # 初始化企业版配置
     enterprise_config = {}
     
-    # 处理每一列（配置）
-    for col_idx in range(1, len(df.columns)):
-        # 提取配置参数
-        exec_type = exec_type_row.iloc[col_idx - 1] 
-        cluster = int(cluster_row.iloc[col_idx - 1])
-        scale = int(scale_row.iloc[col_idx - 1])
-        worker = int(worker_row.iloc[col_idx - 1])
-        
-        # 创建配置键
-        config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
-        
-        # 初始化配置（如果不存在）
-        if config_key not in enterprise_config:
-            enterprise_config[config_key] = {}
-        
-        # 提取此配置的指标值（从第4行开始）
-        for row_idx in range(4, len(df)):
-            metric_name = df.iloc[row_idx, 0]  # 第一列包含指标名称
-            metric_value = df.iloc[row_idx, col_idx]
+    # 获取表头
+    headers = df.columns.tolist()
+    
+    # 检查是否是表格格式（前4列应该是Scale, Cluster, Execution Type, Workers）
+    expected_basic_columns = ['Scale', 'Cluster', 'Execution Type', 'Workers']
+    if len(headers) >= 4 and all(col in headers[:4] for col in expected_basic_columns):
+        # 表格格式解析
+        for index, row in df.iterrows():
+            # 提取基本配置参数
+            scale = int(row['Scale'])
+            cluster = int(row['Cluster'])
+            exec_type = str(row['Execution Type'])
+            worker = int(row['Workers'])
             
-            # 转换指标名称以匹配配置格式
-            if metric_name == 'import_speed':
-                enterprise_config[config_key]['import_speed'] = float(metric_value)
-            else:
-                # 将下划线转换为连字符以保持一致性
-                config_metric_name = metric_name.replace('_', '-')
-                enterprise_config[config_key][config_metric_name] = float(metric_value)
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置
+            if config_key not in enterprise_config:
+                enterprise_config[config_key] = {}
+            
+            # 处理导入速度（第5列应该是导入速度基准值）
+            if len(headers) > 4 and '导入速度' in headers[4]:
+                import_speed_value = row.iloc[4]
+                if pd.notna(import_speed_value) and import_speed_value != '':
+                    enterprise_config[config_key]['import_speed'] = float(import_speed_value)
+            
+            # 处理查询类型指标（从第7列开始，跳过单位列）
+            col_idx = 6  # 跳过Scale, Cluster, Execution Type, Workers, 导入速度基准值, 导入速度单位
+            while col_idx < len(headers):
+                header = headers[col_idx]
+                # 解析查询类型和指标名称
+                # 格式应该是 "query_type mean_ms" 或类似
+                if ' ' in header:
+                    parts = header.rsplit(' ', 1)  # 从右侧分割，只分割一次
+                    if len(parts) == 2:
+                        query_type = parts[0]
+                        metric_name = parts[1]
+                        
+                        # 转换查询类型名称以匹配配置格式（与前端逻辑保持一致）
+                        import re
+                        config_query_type = re.sub(r'[^a-zA-Z0-9_-]', '-', query_type).lower().replace('_', '-')
+                        
+                        # 获取指标值
+                        metric_value = row.iloc[col_idx]
+                        if pd.notna(metric_value) and metric_value != '':
+                            # 初始化查询类型配置
+                            if config_query_type not in enterprise_config[config_key]:
+                                enterprise_config[config_key][config_query_type] = {}
+                            
+                            enterprise_config[config_key][config_query_type][metric_name] = float(metric_value)
+                
+                col_idx += 1
+    
+    else:
+        # 兼容旧的参数头格式
+        # 获取头部信息
+        exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
+        cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
+        scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
+        worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
+        
+        # 处理每一列（配置）
+        for col_idx in range(1, len(df.columns)):
+            # 提取配置参数
+            exec_type = exec_type_row.iloc[col_idx - 1] 
+            cluster = int(cluster_row.iloc[col_idx - 1])
+            scale = int(scale_row.iloc[col_idx - 1])
+            worker = int(worker_row.iloc[col_idx - 1])
+            
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置（如果不存在）
+            if config_key not in enterprise_config:
+                enterprise_config[config_key] = {}
+            
+            # 提取此配置的指标值（从第4行开始）
+            for row_idx in range(4, len(df)):
+                metric_name = str(df.iloc[row_idx, 0])  # 第一列包含指标名称，确保转为字符串
+                metric_value = df.iloc[row_idx, col_idx]
+                
+                # 转换指标名称以匹配配置格式
+                if metric_name == 'import_speed':
+                    enterprise_config[config_key]['import_speed'] = float(metric_value)
+                else:
+                    # 将下划线转换为连字符以保持一致性
+                    config_metric_name = str(metric_name).replace('_', '-')
+                    enterprise_config[config_key][config_metric_name] = float(metric_value)
     
     return enterprise_config
 
 def parse_opensource_csv_from_dataframe(df):
-    """从DataFrame解析开源版CSV数据"""
-    # 获取头部信息
-    exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
-    cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
-    scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
-    worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
-    
+    """从DataFrame解析开源版CSV数据（表格格式）"""
     # 初始化开源版配置
     opensource_config = {}
     
-    # 处理每一列（配置）
-    for col_idx in range(1, len(df.columns)):
-        # 提取配置参数
-        exec_type = exec_type_row.iloc[col_idx - 1] 
-        cluster = int(cluster_row.iloc[col_idx - 1])
-        scale = int(scale_row.iloc[col_idx - 1])
-        worker = int(worker_row.iloc[col_idx - 1])
-        
-        # 创建配置键
-        config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
-        
-        # 初始化配置（如果不存在）
-        if config_key not in opensource_config:
-            opensource_config[config_key] = {}
-        
-        # 提取此配置的指标值（从第4行开始）
-        for row_idx in range(4, len(df)):
-            metric_name = df.iloc[row_idx, 0]  # 第一列包含指标名称
-            metric_value = df.iloc[row_idx, col_idx]
+    # 获取表头
+    headers = df.columns.tolist()
+    
+    # 检查是否是表格格式（前4列应该是Scale, Cluster, Execution Type, Workers）
+    expected_basic_columns = ['Scale', 'Cluster', 'Execution Type', 'Workers']
+    if len(headers) >= 4 and all(col in headers[:4] for col in expected_basic_columns):
+        # 表格格式解析
+        for index, row in df.iterrows():
+            # 提取基本配置参数
+            scale = int(row['Scale'])
+            cluster = int(row['Cluster'])
+            exec_type = str(row['Execution Type'])
+            worker = int(row['Workers'])
             
-            # 转换指标名称以匹配配置格式
-            if metric_name == 'import_speed':
-                opensource_config[config_key]['import_speed'] = float(metric_value)
-            else:
-                # 将下划线转换为连字符以保持一致性
-                config_metric_name = metric_name.replace('_', '-')
-                opensource_config[config_key][config_metric_name] = float(metric_value)
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置
+            if config_key not in opensource_config:
+                opensource_config[config_key] = {}
+            
+            # 处理导入速度（第5列应该是导入速度基准值）
+            if len(headers) > 4 and '导入速度' in headers[4]:
+                import_speed_value = row.iloc[4]
+                if pd.notna(import_speed_value) and import_speed_value != '':
+                    opensource_config[config_key]['import_speed'] = float(import_speed_value)
+            
+            # 处理查询类型指标（从第7列开始，跳过单位列）
+            col_idx = 6  # 跳过Scale, Cluster, Execution Type, Workers, 导入速度基准值, 导入速度单位
+            while col_idx < len(headers):
+                header = headers[col_idx]
+                # 解析查询类型和指标名称
+                # 格式应该是 "query_type mean_ms" 或类似
+                if ' ' in header:
+                    parts = header.rsplit(' ', 1)  # 从右侧分割，只分割一次
+                    if len(parts) == 2:
+                        query_type = parts[0]
+                        metric_name = parts[1]
+                        
+                        # 转换查询类型名称以匹配配置格式（与前端逻辑保持一致）
+                        import re
+                        config_query_type = re.sub(r'[^a-zA-Z0-9_-]', '-', query_type).lower().replace('_', '-')
+                        
+                        # 获取指标值
+                        metric_value = row.iloc[col_idx]
+                        if pd.notna(metric_value) and metric_value != '':
+                            # 初始化查询类型配置
+                            if config_query_type not in opensource_config[config_key]:
+                                opensource_config[config_key][config_query_type] = {}
+                            
+                            opensource_config[config_key][config_query_type][metric_name] = float(metric_value)
+                
+                col_idx += 1
+    
+    else:
+        # 兼容旧的参数头格式
+        # 获取头部信息
+        exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
+        cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
+        scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
+        worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
+        
+        # 处理每一列（配置）
+        for col_idx in range(1, len(df.columns)):
+            # 提取配置参数
+            exec_type = exec_type_row.iloc[col_idx - 1] 
+            cluster = int(cluster_row.iloc[col_idx - 1])
+            scale = int(scale_row.iloc[col_idx - 1])
+            worker = int(worker_row.iloc[col_idx - 1])
+            
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置（如果不存在）
+            if config_key not in opensource_config:
+                opensource_config[config_key] = {}
+            
+            # 提取此配置的指标值（从第4行开始）
+            for row_idx in range(4, len(df)):
+                metric_name = str(df.iloc[row_idx, 0])  # 第一列包含指标名称，确保转为字符串
+                metric_value = df.iloc[row_idx, col_idx]
+                
+                # 转换指标名称以匹配配置格式
+                if metric_name == 'import_speed':
+                    opensource_config[config_key]['import_speed'] = float(metric_value)
+                else:
+                    # 将下划线转换为连字符以保持一致性
+                    config_metric_name = str(metric_name).replace('_', '-')
+                    opensource_config[config_key][config_metric_name] = float(metric_value)
     
     return opensource_config
 

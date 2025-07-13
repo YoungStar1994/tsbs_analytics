@@ -109,12 +109,35 @@
                     <button class="btn btn-success ms-2" onclick="saveBaselines()">
                         <i class="fas fa-save"></i> 保存开源发版基准值
                     </button>
+                    <button class="btn btn-info ms-2" onclick="exportBaselinesToCSV()">
+                        <i class="fas fa-download"></i> 导出CSV
+                    </button>
                     <form id="csv-upload-form" style="display:inline-block; margin-left:10px;">
                         <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
                         <button type="button" class="btn btn-warning ms-2" onclick="document.getElementById('csv-file-input').click();">
                             <i class="fas fa-upload"></i> 上传CSV并更新
                         </button>
                     </form>
+                    <button type="button" class="btn btn-outline-info ms-2" data-bs-toggle="modal" data-bs-target="#csvFormatModal">
+                        <i class="fas fa-question-circle"></i> CSV格式说明
+                    </button>
+                </div>
+                <!-- CSV格式说明 -->
+                <div class="alert alert-info" style="font-size:13px;max-width:1200px;">
+                    <b>CSV格式要求：</b><br>
+                    <ul style="margin-bottom:0;">
+                        <li><b>表头与页面表格完全一致，顺序不可变。</b></li>
+                        <li>每一行对应页面上的一行配置（Scale, Cluster, Execution Type, Workers...）。</li>
+                        <li>每个查询类型下有4列，分别为 mean_ms、med_ms、std_ms、range_ms，列名格式为：<code>查询类型 mean_ms</code>，如 <code>cpu-max-all-1 mean_ms</code>。</li>
+                        <li>导入速度请填写在“导入速度 (import_speed) 基准值”列，单位请填写“rows/sec”。</li>
+                        <li><b>建议先在页面导出CSV，再编辑后上传，避免格式错误。</b></li>
+                        <li>示例：<br>
+<pre style="font-size:12px;line-height:1.2;background:#f8f9fa;">Scale,Cluster,Execution Type,Workers,导入速度 (import_speed) 基准值,导入速度 (import_speed) 单位,cpu-max-all-1 mean_ms,cpu-max-all-1 med_ms,cpu-max-all-1 std_ms,cpu-max-all-1 range_ms
+100,1,insert,1,1622221.59,rows/sec,5.19,4.70,1.29,15.26
+100,1,insert,8,1622221.59,rows/sec,6.05,5.36,1.39,14.37
+...</pre>
+                        </li>
+                    </ul>
                 </div>
                 
                 <!-- 基准值表格 -->
@@ -127,6 +150,48 @@
                             <!-- 动态生成表格内容 -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV格式说明模态框 -->
+    <div class="modal fade" id="csvFormatModal" tabindex="-1" aria-labelledby="csvFormatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="csvFormatModalLabel">CSV格式说明</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>支持的CSV格式：</h6>
+                    <p>系统支持<strong>表格格式</strong>的CSV文件，与页面表格结构完全一致。</p>
+                    
+                    <h6>表头格式：</h6>
+                    <div class="bg-light p-3 mb-3">
+                        <code>Scale,Cluster,Execution Type,Workers,导入速度 (import_speed) 基准值,导入速度 (import_speed) 单位,查询类型1 mean_ms,查询类型1 med_ms,查询类型1 std_ms,查询类型1 range_ms,...</code>
+                    </div>
+                    
+                    <h6>数据行格式：</h6>
+                    <div class="bg-light p-3 mb-3">
+                        <code>1000,3,sequential,8,1234.5,rows/sec,100.2,95.1,15.3,45.2,...</code>
+                    </div>
+                    
+                    <h6>重要说明：</h6>
+                    <ul>
+                        <li>前4列必须是：Scale, Cluster, Execution Type, Workers</li>
+                        <li>第5列是导入速度基准值，第6列是单位（固定为"rows/sec"）</li>
+                        <li>从第7列开始是各查询类型的4个指标（mean_ms, med_ms, std_ms, range_ms）</li>
+                        <li>表头中的查询类型名称必须与系统中的查询类型名称完全匹配</li>
+                        <li>建议使用"导出CSV"功能生成标准格式的CSV文件作为模板</li>
+                    </ul>
+                    
+                    <div class="alert alert-info">
+                        <strong>提示：</strong> 最简单的方法是先使用"导出CSV"按钮下载当前配置，然后在导出的文件基础上修改数据后重新上传。
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                 </div>
             </div>
         </div>
@@ -240,14 +305,17 @@
             
             // 第一行表头
             const headerRow1 = document.createElement('tr');
-            headerRow1.innerHTML = `
+            let headerRow1Html = `
                 <th class="sticky-column" rowspan="2">Scale</th>
                 <th class="sticky-column" rowspan="2" style="left: 60px;">Cluster</th>
                 <th class="sticky-column" rowspan="2" style="left: 120px;">Execution Type</th>
                 <th class="sticky-column" rowspan="2" style="left: 200px;">Workers</th>
                 <th colspan="2">导入速度 (import_speed)</th>
-                <th colspan="${queryTypesCount}">查询延迟 (mean_ms)</th>
             `;
+            queryTypes.forEach(queryType => {
+                headerRow1Html += `<th colspan="4">${queryType}</th>`;
+            });
+            headerRow1.innerHTML = headerRow1Html;
             
             // 第二行表头
             const headerRow2 = document.createElement('tr');
@@ -255,12 +323,9 @@
                 <th>基准值</th>
                 <th>单位</th>
             `;
-            
-            // 动态添加查询类型列
             queryTypes.forEach(queryType => {
-                headerRow2Html += `<th>${queryType}</th>`;
+                headerRow2Html += `<th>mean_ms</th><th>med_ms</th><th>std_ms</th><th>range_ms</th>`;
             });
-            
             headerRow2.innerHTML = headerRow2Html;
             
             thead.appendChild(headerRow1);
@@ -335,8 +400,6 @@
             const key = `${scale}_${cluster}_${execType}_${worker}`;
             const queryTypes = options.query_types || [];
             
-            console.log(`创建行: ${key}`);
-            
             let rowHtml = `
                 <td class="sticky-column">${scale}</td>
                 <td class="sticky-column" style="left: 60px;">${cluster}</td>
@@ -345,69 +408,76 @@
                 <td><input type="number" class="baseline-input" data-key="${key}" data-metric="import_speed" placeholder="0" step="0.01"></td>
                 <td>rows/sec</td>
             `;
-            
-            // 动态添加查询类型输入框
             queryTypes.forEach(queryType => {
-                // 使用查询类型名称作为metric，但需要处理特殊字符（与后端保持一致）
+                // metricKey 用于 json key
                 const metricKey = queryType.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase().replace(/_/g, '-');
-                console.log(`查询类型转换: ${queryType} => ${metricKey}`);
-                rowHtml += `<td><input type="number" class="baseline-input" data-key="${key}" data-metric="${metricKey}" data-query-type="${queryType}" placeholder="0" step="0.01"></td>`;
+                ['mean_ms','med_ms','std_ms','range_ms'].forEach(metric => {
+                    rowHtml += `<td><input type="number" class="baseline-input" data-key="${key}" data-metric="${metricKey}-${metric}" data-query-type="${queryType}" placeholder="0" step="0.01"></td>`;
+                });
             });
-            
             row.innerHTML = rowHtml;
             return row;
         }
 
         // 填充已有的基准值
         function fillBaselines() {
-            console.log('开始填充开源发版基准值到表格...');
-            console.log('当前开源发版基准值数据:', currentBaselines);
-            
+            console.log('开始填充基准值，currentBaselines:', currentBaselines);
             let filledCount = 0;
-            let totalInputs = 0;
+            let totalCount = 0;
             
             document.querySelectorAll('.baseline-input').forEach(input => {
-                totalInputs++;
+                totalCount++;
                 const key = input.dataset.key;
                 const metric = input.dataset.metric;
                 
-                console.log(`检查输入框: key=${key}, metric=${metric}`);
-                
-                if (currentBaselines[key]) {
-                    console.log(`找到配置键: ${key}`, currentBaselines[key]);
-                    if (currentBaselines[key][metric] !== undefined) {
-                        input.value = currentBaselines[key][metric];
+                if (metric === 'import_speed') {
+                    if (currentBaselines[key] && currentBaselines[key]['import_speed'] !== undefined) {
+                        input.value = currentBaselines[key]['import_speed'];
                         filledCount++;
-                        console.log(`✓ 填充 ${key}.${metric} = ${currentBaselines[key][metric]}`);
+                        console.log(`填充 ${key}.import_speed = ${currentBaselines[key]['import_speed']}`);
                     } else {
-                        console.log(`✗ 未找到指标 ${metric} 在配置 ${key} 中`);
+                        console.log(`未找到 ${key}.import_speed`);
                     }
                 } else {
-                    console.log(`✗ 未找到配置键: ${key}`);
+                    // metric 格式: metricKey-mean_ms，从最后一个'-'拆分
+                    const lastDashIndex = metric.lastIndexOf('-');
+                    const metricKey = metric.substring(0, lastDashIndex);
+                    const subMetric = metric.substring(lastDashIndex + 1);
+                    if (currentBaselines[key] && currentBaselines[key][metricKey] && currentBaselines[key][metricKey][subMetric] !== undefined) {
+                        input.value = currentBaselines[key][metricKey][subMetric];
+                        filledCount++;
+                        console.log(`填充 ${key}.${metricKey}.${subMetric} = ${currentBaselines[key][metricKey][subMetric]}`);
+                    } else {
+                        console.log(`未找到 ${key}.${metricKey}.${subMetric}`);
+                    }
                 }
             });
             
-            console.log(`总共 ${totalInputs} 个输入框，填充了 ${filledCount} 个开源发版基准值`);
-            
-            // 显示一些基准值键的示例
-            console.log('开源发版基准值配置键示例:', Object.keys(currentBaselines).slice(0, 5));
+            console.log(`填充完成: ${filledCount}/${totalCount} 个字段被填充`);
         }
 
         // 保存基准值（使用开源发版API端点）
         async function saveBaselines() {
             const baselines = {};
-            
             document.querySelectorAll('.baseline-input').forEach(input => {
                 const key = input.dataset.key;
                 const metric = input.dataset.metric;
                 const value = parseFloat(input.value) || 0;
-                
                 if (!baselines[key]) {
                     baselines[key] = {};
                 }
-                baselines[key][metric] = value;
+                if (metric === 'import_speed') {
+                    baselines[key]['import_speed'] = value;
+                } else {
+                    const lastDashIndex = metric.lastIndexOf('-');
+                    const metricKey = metric.substring(0, lastDashIndex);
+                    const subMetric = metric.substring(lastDashIndex + 1);
+                    if (!baselines[key][metricKey]) {
+                        baselines[key][metricKey] = {};
+                    }
+                    baselines[key][metricKey][subMetric] = value;
+                }
             });
-
             try {
                 const response = await fetch('/opensources', {
                     method: 'POST',
@@ -416,7 +486,6 @@
                     },
                     body: JSON.stringify(baselines)
                 });
-
                 if (response.ok) {
                     alert('开源发版基准值保存成功！');
                     currentBaselines = baselines;
@@ -453,13 +522,70 @@
                     alert('CSV上传并更新成功！' + data.message);
                     await loadOptionsAndBaselines();
                 } else {
-                    alert('CSV上传失败: ' + (data.error || data.message || '未知错误'));
+                    alert('CSV上传失败: ' + (data.error || data.message || '未知错误') + '\n请检查CSV格式是否符合要求。');
                 }
             } catch (error) {
-                alert('CSV上传失败: ' + error.message);
+                alert('CSV上传失败: ' + error.message + '\n请检查CSV格式是否符合要求。');
             }
             event.target.value = '';
         });
+
+        function exportBaselinesToCSV() {
+            // 1. 生成表头
+            const queryTypes = options.query_types || [];
+            const header = [
+                'Scale','Cluster','Execution Type','Workers',
+                '导入速度 (import_speed) 基准值','导入速度 (import_speed) 单位'
+            ];
+            queryTypes.forEach(qt => {
+                ['mean_ms','med_ms','std_ms','range_ms'].forEach(metric => {
+                    header.push(`${qt} ${metric}`);
+                });
+            });
+            let csv = header.join(',') + '\n';
+
+            // 2. 生成每一行
+            const uniqueScales = [...new Set(options.scales)];
+            const uniqueClusters = [...new Set(options.clusters)];
+            const uniqueExecutionTypes = [...new Set(options.execution_types)];
+            const uniqueWorkers = [...new Set(options.workers)];
+            uniqueScales.forEach(scale => {
+                uniqueClusters.forEach(cluster => {
+                    uniqueExecutionTypes.forEach(execType => {
+                        uniqueWorkers.forEach(worker => {
+                            const key = `${scale}_${cluster}_${execType}_${worker}`;
+                            const row = [];
+                            row.push(scale, cluster, execType, worker);
+                            // 导入速度
+                            row.push(currentBaselines[key]?.import_speed ?? '');
+                            row.push('rows/sec');
+                            // 查询类型
+                            queryTypes.forEach(qt => {
+                                // 转换查询类型名称以匹配配置格式
+                                const metricKey = qt.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase().replace(/_/g, '-');
+                                ['mean_ms','med_ms','std_ms','range_ms'].forEach(metric => {
+                                    row.push(
+                                        currentBaselines[key]?.[metricKey]?.[metric] ?? ''
+                                    );
+                                });
+                            });
+                            csv += row.join(',') + '\n';
+                        });
+                    });
+                });
+            });
+
+            // 3. 触发下载
+            const blob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'opensource_baseline_export.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 </html>

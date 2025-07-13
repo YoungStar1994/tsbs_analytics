@@ -1409,10 +1409,10 @@
                 queryTypes.forEach(qt => {
                     const q = row.queries[qt];
                     if (q) {
+                        // 只展示 mean_ms
                         const value = formatNumber(q.mean_ms);
                         tr.innerHTML += `<td class="query-result-col">${value}</td>`;
-                        
-                        // 添加基准对比列
+                        // 只用 mean_ms 参与百分比对比
                         let baselineComp = '--';
                         if (q.mean_ms_baseline_pct != null) {
                             const pct = q.mean_ms_baseline_pct;
