@@ -849,6 +849,18 @@
             
             // 为基准值类型选择器添加change事件监听器
             $('#baseline-type').on('change', function() {
+                const baselineType = $(this).val();
+                const displayModeSelect = $('#display-mode');
+                
+                // Master基准值只支持百分比显示，不支持评分显示
+                if (baselineType === 'master') {
+                    displayModeSelect.val('percentage');
+                    displayModeSelect.prop('disabled', true);
+                    displayModeSelect.trigger('change.select2');
+                } else {
+                    displayModeSelect.prop('disabled', false);
+                }
+                
                 // 当基准值类型改变时，自动应用筛选
                 applyFilters();
             });
@@ -899,6 +911,14 @@
                 
                 // 显示模式默认选择百分比显示
                 document.getElementById('display-mode').value = 'percentage';
+                
+                // 检查初始基准值类型，如果是master则禁用评分模式
+                const initialBaselineType = document.getElementById('baseline-type').value;
+                const displayModeSelect = $('#display-mode');
+                if (initialBaselineType === 'master') {
+                    displayModeSelect.prop('disabled', true);
+                    displayModeSelect.trigger('change.select2');
+                }
             }, 300);
             loadData();
         });

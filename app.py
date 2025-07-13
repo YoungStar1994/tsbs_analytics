@@ -459,7 +459,19 @@ def add_scoring_to_table_data(table_data, grouped_stats, baselines):
                         baseline_metrics = baseline_data[metric_key]
                         actual_metrics = stats_data[metric_key]
                         
-                        if isinstance(baseline_metrics, dict) and isinstance(actual_metrics, dict):
+                        # 检查是否是Master基准值（直接存储数值而非字典）
+                        if isinstance(baseline_metrics, (int, float)) and isinstance(actual_metrics, dict):
+                            # Master基准值：baseline是数值，actual是字典
+                            baseline_mean = float(baseline_metrics)
+                            actual_mean = actual_metrics.get('mean_ms', 0)
+                            if baseline_mean > 0:
+                                percentage = calculate_performance_percentage_reverse(actual_mean, baseline_mean)
+                                if percentage is not None:
+                                    table_data.at[idx, 'mean_ms_baseline_pct'] = round(percentage, 2)  # type: ignore
+                                    logging.info(f"Master baseline query {query_type}: actual={actual_mean}, baseline={baseline_mean}, percentage={percentage}%")
+                        
+                        elif isinstance(baseline_metrics, dict) and isinstance(actual_metrics, dict):
+                            # 其他基准值：都是字典结构
                             # 计算综合评分
                             score_info = calculate_comprehensive_score(actual_metrics, baseline_metrics)
                             if score_info:
@@ -1125,6 +1137,132 @@ def upload_master_secondary_csv():
     except Exception as e:
         logging.error(f"Upload master secondary CSV error: {str(e)}")
         return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
+
+@app.route('/api/upload-master-csv', methods=['POST'])
+@login_required
+def upload_master_csv():
+    """上传Master基准值CSV文件并更新配置"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': '没有选择文件'}), 400
+        
+        if not file.filename or not file.filename.endswith('.csv'):
+            return jsonify({'error': '请上传CSV格式的文件'}), 400
+        
+        # 读取CSV文件
+        csv_content = file.read().decode('utf-8')
+        df = pd.read_csv(io.StringIO(csv_content))
+        
+        # 解析CSV并生成配置
+        master_config = parse_master_csv_from_dataframe(df)
+        
+        # 保存配置
+        save_master_config(master_config)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Master基准值配置更新成功，共处理 {len(master_config)} 个配置项',
+            'config_count': len(master_config),
+            'sample_keys': list(master_config.keys())[:5]  # 显示前5个配置键
+        })
+        
+    except Exception as e:
+        logging.error(f"Upload master CSV error: {str(e)}")
+        return jsonify({'error': f'处理文件失败: {str(e)}'}), 500
+
+def parse_master_csv_from_dataframe(df):
+    """从DataFrame解析Master基准值CSV数据（表格格式）"""
+    # 初始化Master基准值配置
+    master_config = {}
+    
+    # 获取表头
+    headers = df.columns.tolist()
+    
+    # 检查是否是表格格式（前4列应该是Scale, Cluster, Execution Type, Workers）
+    expected_basic_columns = ['Scale', 'Cluster', 'Execution Type', 'Workers']
+    if len(headers) >= 4 and all(col in headers[:4] for col in expected_basic_columns):
+        # 表格格式解析
+        for index, row in df.iterrows():
+            # 提取基本配置参数
+            scale = int(row['Scale'])
+            cluster = int(row['Cluster'])
+            exec_type = str(row['Execution Type'])
+            worker = int(row['Workers'])
+            
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置
+            if config_key not in master_config:
+                master_config[config_key] = {}
+            
+            # 处理导入速度（第5列应该是导入速度基准值）
+            if len(headers) > 4 and '导入速度' in headers[4]:
+                import_speed_value = row.iloc[4]
+                if pd.notna(import_speed_value) and import_speed_value != '':
+                    master_config[config_key]['import_speed'] = float(import_speed_value)
+            
+            # 处理查询类型指标（从第7列开始，跳过单位列）
+            # Master基准值只有平均值，不像其他基准值有4个指标
+            col_idx = 6  # 跳过Scale, Cluster, Execution Type, Workers, 导入速度基准值, 导入速度单位
+            while col_idx < len(headers):
+                header = headers[col_idx]
+                # 对于Master基准值，每个查询类型只有一列（平均值）
+                query_type = header.strip()
+                
+                # 转换查询类型名称以匹配配置格式（与前端逻辑保持一致）
+                import re
+                config_query_type = re.sub(r'[^a-zA-Z0-9_-]', '-', query_type).lower().replace('_', '-')
+                
+                # 获取指标值
+                metric_value = row.iloc[col_idx]
+                if pd.notna(metric_value) and metric_value != '':
+                    # Master基准值直接存储平均值
+                    master_config[config_key][config_query_type] = float(metric_value)
+                
+                col_idx += 1
+    
+    else:
+        # 兼容旧的参数头格式
+        # 获取头部信息
+        exec_type_row = df.iloc[0, 1:]  # 第一行数据包含执行类型
+        cluster_row = df.iloc[1, 1:]    # 第二行数据包含集群数量
+        scale_row = df.iloc[2, 1:]      # 第三行数据包含规模
+        worker_row = df.iloc[3, 1:]     # 第四行数据包含工作节点数量
+        
+        # 处理每一列（配置）
+        for col_idx in range(1, len(df.columns)):
+            # 提取配置参数
+            exec_type = exec_type_row.iloc[col_idx - 1] 
+            cluster = int(cluster_row.iloc[col_idx - 1])
+            scale = int(scale_row.iloc[col_idx - 1])
+            worker = int(worker_row.iloc[col_idx - 1])
+            
+            # 创建配置键
+            config_key = f"{scale}_{cluster}_{exec_type}_{worker}"
+            
+            # 初始化配置（如果不存在）
+            if config_key not in master_config:
+                master_config[config_key] = {}
+            
+            # 提取此配置的指标值（从第4行开始）
+            for row_idx in range(4, len(df)):
+                metric_name = str(df.iloc[row_idx, 0])  # 第一列包含指标名称，确保转为字符串
+                metric_value = df.iloc[row_idx, col_idx]
+                
+                # 转换指标名称以匹配配置格式
+                if metric_name == 'import_speed':
+                    master_config[config_key]['import_speed'] = float(metric_value)
+                else:
+                    # 将下划线转换为连字符以保持一致性
+                    config_metric_name = str(metric_name).replace('_', '-')
+                    master_config[config_key][config_metric_name] = float(metric_value)
+    
+    return master_config
 
 def parse_enterprise_csv_from_dataframe(df):
     """从DataFrame解析企业版CSV数据（表格格式）"""
