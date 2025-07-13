@@ -416,6 +416,99 @@
             text-align: center;
         }
 
+        /* 计算详情列样式 */
+        .calculation-detail-col {
+            background-color: #f8f9fa !important;
+            font-size: 0.75rem;
+            color: #6c757d;
+            border-left: 2px solid #dee2e6 !important;
+            padding: 8px 6px !important;
+            max-width: 280px;
+            min-width: 250px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            vertical-align: top;
+        }
+
+        .calculation-detail-col .detail-item {
+            margin-bottom: 3px;
+            font-size: 0.75rem;
+        }
+
+        .calculation-detail-col .detail-value {
+            font-weight: 600;
+            color: #495057;
+            display: inline-block;
+            min-width: 60px;
+        }
+
+        .calculation-detail-col .detail-section {
+            margin-top: 8px;
+            margin-bottom: 4px;
+            padding: 2px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .calculation-detail-col .detail-section:first-child {
+            margin-top: 0;
+        }
+
+        .calculation-detail-col .detail-section strong {
+            color: #343a40;
+            font-size: 0.8rem;
+        }
+
+        /* 详情折叠控制 */
+        .detail-toggle {
+            cursor: pointer;
+            user-select: none;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .detail-toggle:hover {
+            color: #5a67d8;
+        }
+
+        .detail-toggle-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .detail-toggle.collapsed .detail-toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .detail-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .detail-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        /* 详情列中的性能指示器 */
+        .calculation-detail-col .performance-good {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .calculation-detail-col .performance-bad {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .calculation-detail-col .performance-neutral {
+            color: #d97706;
+            font-weight: 600;
+        }
+
         /* 性能对比颜色 */
         .performance-good {
             color: #059669;
@@ -625,6 +718,19 @@
                 min-width: 120px;
                 max-width: 120px;
                 font-size: 0.7rem;
+            }
+            
+            /* 移动端计算详情列样式优化 */
+            .calculation-detail-col {
+                font-size: 0.65rem !important;
+                padding: 4px 3px !important;
+                max-width: 150px !important;
+                line-height: 1.2;
+            }
+            
+            .calculation-detail-col .detail-value {
+                min-width: 50px !important;
+                font-size: 0.6rem !important;
             }
         }
 
@@ -1671,18 +1777,30 @@
         });
         
         if (displayMode === 'score') {
-            // 评分显示模式：只显示评分列
+            // 评分显示模式：显示评分列和计算详情列
             const thImportScore = document.createElement('th');
             thImportScore.textContent = '导入速度评分';
             thImportScore.className = 'header-import-speed';
             headerRow.appendChild(thImportScore);
             
-            // 查询类型评分列
+            // 导入速度计算详情列
+            const thImportDetail = document.createElement('th');
+            thImportDetail.textContent = '导入速度计算详情';
+            thImportDetail.className = 'header-import-baseline';
+            headerRow.appendChild(thImportDetail);
+            
+            // 查询类型评分列和详情列
             queryTypes.forEach(qt => {
                 const th = document.createElement('th');
                 th.textContent = qt + ' 评分';
                 th.className = 'header-query-result';
                 headerRow.appendChild(th);
+                
+                // 查询类型计算详情列
+                const thDetail = document.createElement('th');
+                thDetail.textContent = qt + ' 计算详情';
+                thDetail.className = 'header-query-baseline';
+                headerRow.appendChild(thDetail);
             });
         } else {
             // 百分比显示模式：显示原始数据和对比
@@ -1728,19 +1846,82 @@
             `;
             
             if (displayMode === 'score') {
-                // 评分显示模式：只显示评分
+                // 评分显示模式：显示评分和计算详情
                 
                 // 导入速度评分
                 let importSpeedScore = '--';
+                let importSpeedDetail = '--';
                 const firstQuery = Object.values(row.queries).find(q => q && q.import_speed_score != null);
                 if (firstQuery && firstQuery.import_speed_score != null) {
                     const score = firstQuery.import_speed_score;
                     const colorClass = score >= 95 ? 'performance-good' : score >= 90 ? 'performance-neutral' : 'performance-bad';
                     importSpeedScore = `<span class="${colorClass}">${score.toFixed(1)}</span>`;
+                    
+                    // 构建导入速度计算详情
+                    const importUniqueId = `import-detail-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // 简化摘要
+                    const importSummaryParts = [];
+                    const importScoreColor = score >= 95 ? 'performance-good' : score >= 90 ? 'performance-neutral' : 'performance-bad';
+                    importSummaryParts.push(`<span class="detail-value">评分:</span> <span class="${importScoreColor}">${score.toFixed(1)}/100</span>`);
+                    if (firstQuery.import_speed != null) {
+                        importSummaryParts.push(`<span class="detail-value">导入速度:</span> ${Number(firstQuery.import_speed).toFixed(2)} rows/sec`);
+                    }
+                    
+                    // 详细内容
+                    const detailParts = [];
+                    
+                    // 显示实际测试值
+                    detailParts.push(`<div class="detail-section"><strong>实际测试值:</strong></div>`);
+                    if (firstQuery.import_speed != null) {
+                        detailParts.push(`<span class="detail-value">导入速度:</span> ${Number(firstQuery.import_speed).toFixed(2)} rows/sec`);
+                    }
+                    
+                    // 显示基准对比
+                    if (firstQuery.import_speed_baseline_pct != null) {
+                        detailParts.push(`<div class="detail-section"><strong>基准对比:</strong></div>`);
+                        const pct = firstQuery.import_speed_baseline_pct;
+                        const pctColor = pct >= 0 ? 'performance-good' : 'performance-bad';
+                        detailParts.push(`<span class="detail-value">性能对比:</span> <span class="${pctColor}">${pct > 0 ? '+' : ''}${pct}%</span>`);
+                        
+                        // 解释对比结果
+                        if (pct > 0) {
+                            detailParts.push(`<span class="detail-value">说明:</span> <span class="performance-good">性能优于基准值</span>`);
+                        } else if (pct < 0) {
+                            detailParts.push(`<span class="detail-value">说明:</span> <span class="performance-bad">性能低于基准值</span>`);
+                        } else {
+                            detailParts.push(`<span class="detail-value">说明:</span> 性能与基准值相当`);
+                        }
+                    }
+                    
+                    // 显示评分
+                    detailParts.push(`<div class="detail-section"><strong>评分结果:</strong></div>`);
+                    detailParts.push(`<span class="detail-value">最终得分:</span> ${score.toFixed(1)}/100`);
+                    
+                    // 评分等级
+                    if (score >= 95) {
+                        detailParts.push(`<span class="detail-value">等级:</span> <span class="performance-good">优秀</span>`);
+                    } else if (score >= 90) {
+                        detailParts.push(`<span class="detail-value">等级:</span> <span class="performance-neutral">良好</span>`);
+                    } else {
+                        detailParts.push(`<span class="detail-value">等级:</span> <span class="performance-bad">需要改进</span>`);
+                    }
+                    
+                    importSpeedDetail = `
+                        ${importSummaryParts.join('<br>')}
+                        <div class="detail-toggle" onclick="toggleDetail(this)">
+                            <span class="detail-toggle-icon">▼</span>
+                            <span>查看详细信息</span>
+                        </div>
+                        <div class="detail-content" id="${importUniqueId}">
+                            ${detailParts.join('<br>')}
+                        </div>
+                    `;
                 }
                 tr.innerHTML += `<td class="import-speed-col">${importSpeedScore}</td>`;
+                tr.innerHTML += `<td class="calculation-detail-col">${importSpeedDetail}</td>`;
                 
-                // 查询类型评分列
+                // 查询类型评分列和详情列
                 queryTypes.forEach(qt => {
                     const q = row.queries[qt];
                     if (q && q.query_comprehensive_score != null) {
@@ -1765,7 +1946,193 @@
                         }
                         
                         tr.innerHTML += `<td class="query-result-col">${scoreDisplay}</td>`;
+                        
+                        // 构建查询计算详情
+                        const uniqueId = `detail-${qt.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                        
+                        // 简化摘要
+                        const summaryParts = [];
+                        
+                        // 详细内容
+                        const detailParts = [];
+                        
+                        // 显示四个核心统计值
+                        detailParts.push(`<div class="detail-section"><strong>聚合统计值:</strong></div>`);
+                        detailParts.push(`<span class="detail-value">数据来源:</span> 多次测试结果聚合`);
+                        
+                        if (q.mean_ms != null) {
+                            detailParts.push(`<span class="detail-value">均值:</span> ${formatNumber(q.mean_ms)}ms`);
+                        }
+                        if (q.med_ms != null) {
+                            detailParts.push(`<span class="detail-value">中位数:</span> ${formatNumber(q.med_ms)}ms`);
+                        }
+                        if (q.min_ms != null && q.max_ms != null) {
+                            const range = q.max_ms - q.min_ms;
+                            detailParts.push(`<span class="detail-value">极差:</span> ${formatNumber(range)}ms`);
+                            detailParts.push(`<span class="detail-value">范围:</span> ${formatNumber(q.min_ms)}ms - ${formatNumber(q.max_ms)}ms`);
+                        }
+                        if (q.std_ms != null) {
+                            detailParts.push(`<span class="detail-value">标准差:</span> ${formatNumber(q.std_ms)}ms`);
+                        }
+                        
+                        // 显示评分详情
+                        detailParts.push(`<div class="detail-section"><strong>评分详情:</strong></div>`);
+                        detailParts.push(`<span class="detail-value">评分算法:</span> 偏差率评分法`);
+                        detailParts.push(`<span class="detail-value">评分公式:</span> 偏差率≤10%得100分，否则100-(偏差率-10)×10，最低0分`);
+                        
+                        // 为了显示计算过程，我们需要从后端获取基准值数据
+                        // 这里我们假设基准值存储在某个地方，或者通过API获取
+                        // 由于当前架构限制，我们先显示得分，后续可以通过API获取基准值
+                        
+                        if (q.query_mean_score != null) {
+                            const scoreColor = q.query_mean_score >= 95 ? 'performance-good' : 
+                                             q.query_mean_score >= 90 ? 'performance-neutral' : 'performance-bad';
+                            detailParts.push(`<span class="detail-value">均值得分:</span> <span class="${scoreColor}">${q.query_mean_score.toFixed(1)}/100</span> (权重50%)`);
+                            
+                            // 显示详细计算过程（使用后端传递的准确数据）
+                            if (q.mean_ms != null && q.query_mean_baseline != null && q.query_mean_deviation != null) {
+                                const actualValue = q.mean_ms;
+                                const baselineValue = q.query_mean_baseline;
+                                const deviationRate = q.query_mean_deviation;
+                                
+                                detailParts.push(`<span class="detail-value">　计算过程:</span> 实际值=${actualValue.toFixed(2)}ms, 基准值=${baselineValue.toFixed(2)}ms`);
+                                detailParts.push(`<span class="detail-value">　偏差率:</span> |${actualValue.toFixed(2)}-${baselineValue.toFixed(2)}|/${baselineValue.toFixed(2)}×100% = ${deviationRate.toFixed(2)}%`);
+                                
+                                if (deviationRate <= 10) {
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 偏差率≤10%，得100分`);
+                                } else {
+                                    const calculatedScore = Math.max(0, 100 - (deviationRate - 10) * 10);
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 100-(${deviationRate.toFixed(2)}-10)×10 = ${calculatedScore.toFixed(1)}分`);
+                                }
+                            }
+                        }
+                        if (q.query_median_score != null) {
+                            const scoreColor = q.query_median_score >= 95 ? 'performance-good' : 
+                                             q.query_median_score >= 90 ? 'performance-neutral' : 'performance-bad';
+                            detailParts.push(`<span class="detail-value">中位数得分:</span> <span class="${scoreColor}">${q.query_median_score.toFixed(1)}/100</span> (权重20%)`);
+                            
+                            // 显示详细计算过程（使用后端传递的准确数据）
+                            if (q.med_ms != null && q.query_median_baseline != null && q.query_median_deviation != null) {
+                                const actualValue = q.med_ms;
+                                const baselineValue = q.query_median_baseline;
+                                const deviationRate = q.query_median_deviation;
+                                
+                                detailParts.push(`<span class="detail-value">　计算过程:</span> 实际值=${actualValue.toFixed(2)}ms, 基准值=${baselineValue.toFixed(2)}ms`);
+                                detailParts.push(`<span class="detail-value">　偏差率:</span> |${actualValue.toFixed(2)}-${baselineValue.toFixed(2)}|/${baselineValue.toFixed(2)}×100% = ${deviationRate.toFixed(2)}%`);
+                                
+                                if (deviationRate <= 10) {
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 偏差率≤10%，得100分`);
+                                } else {
+                                    const calculatedScore = Math.max(0, 100 - (deviationRate - 10) * 10);
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 100-(${deviationRate.toFixed(2)}-10)×10 = ${calculatedScore.toFixed(1)}分`);
+                                }
+                            }
+                        }
+                                                // 标准差得分显示：总是显示，即使数据缺失也给出合理的解释
+                        if (q.query_std_score != null) {
+                            // 有标准差得分数据
+                            const scoreColor = q.query_std_score >= 95 ? 'performance-good' : 
+                                             q.query_std_score >= 90 ? 'performance-neutral' : 'performance-bad';
+                            detailParts.push(`<span class="detail-value">标准差得分:</span> <span class="${scoreColor}">${q.query_std_score.toFixed(1)}/100</span> (权重20%)`);
+                            
+                            // 显示详细计算过程
+                            const actualValue = q.std_ms != null ? q.std_ms : 0.0;
+                            const baselineValue = q.query_std_baseline != null ? q.query_std_baseline : 0.0;
+                            const deviationRate = q.query_std_deviation != null ? q.query_std_deviation : 
+                                                 (baselineValue > 0 ? Math.abs(actualValue - baselineValue) / baselineValue * 100 : 0);
+                            
+                            detailParts.push(`<span class="detail-value">　计算过程:</span> 实际值=${actualValue.toFixed(2)}ms, 基准值=${baselineValue.toFixed(2)}ms`);
+                            
+                            if (baselineValue > 0) {
+                                detailParts.push(`<span class="detail-value">　偏差率:</span> |${actualValue.toFixed(2)} - ${baselineValue.toFixed(2)}| / ${baselineValue.toFixed(2)} × 100% = ${deviationRate.toFixed(2)}%`);
+                                
+                                if (deviationRate <= 10) {
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 偏差率≤10%，得100分`);
+                                } else {
+                                    const calculatedScore = Math.max(0, 100 - (deviationRate - 10) * 10);
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 100 - (${deviationRate.toFixed(2)} - 10) × 10 = ${calculatedScore.toFixed(1)}分`);
+                                }
+                            } else {
+                                detailParts.push(`<span class="detail-value">　偏差率:</span> 基准值为0，特殊处理`);
+                                detailParts.push(`<span class="detail-value">　得分计算:</span> 基准值为0时，实际值为0得满分，否则得0分`);
+                            }
+                            
+                            if (q.std_ms == null || q.std_ms === 0) {
+                                detailParts.push(`<span class="detail-value">　数据来源:</span> <span class="performance-neutral">标准差为0（单次测试或数据不足）</span>`);
+                            } else {
+                                detailParts.push(`<span class="detail-value">　数据来源:</span> <span class="performance-neutral">标准差从原始数据计算得出</span>`);
+                            }
+                        } else {
+                            // 没有标准差得分数据
+                            detailParts.push(`<span class="detail-value">标准差得分:</span> <span class="performance-neutral">跳过 (权重20%)</span>`);
+                            detailParts.push(`<span class="detail-value">　说明:</span> <span class="performance-neutral">测试数据中缺少标准差信息</span>`);
+                        }
+                        if (q.query_range_score != null) {
+                            const scoreColor = q.query_range_score >= 95 ? 'performance-good' : 
+                                             q.query_range_score >= 90 ? 'performance-neutral' : 'performance-bad';
+                            detailParts.push(`<span class="detail-value">极差得分:</span> <span class="${scoreColor}">${q.query_range_score.toFixed(1)}/100</span> (权重10%)`);
+                            
+                            // 显示详细计算过程（使用后端传递的准确数据）
+                            if (q.min_ms != null && q.max_ms != null && q.query_range_baseline != null && q.query_range_deviation != null) {
+                                const actualValue = q.max_ms - q.min_ms;
+                                const baselineValue = q.query_range_baseline;
+                                const deviationRate = q.query_range_deviation;
+                                
+                                detailParts.push(`<span class="detail-value">　计算过程:</span> 实际值=${actualValue.toFixed(2)}ms, 基准值=${baselineValue.toFixed(2)}ms`);
+                                detailParts.push(`<span class="detail-value">　偏差率:</span> |${actualValue.toFixed(2)}-${baselineValue.toFixed(2)}|/${baselineValue.toFixed(2)}×100% = ${deviationRate.toFixed(2)}%`);
+                                
+                                if (deviationRate <= 10) {
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 偏差率≤10%，得100分`);
+                                } else {
+                                    const calculatedScore = Math.max(0, 100 - (deviationRate - 10) * 10);
+                                    detailParts.push(`<span class="detail-value">　得分计算:</span> 100-(${deviationRate.toFixed(2)}-10)×10 = ${calculatedScore.toFixed(1)}分`);
+                                }
+                            }
+                        }
+                        
+                        // 显示综合评分
+                        detailParts.push(`<div class="detail-section"><strong>综合评分:</strong></div>`);
+                        detailParts.push(`<span class="detail-value">计算公式:</span> 均值×50% + 中位数×20% + 标准差×20% + 极差×10%`);
+                        
+                        // 显示计算过程
+                        if (q.query_mean_score != null && q.query_median_score != null && 
+                            q.query_std_score != null && q.query_range_score != null) {
+                            const calculation = `${q.query_mean_score.toFixed(1)}×0.5 + ${q.query_median_score.toFixed(1)}×0.2 + ${q.query_std_score.toFixed(1)}×0.2 + ${q.query_range_score.toFixed(1)}×0.1`;
+                            detailParts.push(`<span class="detail-value">计算过程:</span> ${calculation}`);
+                        }
+                        
+                        const scoreColor = score >= 95 ? 'performance-good' : score >= 90 ? 'performance-neutral' : 'performance-bad';
+                        detailParts.push(`<span class="detail-value">最终得分:</span> <span class="${scoreColor}">${score.toFixed(1)}/100</span>`);
+                        
+                        // 评分等级和状态
+                        if (score >= 95) {
+                            detailParts.push(`<span class="detail-value">等级:</span> <span class="performance-good">优秀</span>`);
+                        } else if (score >= 90) {
+                            detailParts.push(`<span class="detail-value">等级:</span> <span class="performance-neutral">良好</span>`);
+                        } else {
+                            detailParts.push(`<span class="detail-value">等级:</span> <span class="performance-bad">需要改进</span>`);
+                        }
+                        
+                        if (!isPassed) {
+                            detailParts.push(`<span class="detail-value">状态:</span> <span class="performance-bad">未通过90分标准</span>`);
+                        } else {
+                            detailParts.push(`<span class="detail-value">状态:</span> <span class="performance-good">通过90分标准</span>`);
+                        }
+                        
+
+                        
+                        const queryDetail = `
+                            <div class="detail-toggle" onclick="toggleDetail(this)">
+                                <span class="detail-toggle-icon">▼</span>
+                                <span>查看详细计算过程</span>
+                            </div>
+                            <div class="detail-content" id="${uniqueId}">
+                                ${detailParts.join('<br>')}
+                            </div>
+                        `;
+                        tr.innerHTML += `<td class="calculation-detail-col">${queryDetail}</td>`;
                     } else {
+                        tr.innerHTML += '<td>-</td>';
                         tr.innerHTML += '<td>-</td>';
                     }
                 });
@@ -1824,7 +2191,7 @@
             const tr = document.createElement('tr');
             // 根据显示模式计算列数
             const colSpan = displayMode === 'score' ? 
-                6 + 1 + queryTypes.length : // 基础列 + 导入速度评分列 + 查询类型评分列
+                6 + 2 + (queryTypes.length * 2) : // 基础列 + 导入速度评分列和详情列 + 查询类型评分列和详情列
                 6 + 2 + (queryTypes.length * 2); // 基础列 + 导入速度列 + 查询类型列及对比列
             tr.innerHTML = `<td colspan="${colSpan}" class="no-data-cell">没有找到匹配的数据</td>`;
             tbody.appendChild(tr);
@@ -1892,6 +2259,22 @@
         function formatNumber(num) {
             if (num == null || num === '') return '-';
             return parseFloat(num).toFixed(2);
+        }
+
+        // 切换详情显示/隐藏
+        function toggleDetail(element) {
+            const content = element.nextElementSibling;
+            const icon = element.querySelector('.detail-toggle-icon');
+            
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                element.classList.remove('collapsed');
+                icon.textContent = '▼';
+            } else {
+                content.classList.add('collapsed');
+                element.classList.add('collapsed');
+                icon.textContent = '▶';
+            }
         }
 
         // 翻页

@@ -395,7 +395,7 @@ def calculate_grouped_statistics(df):
 
 def calculate_improved_aggregation(group_df):
     """
-    改进的聚合计算方法
+    改进的聚合计算方法 - 从原始数据的均值、最大值、最小值、中位数计算标准差
     
     Args:
         group_df: 同一分组下的所有测试数据
@@ -408,7 +408,6 @@ def calculate_improved_aggregation(group_df):
     # 检查可用的数据列
     has_mean = 'mean_ms' in group_df.columns
     has_median = 'med_ms' in group_df.columns  
-    has_std = 'std_ms' in group_df.columns
     has_min_max = 'min_ms' in group_df.columns and 'max_ms' in group_df.columns
     
     if not has_mean:
@@ -435,17 +434,27 @@ def calculate_improved_aggregation(group_df):
         # 如果没有中位数数据，使用均值作为估计
         query_stats['med_ms'] = query_stats['mean_ms']
     
-    # 3. 计算聚合标准差
-    if has_std and len(mean_values) > 1:
-        std_values = group_df['std_ms'].dropna()
-        if len(std_values) > 0:
-            # 使用改进的标准差聚合方法
-            query_stats['std_ms'] = calculate_aggregated_std(mean_values, std_values)
+    # 3. 从原始数据的均值计算标准差
+    if len(mean_values) > 1:
+        # 方法1：如果有多个测试数据，计算均值的标准差
+        query_stats['std_ms'] = float(mean_values.std())
+        logging.info(f"从多个均值计算标准差：mean_count={len(mean_values)}, std_ms={query_stats['std_ms']:.4f}")
+    elif len(mean_values) == 1 and has_min_max:
+        # 方法2：如果只有一个均值但有最大值最小值，从range估算标准差
+        min_vals = group_df['min_ms'].dropna()
+        max_vals = group_df['max_ms'].dropna()
+        if len(min_vals) > 0 and len(max_vals) > 0:
+            # 使用经验公式：标准差 ≈ range/4 (基于正态分布的近似)
+            range_val = max_vals.max() - min_vals.min()
+            query_stats['std_ms'] = float(range_val / 4.0)
+            logging.info(f"从单个测试的min-max估算标准差：range={range_val:.4f}, std_ms={query_stats['std_ms']:.4f}")
         else:
-            # 如果没有标准差数据，使用均值的标准差作为下限估计
-            query_stats['std_ms'] = float(mean_values.std())
+            query_stats['std_ms'] = 0.0
+            logging.warning(f"单个测试且无min/max数据，标准差设置为0")
     else:
+        # 方法3：如果只有一个均值且无min/max，标准差设为0
         query_stats['std_ms'] = 0.0
+        logging.warning(f"无法计算标准差（只有一个数据点且无min/max），设置为0：mean_values_count={len(mean_values)}")
     
     # 4. 计算聚合极差（最准确的方法）
     if has_min_max:
@@ -456,51 +465,19 @@ def calculate_improved_aggregation(group_df):
             query_stats['range_ms'] = float(max_values.max() - min_values.min())
             query_stats['min_ms'] = float(min_values.min())
             query_stats['max_ms'] = float(max_values.max())
+            logging.info(f"从min/max计算极差：min={query_stats['min_ms']:.4f}, max={query_stats['max_ms']:.4f}, range={query_stats['range_ms']:.4f}")
         else:
             # 如果没有min/max数据，使用均值的极差作为下限估计
             query_stats['range_ms'] = float(mean_values.max() - mean_values.min()) if len(mean_values) > 1 else 0.0
+            logging.info(f"从均值计算极差：range={query_stats['range_ms']:.4f}")
     else:
         # 如果没有min/max数据，使用均值的极差作为下限估计
         query_stats['range_ms'] = float(mean_values.max() - mean_values.min()) if len(mean_values) > 1 else 0.0
+        logging.info(f"无min/max数据，从均值计算极差：range={query_stats['range_ms']:.4f}")
     
     return query_stats
 
-def calculate_aggregated_std(mean_values, std_values):
-    """
-    计算聚合标准差的改进方法
-    
-    在缺少样本数信息的情况下，使用保守估计方法：
-    1. 如果标准差变化不大，使用标准差的平均值
-    2. 如果标准差变化较大，使用较大的标准差值
-    3. 考虑均值间的差异对总体标准差的贡献
-    
-    Args:
-        mean_values: 各测试的均值
-        std_values: 各测试的标准差
-        
-    Returns:
-        float: 聚合后的标准差估计值
-    """
-    if len(std_values) == 0:
-        return 0.0
-    
-    if len(std_values) == 1:
-        return float(std_values.iloc[0])
-    
-    # 方法1：标准差的平均值
-    avg_std = float(std_values.mean())
-    
-    # 方法2：考虑均值间差异的贡献
-    # 均值间的标准差反映了组间变异
-    mean_variation = float(mean_values.std()) if len(mean_values) > 1 else 0.0
-    
-    # 方法3：使用较大的标准差值（保守估计）
-    max_std = float(std_values.max())
-    
-    # 综合估计：取平均标准差和均值变异的较大值，但不超过最大标准差
-    estimated_std = min(max(avg_std, mean_variation), max_std)
-    
-    return estimated_std
+
 
 def add_scoring_to_table_data(table_data, grouped_stats, baselines):
     """
@@ -578,6 +555,25 @@ def add_scoring_to_table_data(table_data, grouped_stats, baselines):
                                 table_data.at[idx, 'query_std_score'] = score_info['detail_scores']['std_score']  # type: ignore
                                 table_data.at[idx, 'query_range_score'] = score_info['detail_scores']['range_score']  # type: ignore
                                 
+                                # 添加偏差率数据
+                                table_data.at[idx, 'query_mean_deviation'] = score_info['deviation_rates']['mean_deviation']  # type: ignore
+                                table_data.at[idx, 'query_median_deviation'] = score_info['deviation_rates']['median_deviation']  # type: ignore
+                                table_data.at[idx, 'query_std_deviation'] = score_info['deviation_rates']['std_deviation']  # type: ignore
+                                table_data.at[idx, 'query_range_deviation'] = score_info['deviation_rates']['range_deviation']  # type: ignore
+                            
+                            # 无论score_info是否为None，都要设置基准值数据，这样前端可以显示说明信息
+                            table_data.at[idx, 'query_mean_baseline'] = baseline_metrics.get('mean_ms', 0)  # type: ignore
+                            table_data.at[idx, 'query_median_baseline'] = baseline_metrics.get('med_ms', 0)  # type: ignore
+                            table_data.at[idx, 'query_std_baseline'] = baseline_metrics.get('std_ms', 0)  # type: ignore
+                            table_data.at[idx, 'query_range_baseline'] = baseline_metrics.get('range_ms', 0)  # type: ignore
+                            
+                            # 确保实际测试数据的标准差字段总是有值
+                            if 'std_ms' in actual_metrics:
+                                table_data.at[idx, 'std_ms'] = actual_metrics.get('std_ms', 0.0)  # type: ignore
+                            else:
+                                table_data.at[idx, 'std_ms'] = 0.0  # type: ignore
+                                
+                            if score_info:
                                 logging.info(f"Query {query_type} comprehensive score: {score_info['comprehensive_score']}, passed: {score_info['is_passed']}")
                             
                             # 计算平均延迟百分比对比
@@ -741,28 +737,27 @@ def calculate_performance_percentage_reverse(actual_value, baseline_value):
 
 def calculate_deviation_score(actual_value, baseline_value):
     """
-    计算单项指标的偏差得分
-    
-    Args:
-        actual_value: 实际测试值
-        baseline_value: 基准值
-        
-    Returns:
-        得分 (0-100)
+    计算单项指标的偏差得分（参考均值逻辑，确保始终返回有效值）
     """
-    if not baseline_value or baseline_value == 0:
-        return None
+    if baseline_value is None or baseline_value == 0:
+        if actual_value == 0:
+            logging.info(f"偏差得分计算: actual=0, baseline=0, 完美匹配，得分=100")
+            return 100.0
+        else:
+            logging.info(f"偏差得分计算: actual={actual_value}, baseline=0, 有变异，得分=0")
+            return 0.0
     
-    # 计算偏差率
+    # 计算偏差率（类似于均值）
     deviation_rate = abs(actual_value - baseline_value) / baseline_value * 100
     
-    # 根据偏差率计算得分
-    if deviation_rate < 10:
-        return 100
+    # 得分公式（类似于均值）
+    if deviation_rate <= 10:
+        score = 100
     else:
-        # 偏差率超过10%时，得分递减
         score = max(0, 100 - (deviation_rate - 10) * 10)
-        return round(score, 2)
+    
+    logging.info(f"偏差得分计算: actual={actual_value}, baseline={baseline_value}, deviation_rate={deviation_rate:.2f}%, score={score}")
+    return round(score, 2)
 
 def calculate_comprehensive_score(actual_metrics, baseline_metrics):
     """
@@ -789,10 +784,18 @@ def calculate_comprehensive_score(actual_metrics, baseline_metrics):
         baseline_metrics.get('med_ms', 0)
     )
     
-    std_score = calculate_deviation_score(
-        actual_metrics.get('std_ms', 0), 
-        baseline_metrics.get('std_ms', 0)
-    )
+    # 标准差得分计算：确保总是有值，即使是0也要计算得分
+    actual_std = actual_metrics.get('std_ms')
+    baseline_std = baseline_metrics.get('std_ms', 0)
+    
+    if actual_std is not None:
+        std_score = calculate_deviation_score(actual_std, baseline_std)
+        logging.info(f"标准差计算 - 实际值: {actual_std}, 基准值: {baseline_std}, 得分: {std_score}")
+    else:
+        # 如果实际标准差为None，设置为0并计算得分
+        actual_std = 0.0
+        std_score = calculate_deviation_score(actual_std, baseline_std) if baseline_std > 0 else 100.0
+        logging.info(f"标准差数据缺失，设置为0 - 实际值: {actual_std}, 基准值: {baseline_std}, 得分: {std_score}")
     
     range_score = calculate_deviation_score(
         actual_metrics.get('range_ms', 0), 
@@ -854,7 +857,7 @@ def calculate_comprehensive_score(actual_metrics, baseline_metrics):
         'deviation_rates': {
             'mean_deviation': calculate_deviation_rate(actual_metrics.get('mean_ms', 0), baseline_metrics.get('mean_ms', 0)),
             'median_deviation': calculate_deviation_rate(actual_metrics.get('med_ms', 0), baseline_metrics.get('med_ms', 0)),
-            'std_deviation': calculate_deviation_rate(actual_metrics.get('std_ms', 0), baseline_metrics.get('std_ms', 0)),
+            'std_deviation': calculate_deviation_rate(actual_std, baseline_std),  # 使用处理后的标准差值
             'range_deviation': calculate_deviation_rate(actual_metrics.get('range_ms', 0), baseline_metrics.get('range_ms', 0))
         }
     }
@@ -862,7 +865,11 @@ def calculate_comprehensive_score(actual_metrics, baseline_metrics):
 def calculate_deviation_rate(actual_value, baseline_value):
     """计算偏差率"""
     if not baseline_value or baseline_value == 0:
-        return None
+        # 基准值为0时，如果实际值也为0，偏差率为0；否则返回None表示无法计算
+        if actual_value == 0:
+            return 0.0
+        else:
+            return None
     return round(abs(actual_value - baseline_value) / baseline_value * 100, 2)
 
 def calculate_import_speed_score(actual_speed, baseline_speed):
