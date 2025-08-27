@@ -15,6 +15,33 @@
   - `runMins`：压测持续时长（min）。
   - 事务 mix 比例：各事务类型的权重，默认 45/43/4/4/4。
 
+- **预检清单（Pre-flight Checks）**
+  - 环境与版本：
+    ```bash
+    uname -a
+    cat /etc/os-release | sed -n '1,5p'
+    java -version
+    ant -version || ./gradlew -v
+    ```
+  - 时间同步：
+    ```bash
+    timedatectl | sed -n '1,8p'
+    chronyc sources -v | sed -n '1,10p' || echo "chrony not installed"
+    ```
+  - 资源上限与内核参数：
+    ```bash
+    ulimit -n
+    ulimit -u
+    sysctl vm.swappiness
+    cat /sys/kernel/mm/transparent_hugepage/enabled
+    ```
+  - 网络与磁盘健康：
+    ```bash
+    ping -c 3 <db_host>
+    iperf3 -c <db_host> -t 10   # 需要 iperf3 服务端
+    iostat -x 1 3 | sed -n '1,40p'
+    ```
+
 ### 2. 安装与环境
 - **获取与编译**
   - 依赖：JDK 8 及以上、Ant 或 Gradle、对应数据库的 JDBC 驱动。
@@ -22,6 +49,30 @@
   - 构建：
     - 使用 Ant：在项目根目录执行 `ant`，产物位于 `dist/`。
     - 使用 Gradle：执行 `./gradlew clean shadowJar`，产物位于 `build/libs/`。
+- **详细安装步骤（示例）**
+  1) 安装依赖：
+     ```bash
+     # Debian/Ubuntu
+     sudo apt update && sudo apt install -y openjdk-11-jdk ant git unzip
+     # RHEL/CentOS/Rocky
+     sudo yum install -y java-11-openjdk-devel ant git unzip
+     ```
+  2) 获取源码并构建：
+     ```bash
+     git clone <benchmarksql_repo_url>
+     cd benchmarksql
+     ant  # 或 ./gradlew clean shadowJar
+     ls -l dist/ || ls -l build/libs/
+     ```
+  3) 放置 JDBC 驱动：
+     ```bash
+     mkdir -p lib
+     cp /path/to/jdbc/*.jar lib/
+     ```
+  4) 验证 classpath 与脚本：
+     ```bash
+     grep -n "classpath" run/*.sh | sed -n '1,40p'
+     ```
 - **目录结构**
   - `run/`：启动脚本与示例属性文件（如 `props.pg`、`props.mysql`）。
   - `sql.common/`：公共 SQL 脚本（DDL/DML 片段）。
@@ -52,6 +103,18 @@
   - I/O 与调度：SSD/NVMe，I/O 调度器与写回策略按数据库最佳实践设置。
   - 网络：固定速率/双工，关闭省电特性，核对 MTU，一致的 NIC 中断亲和。
 
+- **快速自检脚本（可选）**
+  ```bash
+  #!/usr/bin/env bash
+  set -e
+  echo "== OS =="; uname -a; cat /etc/os-release | sed -n '1,5p'
+  echo "== Time =="; timedatectl | sed -n '1,8p'
+  echo "== Java/Ant =="; java -version; ant -version || true
+  echo "== Limits =="; echo "nofile=$(ulimit -n)"; echo "nproc=$(ulimit -u)"
+  echo "== THP =="; cat /sys/kernel/mm/transparent_hugepage/enabled
+  echo "== Disks =="; iostat -x 1 2 | sed -n '1,40p'
+  ```
+
 ### 3. BenchmarkSQL 的安装使用
 - **数据准备与装载**
   - 创建数据库与账户，授予建表/索引/加载权限；为测试专用库与用户。
@@ -68,6 +131,47 @@
     ```bash
     ./runSQL.sh props.<db> sql.<db>/foreignKeys.sql
     ```
+- **属性文件示例（PostgreSQL）**
+  ```properties
+  db=postgres
+  driver=org.postgresql.Driver
+  conn=jdbc:postgresql://<host>:5432/tpcc
+  user=tpcc
+  password=tpcc
+  warehouses=300
+  loadWorkers=16
+  terminals=128
+  rampup=10
+  runMins=30
+  # 事务权重
+  newOrderWeight=45
+  paymentWeight=43
+  orderStatusWeight=4
+  deliveryWeight=4
+  stockLevelWeight=4
+  # 结果与监控
+  resultDirectory=results_pg_%tY-%tm-%td_%tH%tM%tS
+  osCollectorScript=./misc/os_collector_linux.py
+  osCollectorInterval=1
+  osCollectorDevices=net_ens3 blk_nvme0n1
+  ```
+- **属性文件示例（MySQL 兼容）**
+  ```properties
+  db=mysql
+  driver=com.mysql.cj.jdbc.Driver
+  conn=jdbc:mysql://<host>:3306/tpcc?useSSL=false&serverTimezone=UTC
+  user=tpcc
+  password=tpcc
+  warehouses=300
+  loadWorkers=16
+  terminals=128
+  rampup=10
+  runMins=30
+  resultDirectory=results_mysql_%tY-%tm-%td_%tH%tM%tS
+  osCollectorScript=./misc/os_collector_linux.py
+  osCollectorInterval=1
+  osCollectorDevices=net_ens3 blk_nvme0n1
+  ```
 - **典型运行方式**
   - 单客户端：
     ```bash
@@ -84,6 +188,25 @@
   - 磁盘/目录：结果输出、数据库数据盘空间与 IOPS 余量。
   - 配置快照：保存属性文件、数据库参数与版本信息。
   - 预热策略：设置 `rampup`，确保缓存与执行路径稳定。
+
+- **验证 SQL（装载后）**
+  - 行数与键范围：
+    ```sql
+    -- PostgreSQL/MySQL 类似
+    SELECT COUNT(*) FROM warehouse;
+    SELECT COUNT(*) FROM district;
+    SELECT COUNT(*) FROM customer;
+    SELECT COUNT(*) FROM history;
+    SELECT COUNT(*) FROM orders;
+    SELECT COUNT(*) FROM order_line;
+    SELECT COUNT(*) FROM stock;
+    ```
+  - 索引存在性：
+    ```sql
+    -- PostgreSQL 示例
+    \d+ customer
+    \d+ orders
+    ```
 
 ### 4. 兼容与非兼容数据库的测试方法
 - **兼容数据库测试步骤（开箱可用）**
@@ -122,6 +245,10 @@
     - 装载校验：记录装载行数、索引与约束状态。
     - 事务通过率：关注死锁/序列化失败重试后成功率。
     - 结果一致性：对比不同并发下的吞吐与延迟曲线是否合理。
+  - 最小改造示例：
+    - 自增列：将 PostgreSQL `SERIAL`/`BIGSERIAL` 替换为目标数据库的自增关键字或序列触发器。
+    - 分页语法：`LIMIT ? OFFSET ?` 替换为 `FETCH NEXT ? ROWS` 或数据库自有语法。
+    - 时间函数：`CURRENT_TIMESTAMP`、`now()` 等按方言替换。
 
 ### 5. 参数优化（BenchmarkSQL 侧）
 - **负载模型参数**
@@ -145,6 +272,16 @@
   - 预热至少 5–15 分钟或直至 TPS/延迟收敛；舍弃预热期数据。
   - 结果取样窗口：压测期中段 60–80% 区间的稳态数据更具比较意义。
 
+- **调参方法学（分阶段搜索策略）**
+  1) 固定 `warehouses`（如 300），以 `terminals` 梯度 32→64→128→256 升压；记录系统资源与 TPS/延迟；定位膝点（knee）。
+  2) 在膝点附近微调 `warehouses`（±50%），寻找更优的争用与 IO 平衡。
+  3) 设定稳定 `rampup`（10–15 min）与较长 `runMins`（30–60 min）获取稳态统计。
+  4) 若中止率高：
+     - 提高 `warehouses` 与热点扩散；
+     - 检查索引、锁与长事务；
+     - 增加客户端重试退避。
+  5) 对比不同 GC 策略与堆大小，避免频繁 Full GC 或 Stop-The-World 超过 p99 延迟阈值。
+
 ### 6. 资源监控与观测（基准机与数据库侧）
 - **基准机监控**
   - OS 采集：`sar`、`pidstat`、`iostat -x 1`、`vmstat 1`、`dstat -tcmnd`、`jstat`（JVM）。
@@ -156,6 +293,26 @@
   - Prometheus/Grafana：部署 Node/DB Exporter，准备标准看板（TPS、延迟、锁、缓存、IO、网络）。
 - **瓶颈定位路径**
   - CPU 饱和→SQL/锁争用→IO 等待→网络饱和→JVM/GC 停顿→配置不当（如日志同步）。
+
+- **常用命令与示例**
+  ```bash
+  # CPU/进程
+  mpstat -P ALL 1 | tee cpu.txt
+  pidstat -t -p $(pgrep -f benchmarksql | tr '\n' ',') 1 | tee pid.txt
+  # 磁盘
+  iostat -x 1 | tee iostat.txt
+  # 网络
+  sar -n DEV 1 | tee net.txt
+  # JVM GC（需启用日志）
+  jstat -gcutil $(pgrep -f benchmarksql | head -n1) 1 300 | tee gc.txt
+  ```
+
+- **Prometheus 集成（简要）**
+  - 基准机与数据库机安装 Node Exporter；数据库按厂商提供的 Exporter 安装。
+  - Grafana 导入通用看板，关键图：整体 TPS、p50/p95/p99 延迟、CPU、LoadAvg、磁盘 util/%iowait、网络吞吐、锁等待。
+  - 典型 PromQL：
+    - `rate(node_cpu_seconds_total{mode="idle"}[1m])` 推算 CPU 使用率。
+    - `rate(node_disk_read_bytes_total[1m])`、`rate(node_disk_written_bytes_total[1m])`。
 
 ### 7. 配置文件与参数说明
 - **`benchmarksql.properties` 字段分组说明**
@@ -172,6 +329,36 @@
   - `resultDirectory` 支持时间占位符（如 `%tY-%tm-%td_%tH%tM%tS`）。
   - 关键文件：汇总统计、每事务类型统计、错误日志、（可选）OS 监控原始数据与图表。
 
+- **完整参数示例与释义（节选）**
+  ```properties
+  # 连接
+  db=postgres                # 目标数据库类型（与 sql.<db>/ 对应）
+  driver=org.postgresql.Driver
+  conn=jdbc:postgresql://host:5432/tpcc
+  user=tpcc
+  password=tpcc
+  # 装载
+  warehouses=300             # 仓库数（数据规模）
+  loadWorkers=16             # 装载并发线程
+  # 运行
+  terminals=128              # 并发终端数
+  rampup=10                  # 预热分钟数
+  runMins=30                 # 运行分钟数（或使用 runTxnsPerTerminal）
+  # 权重（总和 100）
+  newOrderWeight=45
+  paymentWeight=43
+  orderStatusWeight=4
+  deliveryWeight=4
+  stockLevelWeight=4
+  # 限速（可选）
+  limitTxnsPerMin=0          # 0 表示不限速
+  # 日志与结果
+  resultDirectory=results_%tY-%tm-%td_%tH%tM%tS
+  osCollectorScript=./misc/os_collector_linux.py
+  osCollectorInterval=1
+  osCollectorDevices=net_ens3 blk_nvme0n1
+  ```
+
 ### 8. 测试流程与交付物
 - **端到端流程**
   1) 目标确认与范围界定 → 2) 环境与参数快照 → 3) 装载与校验 → 4) 预热 → 5) 升压寻优 → 6) 稳态采样 → 7) 复核与复现 → 8) 出具报告。
@@ -183,6 +370,21 @@
   - 结论：最优点、退化点、配置建议与风险清单。
 - **复现实验**
   - 固定版本与依赖、保存属性文件与脚本、记录随机种子与时间戳、保留监控原始数据。
+
+- **SOP（标准作业步骤）**
+  1) 预检：完成第 1–2 章检查并记录。
+  2) 准备属性：复制 `run/props.<db>` 为 `props.test.<tag>`，填入连接、并发、仓数、结果目录。
+  3) 建表与装载：执行建表、建索引、装载，验证行数与索引；记录时间与日志。
+  4) 预热与试跑：`rampup=10`、`runMins=5`，验证无明显错误与中止风暴。
+  5) 正式压测：逐级升压（示例：64→128→256 terminals），每级 `runMins≥30`；保存所有结果目录。
+  6) 监控采集：开启 OS 采集与 Prometheus，看板截屏或导出 JSON。
+  7) 稳态判定：选取每轮中段 60–80% 时间窗作为汇总样本。
+  8) 交付产物：整理报告、属性文件、SQL 校验结果、监控原始数据与图表、版本清单。
+
+- **验收标准（示例）**
+  - 试跑阶段错误率 < 1%，正式阶段中止+重试成功率 ≥ 98%。
+  - 稳态窗口内 p95 延迟抖动 < 10%，无 CPU/IO/网络持续饱和且无异常 spike。
+  - 报告可复现：提供同构环境复跑指引与脚本，结果偏差在 ±5% 内。
 
 ### 9. 附录
 - **并发与仓数选型参考（起步值，需按监控调优）**
@@ -198,4 +400,23 @@
   - BenchmarkSQL 上游仓库与社区分支（获取源码与脚本）。
   - TPC-C 规范要点与事务比例说明。
   - 数据库厂商性能调优与最佳实践文档。
+
+- **校验 SQL 速查（节选）**
+  ```sql
+  -- 订单与行项目一致性（示例）
+  SELECT o_id, COUNT(*) AS lines
+  FROM order_line
+  GROUP BY o_id
+  ORDER BY lines DESC
+  LIMIT 5;
+
+  -- 库存热点分布
+  SELECT s_w_id, COUNT(*) AS cnt
+  FROM stock
+  GROUP BY s_w_id
+  ORDER BY cnt DESC;
+
+  -- 最近支付记录
+  SELECT * FROM history ORDER BY h_date DESC LIMIT 10;
+  ```
 
