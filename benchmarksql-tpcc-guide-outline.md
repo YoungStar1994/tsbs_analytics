@@ -103,6 +103,42 @@
   - I/O 与调度：SSD/NVMe，I/O 调度器与写回策略按数据库最佳实践设置。
   - 网络：固定速率/双工，关闭省电特性，核对 MTU，一致的 NIC 中断亲和。
 
+- **OS/内核调优（参考建议，按安全与合规评估采纳）**
+  - 永久配置 `/etc/sysctl.d/99-benchmark.conf`（示例）：
+    ```
+    vm.swappiness=1
+    vm.dirty_background_ratio=5
+    vm.dirty_ratio=20
+    fs.file-max=1048576
+    net.core.somaxconn=1024
+    net.core.netdev_max_backlog=250000
+    net.ipv4.tcp_max_syn_backlog=4096
+    net.ipv4.ip_local_port_range=10000 65535
+    net.ipv4.tcp_fin_timeout=15
+    net.ipv4.tcp_tw_reuse=1
+    net.core.rmem_max=134217728
+    net.core.wmem_max=134217728
+    net.ipv4.tcp_rmem=4096 87380 134217728
+    net.ipv4.tcp_wmem=4096 65536 134217728
+    ```
+    应用：`sudo sysctl --system`
+  - 关闭 THP：
+    ```bash
+    echo never | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+    echo never | sudo tee /sys/kernel/mm/transparent_hugepage/defrag
+    ```
+  - CPU 频率与调优：
+    ```bash
+    # 设置性能模式（不同发行版命令可能不同）
+    sudo cpupower frequency-set -g performance || true
+    sudo tuned-adm profile throughput-performance || true
+    ```
+  - NIC 与中断亲和：
+    ```bash
+    sudo ethtool -G <iface> rx 4096 tx 4096 || true
+    cat /proc/interrupts | grep <iface>
+    # 结合 RPS/XPS 设置 /sys/class/net/<iface>/queues/*/rps_cpus
+    ```
 - **快速自检脚本（可选）**
   ```bash
   #!/usr/bin/env bash
@@ -208,6 +244,23 @@
     \d+ orders
     ```
 
+- **多客户端编排（多基准机并行）**
+  - 节点清单 `clients.txt`：
+    ```
+    bench01 /opt/bmsql/run/props.pg.01 64 results_pg_01
+    bench02 /opt/bmsql/run/props.pg.02 64 results_pg_02
+    bench03 /opt/bmsql/run/props.pg.03 64 results_pg_03
+    ```
+  - 远程启动脚本 `start_all.sh`：
+    ```bash
+    #!/usr/bin/env bash
+    set -euo pipefail
+    while read host props terms outdir; do
+      ssh -o StrictHostKeyChecking=no $host "cd $(dirname $props)/.. && sed -i 's/^terminals=.*/terminals=$terms/' $props && nohup ./run/runBenchmark.sh $props > $outdir.log 2>&1 &"
+    done < clients.txt
+    ```
+  - 结果汇总：将各 `resultDirectory` 下的聚合文件（如 `summary.csv`）集中统计，统一绘图。
+
 ### 4. 兼容与非兼容数据库的测试方法
 - **兼容数据库测试步骤（开箱可用）**
   - 放置 JDBC 驱动到 `lib/`（或在 `run` 脚本中指明 classpath）。
@@ -250,6 +303,30 @@
     - 分页语法：`LIMIT ? OFFSET ?` 替换为 `FETCH NEXT ? ROWS` 或数据库自有语法。
     - 时间函数：`CURRENT_TIMESTAMP`、`now()` 等按方言替换。
 
+- **数据库专项准备（示例）**
+  - PostgreSQL（示例建议，按场景与版本调整）：
+    ```sql
+    -- 连接/会话
+    SHOW max_connections;  -- 确保高于 terminals 总和（含余量）
+    -- 主要参数（需重启/重载）
+    ALTER SYSTEM SET shared_buffers='25%';
+    ALTER SYSTEM SET wal_compression=on;
+    ALTER SYSTEM SET checkpoint_timeout='30min';
+    ALTER SYSTEM SET max_wal_size='64GB';
+    ALTER SYSTEM SET effective_io_concurrency=256;
+    ALTER SYSTEM SET synchronous_commit=off;  -- 最大吞吐场景
+    SELECT pg_reload_conf();
+    ```
+  - MySQL/InnoDB（示例建议，按版本/发行版校准）：
+    ```
+    innodb_buffer_pool_size = 50G
+    innodb_log_file_size = 4G
+    innodb_flush_log_at_trx_commit = 2     # 最大吞吐场景
+    innodb_flush_method = O_DIRECT
+    sync_binlog = 0                        # 非生产测试
+    max_connections = 4096
+    ```
+
 ### 5. 参数优化（BenchmarkSQL 侧）
 - **负载模型参数**
   - `warehouses`：决定数据规模与热点分布，增大可降低争用但增加 IO。
@@ -282,6 +359,10 @@
      - 增加客户端重试退避。
   5) 对比不同 GC 策略与堆大小，避免频繁 Full GC 或 Stop-The-World 超过 p99 延迟阈值。
 
+- **结果判读与拐点识别**
+  - 将 TPS 随 `terminals` 绘图；拐点前近线性增长，拐点后 TPS 平台或下降且 p95/p99 急升。
+  - CPU>85% 且 p95 急升多为 CPU 饱和或锁争用；IO util>80% 伴随 svctm/wait 升高多为 IO 瓶颈。
+  - 网络收发逼近上限且 RTT 抖动，考虑多网卡/链路汇聚或多机位分流。
 ### 6. 资源监控与观测（基准机与数据库侧）
 - **基准机监控**
   - OS 采集：`sar`、`pidstat`、`iostat -x 1`、`vmstat 1`、`dstat -tcmnd`、`jstat`（JVM）。
@@ -314,6 +395,30 @@
     - `rate(node_cpu_seconds_total{mode="idle"}[1m])` 推算 CPU 使用率。
     - `rate(node_disk_read_bytes_total[1m])`、`rate(node_disk_written_bytes_total[1m])`。
 
+- **数据库内部观测（示例）**
+  - PostgreSQL：
+    ```sql
+    SELECT wait_event_type, wait_event, COUNT(*)
+    FROM pg_stat_activity
+    WHERE state='active'
+    GROUP BY 1,2 ORDER BY 3 DESC;
+
+    SELECT locktype, mode, COUNT(*) FROM pg_locks GROUP BY 1,2;
+
+    SELECT * FROM pg_stat_bgwriter;  -- 检查 checkpoints/flush
+
+    -- 若安装 pg_stat_statements
+    SELECT calls,total_exec_time/1000 AS sec, mean_exec_time, rows
+    FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 10;
+    ```
+  - MySQL/InnoDB：
+    ```sql
+    SHOW ENGINE INNODB STATUS\G
+    SELECT * FROM performance_schema.events_statements_summary_by_digest
+    ORDER BY SUM_TIMER_WAIT DESC LIMIT 10;
+    SELECT * FROM information_schema.innodb_trx\G
+    SELECT * FROM information_schema.innodb_locks\G
+    ```
 ### 7. 配置文件与参数说明
 - **`benchmarksql.properties` 字段分组说明**
   - 连接配置：`db`、`driver`、`conn`、`user`、`password`（必要时 `ssl` 等）。
@@ -358,6 +463,14 @@
   osCollectorInterval=1
   osCollectorDevices=net_ens3 blk_nvme0n1
   ```
+
+- **高级/可选参数（不同分支可能差异，以所用版本为准）**
+  - `terminalWarehouseFixed`：true 时每个终端固定绑定仓库，减少跨仓热点。
+  - `terminalDistrictFixed`：true 时终端固定绑定某个 district，进一步减少冲突。
+  - `useStoredProcedures`：若实现为存储过程可开启以减少往返（部分分支支持）。
+  - `printScreen`/`log4j` 级别：控制控制台与文件日志冗长度，避免 IO 干扰。
+  - `noshort`/`noCustomers` 等：部分分支用于禁用特定事务类型或路径。
+  - `resultDirectory` 时间占位符：`%tY %tm %td %tH %tM %tS` 等组合。
 
 ### 8. 测试流程与交付物
 - **端到端流程**
@@ -419,4 +532,37 @@
   -- 最近支付记录
   SELECT * FROM history ORDER BY h_date DESC LIMIT 10;
   ```
+
+- **TPCC 装载期期望基数（理论值）**
+  - 设 `W = warehouses`：
+    - `warehouse`：W
+    - `district`：10 × W
+    - `customer`：30,000 × W（每 district 3,000）
+    - `history`：30,000 × W（对应每个 customer 一条初始付款）
+    - `orders`：30,000 × W（每 district 3,000）
+    - `new_order`：9,000 × W（每 district 最近 900 个订单为未交付）
+    - `order_line`：≈ 315,000 × W（每订单 5–15 行，均值 10.5）
+    - `item`：100,000（全局共享）
+    - `stock`：100,000 × W（每仓每 item 一行）
+
+- **基数校验 SQL（示例）**
+  ```sql
+  -- 以 W=300 示例：
+  -- 期望：warehouse=300, district=3000, customer=9,000,000
+  SELECT COUNT(*) FROM warehouse;         -- 应为 W
+  SELECT COUNT(*) FROM district;          -- 应为 10*W
+  SELECT COUNT(*) FROM customer;          -- 应为 30000*W
+  SELECT COUNT(*) FROM history;           -- 应为 30000*W
+  SELECT COUNT(*) FROM orders;            -- 应为 30000*W
+  SELECT COUNT(*) FROM new_order;         -- 应为 9000*W
+  SELECT COUNT(*) FROM order_line;        -- 约 315000*W（上下浮动）
+  SELECT COUNT(*) FROM item;              -- 应为 100000
+  SELECT COUNT(*) FROM stock;             -- 应为 100000*W
+  ```
+
+- **常见问题进阶排查**
+  - TPS 波动但 CPU 未饱和：检查锁/等待、慢查询、检查点/刷盘、网络丢包/重传。
+  - p99 偶发飙高：核对 GC 日志/Full GC、IO 等待长尾、后台维护任务（VACUUM/ANALYZE/备份）。
+  - 中止率高：热点行（district/order 序列相关）、隔离级别冲突、row-level locking；可增加 `warehouses`/分片数。
+  - 结果不可复现：确保属性、数据库参数、二进制版本一致；检查 NTP 偏移与基准机 CPU governor。
 
